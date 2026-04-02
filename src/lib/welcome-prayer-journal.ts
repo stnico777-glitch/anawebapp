@@ -64,6 +64,9 @@ ${SIGN_OFF}`,
   },
 ];
 
+/** Same copy as seeded welcome entries — used for Vercel/offline preview when the DB is unavailable. */
+export const WELCOME_JOURNAL_DEMO_ENTRIES = WELCOME_ENTRIES;
+
 /**
  * Ensures the user has the standard “from our team” prayer pack once.
  * Safe to call on every journal load; no-ops if already present.

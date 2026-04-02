@@ -5,6 +5,7 @@ import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
 import { tagsToJson, photosToJson, parseStatus, parseTagFilter } from "@/lib/prayer-journal";
 import { ensureWelcomePrayerJournalEntries } from "@/lib/welcome-prayer-journal";
+import { getDemoPrayerJournalApiRows } from "@/lib/demo-prayer-journal-api";
 
 const statusSchema = z.enum(["ACTIVE", "ANSWERED", "PAUSED"]);
 
@@ -21,8 +22,6 @@ export async function GET(request: Request) {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  await ensureWelcomePrayerJournalEntries(user.id);
-
   const { searchParams } = new URL(request.url);
   const status = parseStatus(searchParams.get("status") ?? undefined);
   const tag =
@@ -30,17 +29,24 @@ export async function GET(request: Request) {
     parseTagFilter(searchParams.get("category") ?? undefined);
   const take = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? "50") || 50));
 
-  const entries = await prisma.prayerJournalEntry.findMany({
-    where: {
-      userId: user.id,
-      ...(status ? { status } : {}),
-      ...(tag ? { tags: { contains: `"${tag}"` } } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take,
-  });
+  try {
+    await ensureWelcomePrayerJournalEntries(user.id);
 
-  return NextResponse.json(entries);
+    const entries = await prisma.prayerJournalEntry.findMany({
+      where: {
+        userId: user.id,
+        ...(status ? { status } : {}),
+        ...(tag ? { tags: { contains: `"${tag}"` } } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+
+    return NextResponse.json(entries);
+  } catch {
+    const demo = getDemoPrayerJournalApiRows(status, tag).slice(0, take);
+    return NextResponse.json(demo);
+  }
 }
 
 export async function POST(request: Request) {
