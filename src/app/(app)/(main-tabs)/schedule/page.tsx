@@ -65,9 +65,9 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
     return (
       <div className="rounded-sm border border-dashed border-sand bg-cream/60 py-16 text-center [font-family:var(--font-body),sans-serif]">
         <p className="text-gray">
-          No schedule for this week yet. Run{" "}
-          <code className="rounded-sm bg-cream px-1.5 py-0.5 text-sm">npm run db:seed</code> to create a sample
-          schedule.
+          No schedule for this week yet. When your database is connected and seeded, the weekly rhythm will
+          show here. Locally, you can run{" "}
+          <code className="rounded-sm bg-cream px-1.5 py-0.5 text-sm">npm run db:seed</code> for sample data.
         </p>
       </div>
     );

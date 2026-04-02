@@ -14,6 +14,10 @@ export async function getDailyVerseForDateInput(
       ? new Date(`${dateInput}T12:00:00.000Z`)
       : new Date();
   const verseDate = toEntryDate(raw);
-  const db = getPrisma();
-  return db.dailyVerse.findUnique({ where: { verseDate } });
+  try {
+    const db = getPrisma();
+    return await db.dailyVerse.findUnique({ where: { verseDate } });
+  } catch {
+    return null;
+  }
 }
