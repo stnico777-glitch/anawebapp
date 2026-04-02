@@ -1,0 +1,335 @@
+// Prisma schema - Auth.js compatible + custom Awake & Align fields
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  name               String?
+  email              String?   @unique
+  emailVerified      DateTime?
+  image              String?
+  passwordHash       String?   // for Credentials provider
+  stripeCustomerId   String?
+  isSubscriber       Boolean   @default(false)
+  isAdmin            Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  completions UserDayCompletion[]
+  workoutCompletions UserWorkoutCompletion[]
+  prayerCompletions  UserPrayerCompletion[]
+  prayerJournalEntries       PrayerJournalEntry[]
+  prayerReminders            PrayerReminder[]
+  prayerRequestInteractions  PrayerRequestInteraction[]
+  praiseReportLikes          PraiseReportLike[]
+  prayerRequestComments      PrayerRequestComment[]
+  praiseReportComments       PraiseReportComment[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Weekly Schedule (Monday–Saturday, Sabbath rest)
+model WeekSchedule {
+  id        String   @id @default(cuid())
+  weekStart DateTime // Monday of the week
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  days ScheduleDay[]
+}
+
+model ScheduleDay {
+  id              String       @id @default(cuid())
+  weekScheduleId  String
+  dayIndex        Int          // 0=Monday, 5=Saturday
+  prayerTitle     String?
+  prayerId        String?
+  workoutTitle    String?
+  workoutId       String?
+  affirmationText String?
+
+  weekSchedule WeekSchedule   @relation(fields: [weekScheduleId], references: [id], onDelete: Cascade)
+  completions  UserDayCompletion[]
+
+  @@unique([weekScheduleId, dayIndex])
+}
+
+model UserDayCompletion {
+  id              String    @id @default(cuid())
+  userId          String
+  scheduleDayId   String
+  prayerDone      Boolean   @default(false)
+  workoutDone     Boolean   @default(false)
+  affirmationDone Boolean   @default(false)
+  completedAt     DateTime?
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheduleDay ScheduleDay @relation(fields: [scheduleDayId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scheduleDayId])
+}
+
+model Workout {
+  id          String   @id @default(cuid())
+  title       String
+  instructor  String?
+  duration    Int      // minutes
+  category    String?  // e.g. Strength, Cardio, Yoga
+  scripture   String?
+  videoUrl    String
+  thumbnailUrl String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  completions UserWorkoutCompletion[]
+}
+
+model UserWorkoutCompletion {
+  id         String   @id @default(cuid())
+  userId     String
+  workoutId  String
+  completedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workoutId])
+}
+
+model PrayerAudio {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  scripture     String?
+  audioUrl      String
+  duration      Int // seconds
+  /** Cover image for catalog / library cards (URL or site-relative path) */
+  coverImageUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  completions UserPrayerCompletion[]
+}
+
+model UserPrayerCompletion {
+  id         String   @id @default(cuid())
+  userId     String
+  prayerId   String
+  completedAt DateTime @default(now())
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prayer PrayerAudio @relation(fields: [prayerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, prayerId])
+}
+
+enum PrayerJournalStatus {
+  ACTIVE
+  ANSWERED
+  PAUSED
+}
+
+enum PrayerReminderCadence {
+  DAILY
+  WEEKLY
+}
+
+/** Private prayer log per subscriber (5-Minute Journal–style: text, tags, photos, status). */
+model PrayerJournalEntry {
+  id          String              @id @default(cuid())
+  userId      String
+  title       String?
+  content     String
+  /** JSON array of short tag strings, e.g. ["family","healing"] */
+  tags        String              @default("[]")
+  status      PrayerJournalStatus @default(ACTIVE)
+  answeredAt  DateTime?
+  answerNote  String?
+  /** JSON array of image URLs (e.g. Vercel Blob) */
+  photos      String              @default("[]")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminders PrayerReminder[]
+
+  @@index([userId, status, createdAt])
+}
+
+/**
+ * In-app reminder only (no push/email): user-chosen local time + cadence.
+ * weekDay: 0–6 Sunday–Saturday (matches JS getDay) when cadence is WEEKLY.
+ */
+model PrayerReminder {
+  id                   String                 @id @default(cuid())
+  userId               String
+  prayerJournalEntryId String?
+  label                String
+  cadence              PrayerReminderCadence
+  /** Local time "HH:mm" (user browser / implied TZ) */
+  timeLocal            String
+  weekDay              Int?
+  enabled              Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry  PrayerJournalEntry? @relation(fields: [prayerJournalEntryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, enabled])
+}
+
+/** One row per calendar day (verseDate stored as UTC midnight for that YYYY-MM-DD). */
+model DailyVerse {
+  id           String   @id @default(cuid())
+  verseDate    DateTime @unique
+  reference    String
+  text         String
+  translation  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PrayerRequest {
+  id         String   @id @default(cuid())
+  content    String
+  authorName String // display name (required for guests and members)
+  userId     String? // optional: set when logged in
+  createdAt  DateTime @default(now())
+
+  interactions PrayerRequestInteraction[]
+  comments     PrayerRequestComment[]
+}
+
+model PraiseReport {
+  id         String   @id @default(cuid())
+  content    String
+  authorName String // display name (required for guests and members)
+  userId     String? // optional: set when logged in
+  createdAt  DateTime @default(now())
+
+  likes    PraiseReportLike[]
+  comments PraiseReportComment[]
+}
+
+enum PrayerRequestInteractionKind {
+  PRAY
+  LIKE
+  ENCOURAGE
+}
+
+model PrayerRequestInteraction {
+  id              String   @id @default(cuid())
+  prayerRequestId String
+  /** Set when the participant is logged in (optional for guests). */
+  userId          String?
+  /** Stable id: `user:{userId}` or `v:{guestUuid}` for anonymous visitors. */
+  participantKey  String
+  kind            PrayerRequestInteractionKind
+  /** Encourage preset key when kind is ENCOURAGE */
+  presetKey       String?
+  message         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  prayerRequest PrayerRequest @relation(fields: [prayerRequestId], references: [id], onDelete: Cascade)
+  user          User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([prayerRequestId, participantKey, kind])
+}
+
+model PraiseReportLike {
+  id             String   @id @default(cuid())
+  praiseReportId String
+  userId         String?
+  participantKey String
+  createdAt      DateTime @default(now())
+
+  praiseReport PraiseReport @relation(fields: [praiseReportId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([praiseReportId, participantKey])
+}
+
+model PrayerRequestComment {
+  id              String   @id @default(cuid())
+  prayerRequestId String
+  participantKey  String
+  userId          String?
+  authorName      String
+  body            String
+  createdAt       DateTime @default(now())
+
+  prayerRequest PrayerRequest @relation(fields: [prayerRequestId], references: [id], onDelete: Cascade)
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([prayerRequestId, createdAt])
+}
+
+model PraiseReportComment {
+  id             String   @id @default(cuid())
+  praiseReportId String
+  participantKey String
+  userId         String?
+  authorName     String
+  body           String
+  createdAt      DateTime @default(now())
+
+  praiseReport PraiseReport @relation(fields: [praiseReportId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([praiseReportId, createdAt])
+}
+
+// Homepage Instagram / social carousel (admin-managed)
+model CarouselPost {
+  id        String   @id @default(cuid())
+  imageUrl  String   // full URL or path, e.g. /day-previews/foo.png or https://...
+  linkUrl   String   // where the post links (e.g. Instagram post URL)
+  alt       String?  // optional alt text
+  sortOrder Int      @default(0) // lower = first
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

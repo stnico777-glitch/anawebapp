@@ -1,0 +1,129 @@
+import Link from "next/link";
+import { DAY_NAMES, WORKOUT_SPLIT } from "@/constants/schedule";
+import ScrollReveal from "@/components/ScrollReveal";
+import RoutineDayCardsGrid from "@/components/RoutineDayCardsGrid";
+
+type ScheduleDay = { id: string; dayIndex: number };
+
+type ScheduleSectionProps = {
+  schedule: { days: ScheduleDay[] } | null;
+  /** When true, show a small white lock on each day card (for signed-out users). */
+  showLockIcon?: boolean;
+};
+
+export default function ScheduleSection({ schedule, showLockIcon = false }: ScheduleSectionProps) {
+  const displayDays = schedule
+    ? schedule.days.map((d) => ({
+        id: d.id,
+        dayName: DAY_NAMES[d.dayIndex],
+        workoutFocus: WORKOUT_SPLIT[d.dayIndex],
+      }))
+    : DAY_NAMES.map((name, i) => ({
+        id: name,
+        dayName: name,
+        workoutFocus: WORKOUT_SPLIT[i],
+      }));
+
+  return (
+    <section
+      id="schedule"
+      className="relative overflow-hidden border-t border-sand border-b border-sand bg-transparent px-3 pt-16 pb-[clamp(5.5rem,18vh,10rem)] md:pt-20 md:pb-[clamp(6rem,20vh,11rem)] lg:px-5 xl:px-8"
+      aria-labelledby="schedule-heading"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(255,255,255,0.25),transparent)] pointer-events-none" aria-hidden />
+      <div className="absolute left-[5%] top-[15%] h-48 w-72 rounded-full bg-white/60 blur-[45px] pointer-events-none" aria-hidden />
+      <div className="absolute right-[8%] top-[50%] h-40 w-56 rounded-full bg-white/50 blur-[40px] pointer-events-none" aria-hidden />
+      <div className="absolute left-[35%] top-[70%] h-36 w-52 rounded-full bg-white/45 blur-[42px] pointer-events-none" aria-hidden />
+      <div className="relative z-10 mx-auto w-full max-w-[min(96rem,calc(100vw-1.25rem))]">
+        <ScrollReveal
+          className="w-full"
+          threshold={0.1}
+          rootMargin="0px 0px -8% 0px"
+          hiddenSlideY="min(10vh, 3rem)"
+          motionDurationMs={880}
+          motionEase="cubic-bezier(0.25, 1, 0.35, 1)"
+          runwayPaddingBottom={{
+            hidden: "min(10vh, 3rem)",
+            visible: "0px",
+          }}
+        >
+          <div className="flex items-center justify-center">
+            <div
+              className="h-[110px] w-[110px] shrink-0"
+              role="img"
+              aria-label="Sunrise over waves"
+              style={{
+                backgroundColor: "#788287",
+                maskImage: "url('/schedule-sun-outline.png')",
+                WebkitMaskImage: "url('/schedule-sun-outline.png')",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+              }}
+            />
+          </div>
+          <h2
+            id="schedule-heading"
+            className="mt-4 text-center text-3xl font-semibold tracking-tight text-foreground md:text-4xl [font-family:var(--font-headline),sans-serif]"
+          >
+            Your Weekly Routine
+          </h2>
+          <p className="mt-2 text-center text-sm lowercase tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:text-base">
+            monday → saturday · prayer, workout split &amp; affirmation each day
+          </p>
+          <div className="mx-auto mt-8 h-[6px] w-64 rounded-full bg-[#788287]" aria-hidden />
+        </ScrollReveal>
+        <div className="mt-12 space-y-10">
+          <div className="relative mx-auto w-full max-w-none">
+            {/* md+: 7 columns — grid above connector in paint order; grid z-[2], line z-[1] */}
+            <RoutineDayCardsGrid displayDays={displayDays} showLockIcon={showLockIcon} />
+
+            {/* Horizontal connector: same big slide-up as CTA (ScrollReveal translateY + opacity) */}
+            <ScrollReveal
+              className="pointer-events-none absolute inset-0 z-[1] [&>div]:h-full"
+              threshold={0.08}
+              rootMargin="0px 0px -8% 0px"
+              hiddenSlideY="min(18vh, 6rem)"
+              motionDurationMs={1000}
+              motionEase="cubic-bezier(0.25, 1, 0.35, 1)"
+              delayMs={100}
+            >
+              <div className="relative h-full w-full">
+                <div
+                  className="absolute left-[-6%] right-[-42%] top-1/2 h-0.5 -translate-y-1/2 bg-[#788287]/80"
+                  aria-hidden
+                />
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
+        <ScrollReveal
+          className="mt-10 w-full text-center"
+          delayMs={80}
+          threshold={0.08}
+          rootMargin="0px 0px -8% 0px"
+          hiddenSlideY="min(18vh, 6rem)"
+          motionDurationMs={1000}
+          motionEase="cubic-bezier(0.25, 1, 0.35, 1)"
+          runwayPaddingBottom={{
+            hidden: "min(18vh, 6rem)",
+            visible: "max(0.5rem, env(safe-area-inset-bottom))",
+          }}
+        >
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 rounded-sm border-2 border-[#788287] px-6 py-3 font-medium text-[#788287] transition-[transform,color,background-color] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#788287]/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#788287] focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100"
+          >
+            Full Workout Library
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </Link>
+        </ScrollReveal>
+      </div>
+    </section>
+  );
+}
