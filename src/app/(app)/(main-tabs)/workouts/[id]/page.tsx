@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import WorkoutPlayer from "./WorkoutPlayer";
 import { getSessionForApp } from "@/lib/auth";
+import { DEMO_WORKOUT_ROWS } from "@/lib/demo-preview-data";
+
+const DEMO_WORKOUT_VIDEO =
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
 export default async function WorkoutDetailPage({
   params,
@@ -12,16 +16,45 @@ export default async function WorkoutDetailPage({
   const { userId } = await getSessionForApp();
 
   const { id } = await params;
-  const workout = await prisma.workout.findUnique({ where: { id } });
+  let workout = null as Awaited<ReturnType<typeof prisma.workout.findUnique>>;
+  try {
+    workout = await prisma.workout.findUnique({ where: { id } });
+  } catch {
+    workout = null;
+  }
+  if (!workout) {
+    const row = DEMO_WORKOUT_ROWS.find((w) => w.id === id);
+    if (row) {
+      workout = {
+        id: row.id,
+        title: row.title,
+        instructor: row.instructor,
+        duration: row.duration,
+        category: row.category,
+        scripture: row.scripture,
+        thumbnailUrl: row.thumbnailUrl,
+        videoUrl: DEMO_WORKOUT_VIDEO,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      };
+    }
+  }
   if (!workout) notFound();
 
-  const completed = userId
-    ? await prisma.userWorkoutCompletion.findUnique({
+  let completed = null as Awaited<
+    ReturnType<typeof prisma.userWorkoutCompletion.findUnique>
+  >;
+  if (userId && !id.startsWith("demo-workout-")) {
+    try {
+      completed = await prisma.userWorkoutCompletion.findUnique({
         where: {
           userId_workoutId: { userId, workoutId: id },
         },
-      })
-    : null;
+      });
+    } catch {
+      completed = null;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">

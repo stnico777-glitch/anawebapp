@@ -3,6 +3,7 @@ import DailyVerseScheduleCard from "@/components/DailyVerseScheduleCard";
 import { getDailyVerseForDateInput } from "@/lib/daily-verse";
 import { getCurrentWeekSchedule, getMonday, formatWeekRange } from "@/lib/schedule";
 import { getSessionForApp } from "@/lib/auth";
+import { getDemoDailyVerse, getDemoWeekSchedule } from "@/lib/demo-preview-data";
 import Link from "next/link";
 
 /** 0 = Monday, 5 = Saturday; Sunday = 7 for "no week day" */
@@ -13,10 +14,11 @@ function getTodayDayIndex(): number {
 }
 
 export default async function SchedulePage() {
-  const [{ userId, isSubscriber }, verseToday] = await Promise.all([
+  const [{ userId, isSubscriber }, verseRaw] = await Promise.all([
     getSessionForApp(),
     getDailyVerseForDateInput(undefined),
   ]);
+  const verseToday = verseRaw ?? getDemoDailyVerse();
 
   return (
     <div className="min-h-screen bg-app-surface">
@@ -59,19 +61,8 @@ export default async function SchedulePage() {
 }
 
 async function ScheduleContent({ userId, isLocked = false }: { userId?: string; isLocked?: boolean }) {
-  const schedule = await getCurrentWeekSchedule(userId);
-
-  if (!schedule) {
-    return (
-      <div className="rounded-sm border border-dashed border-sand bg-cream/60 py-16 text-center [font-family:var(--font-body),sans-serif]">
-        <p className="text-gray">
-          No schedule for this week yet. When your database is connected and seeded, the weekly rhythm will
-          show here. Locally, you can run{" "}
-          <code className="rounded-sm bg-cream px-1.5 py-0.5 text-sm">npm run db:seed</code> for sample data.
-        </p>
-      </div>
-    );
-  }
+  const schedule =
+    (await getCurrentWeekSchedule(userId)) ?? getDemoWeekSchedule();
 
   const weekStart = getMonday(new Date());
   const todayDayIndex = getTodayDayIndex();

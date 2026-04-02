@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { participantKeyFromViewer } from "@/lib/community-participant";
 import { Prisma, PrayerRequestInteractionKind } from "@prisma/client";
+import { getDemoCommunityFeedItems } from "@/lib/demo-preview-data";
 
 type ViewerPrayerRow = {
   prayerRequestId: string;
@@ -105,9 +106,11 @@ export async function getCommunityFeed(
   visitorId: string | null,
 ): Promise<CommunityFeedItem[]> {
   try {
-    return await loadCommunityFeed(userId, visitorId);
+    const items = await loadCommunityFeed(userId, visitorId);
+    if (items.length > 0) return items;
+    return getDemoCommunityFeedItems();
   } catch {
-    return [];
+    return getDemoCommunityFeedItems();
   }
 }
 

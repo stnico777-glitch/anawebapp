@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSessionForApp } from "@/lib/auth";
 import WorkoutLibrarySection from "@/components/WorkoutLibrarySection";
+import { DEMO_WORKOUT_ROWS } from "@/lib/demo-preview-data";
 
 type WorkoutListRow = {
   id: string;
@@ -40,6 +41,10 @@ export default async function WorkoutsPage() {
     }
   } catch {
     // e.g. Vercel without hosted DATABASE_URL — show empty library instead of 500
+  }
+
+  if (workouts.length === 0) {
+    workouts = DEMO_WORKOUT_ROWS;
   }
 
   return (

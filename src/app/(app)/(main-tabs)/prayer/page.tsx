@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import PrayerAudioLibrary, { type PrayerLibraryItem } from "./PrayerAudioLibrary";
 import { getSessionForApp } from "@/lib/auth";
+import { DEMO_PRAYER_LIBRARY } from "@/lib/demo-preview-data";
 
 export default async function PrayerPage() {
   const { userId, isSubscriber } = await getSessionForApp();
@@ -21,6 +22,10 @@ export default async function PrayerPage() {
     }
   } catch {
     // e.g. Vercel without hosted DATABASE_URL
+  }
+
+  if (prayers.length === 0) {
+    prayers = DEMO_PRAYER_LIBRARY as PrayerLibraryItem[];
   }
 
   return (

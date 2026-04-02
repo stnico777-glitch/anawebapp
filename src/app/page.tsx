@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrentWeekSchedule } from "@/lib/schedule";
+import { getDemoWeekSchedule, DEMO_CAROUSEL_POSTS } from "@/lib/demo-preview-data";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSection from "@/components/HeroSection";
 import TrialBanner from "@/components/TrialBanner";
@@ -28,10 +29,12 @@ async function getCarouselPosts() {
 
 async function HomeContent() {
   const session = await auth();
-  const [schedule, carouselPosts] = await Promise.all([
+  const [scheduleRaw, carouselRaw] = await Promise.all([
     getCurrentWeekSchedule(),
     getCarouselPosts(),
   ]);
+  const schedule = scheduleRaw ?? getDemoWeekSchedule();
+  const carouselPosts = carouselRaw.length > 0 ? carouselRaw : DEMO_CAROUSEL_POSTS;
   const isSignedIn = !!session?.user;
 
   return (
