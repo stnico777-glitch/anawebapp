@@ -7,7 +7,9 @@ import { getDemoPrayerJournalTagSlugs } from "@/lib/demo-prayer-journal-api";
 
 export async function GET() {
   const user = await requireAuth();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    return NextResponse.json({ slugs: getDemoPrayerJournalTagSlugs() });
+  }
 
   try {
     const rows = await prisma.prayerJournalEntry.findMany({

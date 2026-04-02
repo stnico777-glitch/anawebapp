@@ -20,7 +20,6 @@ const createSchema = z.object({
 
 export async function GET(request: Request) {
   const user = await requireAuth();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const status = parseStatus(searchParams.get("status") ?? undefined);
@@ -28,6 +27,11 @@ export async function GET(request: Request) {
     parseTagFilter(searchParams.get("tag") ?? undefined) ??
     parseTagFilter(searchParams.get("category") ?? undefined);
   const take = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? "50") || 50));
+
+  if (!user) {
+    const demo = getDemoPrayerJournalApiRows(status, tag).slice(0, take);
+    return NextResponse.json(demo);
+  }
 
   try {
     await ensureWelcomePrayerJournalEntries(user.id);
