@@ -20,33 +20,37 @@ export async function getCurrentWeekSchedule(userId?: string) {
   thisMonday.setHours(0, 0, 0, 0);
   const nextMonday = new Date(thisMonday);
   nextMonday.setDate(nextMonday.getDate() + 7);
-  const week = await prisma.weekSchedule.findFirst({
-    where: {
-      weekStart: {
-        gte: thisMonday,
-        lt: nextMonday,
-      },
-    },
-    include: {
-      days: {
-        orderBy: { dayIndex: "asc" },
-        include: {
-          completions: userId ? { where: { userId }, take: 1 } : false,
+  try {
+    const week = await prisma.weekSchedule.findFirst({
+      where: {
+        weekStart: {
+          gte: thisMonday,
+          lt: nextMonday,
         },
       },
-    },
-  });
+      include: {
+        days: {
+          orderBy: { dayIndex: "asc" },
+          include: {
+            completions: userId ? { where: { userId }, take: 1 } : false,
+          },
+        },
+      },
+    });
 
-  if (!week) return null;
+    if (!week) return null;
 
-  return {
-    ...week,
-    days: week.days.map((d) => {
-      const completion = userId && "completions" in d && Array.isArray(d.completions)
-        ? d.completions[0] ?? null
-        : null;
-      const { completions: _, ...dayRest } = d as typeof d & { completions?: unknown[] };
-      return { ...dayRest, completion };
-    }),
-  };
+    return {
+      ...week,
+      days: week.days.map((d) => {
+        const completion = userId && "completions" in d && Array.isArray(d.completions)
+          ? d.completions[0] ?? null
+          : null;
+        const { completions: _, ...dayRest } = d as typeof d & { completions?: unknown[] };
+        return { ...dayRest, completion };
+      }),
+    };
+  } catch {
+    return null;
+  }
 }

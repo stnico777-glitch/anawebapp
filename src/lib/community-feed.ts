@@ -104,6 +104,17 @@ export async function getCommunityFeed(
   userId: string | null,
   visitorId: string | null,
 ): Promise<CommunityFeedItem[]> {
+  try {
+    return await loadCommunityFeed(userId, visitorId);
+  } catch {
+    return [];
+  }
+}
+
+async function loadCommunityFeed(
+  userId: string | null,
+  visitorId: string | null,
+): Promise<CommunityFeedItem[]> {
   const viewerKey = participantKeyFromViewer(userId, visitorId);
   const [prayers, praises] = await Promise.all([
     prisma.prayerRequest.findMany({

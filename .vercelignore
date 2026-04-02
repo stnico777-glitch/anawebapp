@@ -1,0 +1,4 @@
+# Never upload local secrets with CLI deploys (matches .env* intent)
+.env
+.env.*
+!.env.example
