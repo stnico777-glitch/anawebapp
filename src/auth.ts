@@ -3,6 +3,8 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  /** Local `next start` and hosts without inferred trust; set `AUTH_URL` in production. */
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days

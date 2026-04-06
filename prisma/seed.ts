@@ -4,7 +4,7 @@ import { PrayerRequestInteractionKind, PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { hash } from "bcryptjs";
 import { getMonday } from "../src/lib/schedule";
-import { DAY_NAMES } from "../src/constants/schedule";
+import { DAY_NAMES, WORKOUT_SPLIT } from "../src/constants/schedule";
 import { AUDIO_LIBRARY_SEED_COVER_BY_TITLE } from "../src/constants/audioLibraryCovers";
 import { toEntryDate } from "../src/lib/journal";
 import { ensureWelcomePrayerJournalEntries } from "../src/lib/welcome-prayer-journal";
@@ -49,7 +49,7 @@ async function main() {
           create: dayNames.map((name, i) => ({
             dayIndex: i,
             prayerTitle: `Morning Prayer – ${name}`,
-            workoutTitle: `${workoutTypes[i]} Session`,
+            workoutTitle: WORKOUT_SPLIT[i],
             affirmationText: `"I am strong in body and spirit." – Day ${i + 1}`,
           })),
         },
@@ -238,7 +238,7 @@ async function main() {
         { content: "Strength for the week ahead. Body, mind, and spirit—I want to honor God in all of it.", authorName: "Chris", createdAt: makeDate(3) },
         { content: "Please pray for peace in our home. We’re going through some tension and need God’s grace to lead.", authorName: "Elena", createdAt: makeDate(4) },
         { content: "Wisdom as a parent. I want to point my kids to Jesus and love them well. ♡", authorName: "Michael", createdAt: makeDate(5) },
-        { content: "Thankful for this prayer wall. Please pray that I would stay consistent in my quiet time and workouts.", authorName: "Jordan", createdAt: makeDate(6) },
+        { content: "Thankful for this prayer wall. Please pray that I would stay consistent in my quiet time and movement.", authorName: "Jordan", createdAt: makeDate(6) },
       ],
     });
   }
@@ -381,7 +381,7 @@ async function main() {
   console.log(
     "Seed complete. Demo user:",
     user.email,
-    "| Schedule, workouts, prayers, daily verses, community posts, welcome journal entries ensured",
+        "| Schedule, movement, prayers, daily verses, community posts, welcome journal entries ensured",
   );
 }
 

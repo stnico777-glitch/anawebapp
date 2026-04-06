@@ -5,24 +5,12 @@
 
 import type { DailyVerse } from "@prisma/client";
 import type { CommunityFeedItem } from "@/lib/community-feed";
-import { DAY_NAMES } from "@/constants/schedule";
+import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES, WORKOUT_SPLIT } from "@/constants/schedule";
 import { getMonday } from "@/lib/schedule";
 import { toEntryDate } from "@/lib/journal";
 import { AUDIO_LIBRARY_SEED_COVER_BY_TITLE } from "@/constants/audioLibraryCovers";
 
 const DEMO_AUDIO = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-
-const WORKOUT_THUMB_ROTATION = [
-  "/placeholders/pilates-strong.png",
-  "/placeholders/pilates-reformer-foot.png",
-  "/placeholders/pilates-reformer-stretch.png",
-  "/placeholders/pilates-stretch-flow.png",
-  "/placeholders/yoga-ocean-forearm.png",
-  "/placeholders/soft-core-stillness.png",
-  "/weekly-workouts.png",
-  "/weekly-workouts2.png",
-  "/weekly-workouts3.png",
-] as const;
 
 export type DemoWorkoutListRow = {
   id: string;
@@ -119,7 +107,7 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   },
 ].map((w, i) => ({
   ...w,
-  thumbnailUrl: w.thumbnailUrl ?? WORKOUT_THUMB_ROTATION[i % WORKOUT_THUMB_ROTATION.length],
+  thumbnailUrl: w.thumbnailUrl ?? WEEKLY_DAY_CARD_IMAGES[i % WEEKLY_DAY_CARD_IMAGES.length],
 }));
 
 function prayerSeedRow(
@@ -271,7 +259,7 @@ const PRAYER_SEED_CONTENT: { content: string; authorName: string; daysAgo: numbe
   },
   {
     content:
-      "Thankful for this prayer wall. Please pray that I would stay consistent in my quiet time and workouts.",
+      "Thankful for this prayer wall. Please pray that I would stay consistent in my quiet time and movement.",
     authorName: "Jordan",
     daysAgo: 6,
   },
@@ -395,7 +383,6 @@ export function getDemoCommunityFeedItems(): CommunityFeedItem[] {
 export function getDemoWeekSchedule() {
   const weekStart = getMonday(new Date());
   weekStart.setHours(0, 0, 0, 0);
-  const workoutTypes = ["Strength", "Cardio", "Yoga", "HIIT", "Restorative", "Full Body"];
   return {
     id: "demo-week-schedule",
     weekStart,
@@ -406,7 +393,7 @@ export function getDemoWeekSchedule() {
       weekScheduleId: "demo-week-schedule",
       dayIndex: i,
       prayerTitle: `Morning Prayer – ${name}`,
-      workoutTitle: `${workoutTypes[i]} Session`,
+      workoutTitle: WORKOUT_SPLIT[i],
       affirmationText: `"I am strong in body and spirit." – Day ${i + 1}`,
       prayerId: `demo-prayer-audio-${i}`,
       workoutId: DEMO_WORKOUT_ROWS[i]?.id ?? null,

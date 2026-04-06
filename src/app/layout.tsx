@@ -43,10 +43,33 @@ const orbitron = Orbitron({
   weight: ["400", "500", "600", "700"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  title: "awake + align — Faith + Fitness",
+  metadataBase: new URL(siteUrl),
+  title: "awake+align",
   description:
-    "Structured daily faith + fitness routines, guided schedules, prayer, workouts, prayer journal, and prayer & praise.",
+    "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
+  openGraph: {
+    title: "awake+align",
+    description:
+      "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
+    images: [
+      {
+        url: "/awake-align-preview.png",
+        alt: "awake + align — power love sound mind",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "awake+align",
+    description:
+      "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
+    images: ["/awake-align-preview.png"],
+  },
 };
 
 export default function RootLayout({
@@ -54,11 +77,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  /* next/font variables on <html> so :root can resolve --font-poppins when building --font-headline (avoids generic sans fallback). */
+  const fontVars = `${geistSans.variable} ${poppins.variable} ${openSans.variable} ${geistMono.variable} ${lora.variable} ${caveat.variable} ${orbitron.variable}`;
+
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${poppins.variable} ${openSans.variable} ${geistMono.variable} ${lora.variable} ${caveat.variable} ${orbitron.variable} bg-background antialiased`}
-      >
+    <html lang="en" className={fontVars}>
+      <body className="bg-background antialiased">
         <div className="relative">
           <SunRaysSection />
           <div className="relative z-10">

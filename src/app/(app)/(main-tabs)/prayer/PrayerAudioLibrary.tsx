@@ -25,7 +25,7 @@ export type PrayerLibraryItem = {
   coverImageUrl: string | null;
 };
 
-/** Curated plans — same rail pattern as Workouts “Programs” (portrait cards + hover summary) */
+/** Curated plans — same rail pattern as Movement “Programs” (portrait cards + hover summary) */
 const PRAYER_PLAN_PLACEHOLDERS = [
   {
     title: "7 Days of Morning Prayer",
@@ -326,30 +326,15 @@ export default function PrayerAudioLibrary({
   return (
     <div className="min-h-screen w-full max-w-none bg-app-surface">
       <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6 md:pt-14">
-        <p className="mb-3 max-w-2xl text-sm leading-relaxed text-gray [font-family:var(--font-body),sans-serif] md:mb-4 md:text-base">
-          Guided prayer, affirmations, and audio—start with a plan, then browse the full library.
-        </p>
-        <p className="mb-10 text-xs lowercase tracking-[0.14em] text-gray/90 [font-family:var(--font-body),sans-serif] md:mb-12 md:text-[0.8125rem]">
-          power · love · sound mind
-        </p>
-
         <section className="mb-14 md:mb-16" aria-labelledby="audio-collections-heading">
           <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
             <h2
               id="audio-collections-heading"
               className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl [font-family:var(--font-headline),sans-serif]"
             >
-              Audio Collections
+              Collections
             </h2>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <LibraryCarouselArrows scrollRef={plansRef} />
-              <Link
-                href={PLAN_HREF}
-                className="text-sm font-medium text-gray underline-offset-4 transition [font-family:var(--font-body),sans-serif] hover:text-foreground"
-              >
-                View all
-              </Link>
-            </div>
+            <LibraryCarouselArrows scrollRef={plansRef} />
           </div>
           <div
             ref={plansRef}
@@ -377,7 +362,7 @@ export default function PrayerAudioLibrary({
             id="audio-essentials-heading"
             className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl [font-family:var(--font-headline),sans-serif]"
           >
-            Audio Essentials
+            Essentials
           </h2>
         </div>
         <div className="grid w-full grid-cols-1 gap-0 sm:grid-cols-2">
@@ -443,19 +428,9 @@ export default function PrayerAudioLibrary({
               id="prayer-library-heading"
               className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl [font-family:var(--font-headline),sans-serif]"
             >
-              Audio library
+              Library
             </h2>
-            {prayers.length > 0 ? (
-              <div className="flex items-center gap-3 sm:gap-4">
-                <LibraryCarouselArrows scrollRef={audioLibraryRef} />
-                <Link
-                  href="/prayer"
-                  className="text-sm font-medium text-gray underline-offset-4 transition [font-family:var(--font-body),sans-serif] hover:text-foreground"
-                >
-                  View all
-                </Link>
-              </div>
-            ) : null}
+            {prayers.length > 0 ? <LibraryCarouselArrows scrollRef={audioLibraryRef} /> : null}
           </div>
 
           {prayers.length === 0 ? (

@@ -2,24 +2,37 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
 import ScrollReveal from "@/components/ScrollReveal";
 import LockIcon from "@/components/LockIcon";
-import { PRAYER_COVER_PATHS } from "@/constants/prayerCovers";
 
-const CARD_LINK_CLASS =
-  "mt-4 inline-block text-sm font-semibold text-sky-blue hover:text-sky-blue/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:rounded-none";
+const FEATURES_HEADER_REVEAL = {
+  threshold: 0.1,
+  rootMargin: "0px 0px -8% 0px" as const,
+  hiddenSlideY: "min(6vh, 2rem)",
+  motionDurationMs: 880,
+  motionEase: "cubic-bezier(0.25, 1, 0.35, 1)",
+};
 
-/** Match ScheduleSection / RoutineDayCardsGrid cards: hover lift — no extra drop shadow on hover. */
+const FEATURES_CARD_REVEAL = {
+  threshold: 0.1,
+  rootMargin: "0px 0px -10% 0px" as const,
+  hiddenSlideY: "min(5vh, 1.5rem)",
+  motionDurationMs: 900,
+  motionEase: "cubic-bezier(0.25, 1, 0.35, 1)",
+};
+/** Program tiles (~10:9) — editorial overlays, thin gutters (see grid wrapper). */
 const FEATURE_CARD_SHELL =
-  "group relative z-0 flex w-[80vw] min-w-[300px] max-w-[420px] flex-shrink-0 snap-start flex-col overflow-hidden rounded-none bg-transparent shadow-[0_2px_8px_rgba(0,0,0,0.06),0_12px_28px_-6px_rgba(0,0,0,0.14)] ring-1 ring-sky-blue/40 transition-all duration-300 ease-out will-change-transform hover:z-[45] hover:-translate-y-3 hover:scale-[1.02] hover:ring-2 hover:ring-accent-amber/60 motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 md:w-full md:min-w-0 md:max-w-none md:flex-shrink";
-
-/** Hover caption — tight chip sized to text (not full-bleed over the image). */
-const FEATURE_HOVER_PANEL_BASE =
-  "pointer-events-none absolute left-3 bottom-3 z-10 inline-flex max-h-[min(38vh,11rem)] max-w-[min(13.5rem,calc(100%-1.75rem))] min-h-0 flex-col justify-start gap-0 overflow-y-auto rounded-none border border-black/10 bg-white/95 px-2.5 py-1.5 text-left opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100";
+  "group relative z-0 overflow-hidden rounded-none bg-sand shadow-[0_1px_0_rgba(0,0,0,0.06)] ring-1 ring-black/[0.06] transition-transform duration-300 ease-out hover:z-[2] hover:shadow-md motion-reduce:transition-none";
 
 const FEATURE_IMAGE_HOVER =
-  "object-cover transition-transform duration-500 ease-out group-hover:scale-[1.08] motion-reduce:transition-none motion-reduce:group-hover:scale-100";
+  "object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100";
+
+const FEATURE_TOP_KICKER =
+  "text-[10px] font-medium uppercase tracking-[0.18em] text-white/95 [font-family:var(--font-headline),sans-serif] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]";
+const FEATURE_TOP_TITLE =
+  "mt-1.5 text-[1.35rem] font-semibold leading-snug tracking-tight text-white sm:text-[1.5rem] md:text-[1.65rem] [font-family:var(--font-headline),sans-serif] [text-shadow:0_2px_8px_rgba(0,0,0,0.35)]";
+const FEATURE_BOTTOM_LINE =
+  "text-[9px] font-normal lowercase leading-snug tracking-[0.12em] text-white/95 [font-family:var(--font-body),sans-serif] [text-shadow:0_1px_2px_rgba(0,0,0,0.5)] sm:text-[10px]";
 
 type FeaturesSectionProps = {
   /** When true, show a small white lock on feature cards for signed-out / non-subscriber visitors. */
@@ -27,236 +40,204 @@ type FeaturesSectionProps = {
 };
 
 export default function FeaturesSection({ showLockIcon = false }: FeaturesSectionProps) {
-  const cardsRef = useRef<HTMLDivElement>(null);
-  const [cardsVisible, setCardsVisible] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    setReduceMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }, []);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      setCardsVisible(true);
-      return;
-    }
-    const el = cardsRef.current;
-    if (!el) return;
-    const ob = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          setCardsVisible(true);
-          ob.unobserve(entry.target);
-        }
-      },
-      {
-        threshold: 0.1,
-        rootMargin: "0px 0px -20% 0px",
-      }
-    );
-    ob.observe(el);
-    return () => ob.disconnect();
-  }, [reduceMotion]);
-
-  const cardsMotion =
-    reduceMotion
-      ? ""
-      : cardsVisible
-        ? "opacity-0 animate-feature-fade-in"
-        : "translate-y-[14px] opacity-0";
-
   return (
-    <section id="features" className="border-t border-sand bg-transparent px-2 py-16 md:px-4 md:py-24" aria-labelledby="features-heading">
+    <section
+      id="features"
+      className="bg-transparent px-2 -mt-2 pt-2 pb-8 md:px-4 md:-mt-3 md:pt-3 md:pb-12"
+      aria-labelledby="features-heading"
+    >
       <div className="mx-auto max-w-[1500px]">
         <ScrollReveal
           className="w-full"
-          threshold={0.1}
-          rootMargin="0px 0px -8% 0px"
-          hiddenSlideY="min(10vh, 3rem)"
-          motionDurationMs={880}
-          motionEase="cubic-bezier(0.25, 1, 0.35, 1)"
+          delayMs={0}
+          {...FEATURES_HEADER_REVEAL}
           runwayPaddingBottom={{
-            hidden: "min(10vh, 3rem)",
+            hidden: "min(6vh, 2rem)",
             visible: "0px",
           }}
         >
           <div className="flex flex-col items-center">
             <div
-              className="mt-2 h-[56px] w-[180px] sm:h-[64px] sm:w-[220px]"
-              role="img"
-              aria-label="Decorative wave over Everything you need"
+              className="aspect-[4/3.92] w-[min(120px,40vw)] sm:w-[min(140px,36vw)]"
+              aria-hidden
               style={{
-                backgroundColor: "#788287",
-                maskImage: "url('/everything-need-mask.png')",
-                WebkitMaskImage: "url('/everything-need-mask.png')",
+                backgroundColor: "var(--gray)",
+                maskImage: "url('/sabbath-birds.png')",
+                WebkitMaskImage: "url('/sabbath-birds.png')",
                 maskRepeat: "no-repeat",
                 WebkitMaskRepeat: "no-repeat",
                 maskPosition: "center",
                 WebkitMaskPosition: "center",
                 maskSize: "contain",
                 WebkitMaskSize: "contain",
+                maskType: "alpha",
               }}
             />
-            <h2
-              id="features-heading"
-              className="mt-4 text-center text-3xl font-light text-foreground md:text-4xl [font-family:var(--font-headline),sans-serif]"
-            >
-              Everything you need
-            </h2>
           </div>
-          <p className="mt-2 text-center text-gray">Faith + fitness, all in one place</p>
-          <div className="mx-auto mt-8 h-[6px] w-64 rounded-none bg-[#788287]" aria-hidden />
+        </ScrollReveal>
+        <ScrollReveal className="w-full" delayMs={90} {...FEATURES_HEADER_REVEAL}>
+          <div
+            className="mx-auto mt-0.5 h-px w-40 rounded-full md:w-44"
+            style={{ backgroundColor: "var(--gray)" }}
+            aria-hidden
+          />
+        </ScrollReveal>
+        <ScrollReveal className="w-full" delayMs={180} {...FEATURES_HEADER_REVEAL}>
+          <h2
+            id="features-heading"
+            className="mt-1.5 text-center text-3xl font-normal capitalize leading-[1.4] tracking-[0.135em] text-gray [font-synthesis:none] md:mt-2 md:text-4xl [font-family:var(--font-headline),sans-serif]"
+          >
+            Everything you need
+          </h2>
+        </ScrollReveal>
+        <ScrollReveal className="w-full" delayMs={270} {...FEATURES_HEADER_REVEAL}>
+          <p className="mt-1 text-center text-sm lowercase tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:mt-1.5 md:text-base">
+            Faith + fitness, all in one place
+          </p>
         </ScrollReveal>
 
-        <div
-          ref={cardsRef}
-          className={`mt-12 transform-gpu md:mt-20 flex gap-2 overflow-x-auto pb-3 pt-5 snap-x snap-mandatory md:grid md:grid-cols-2 md:overflow-visible md:gap-4 md:pb-2 md:pt-0 lg:gap-4 xl:grid-cols-4 xl:gap-4 -mx-2 px-2 md:mx-0 md:px-0 ${cardsMotion}`}
-        >
-          <article className={FEATURE_CARD_SHELL}>
-            <div className="relative aspect-[5/4] min-h-0 w-full max-h-[390px] md:max-h-[450px] overflow-hidden bg-sand">
-              {showLockIcon && (
-                <span className="absolute right-2 bottom-3 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
-                  <LockIcon size="sm" className="text-white" />
-                </span>
-              )}
-              <Image src="/weekly-workouts.png" alt="Weekly schedule — prayer, workouts and affirmations" fill sizes="(max-width: 768px) 72vw, (max-width: 1024px) 50vw, 25vw" className={FEATURE_IMAGE_HOVER} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-transparent" aria-hidden />
-              <Link
-                href="/#schedule"
-                className="absolute inset-x-0 top-0 z-20 rounded-none bg-[#788287]/95 px-4 py-2.5 text-center text-[13px] font-semibold leading-tight text-[#FFFCE9] [font-family:var(--font-headline),sans-serif]"
-              >
-                The <span className="font-semibold">Weekly Schedule</span>
-              </Link>
-              <div
-                className={`${FEATURE_HOVER_PANEL_BASE} ${showLockIcon ? "pr-10" : ""}`}
-              >
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray">Workouts & Meditations</p>
-                <p className="mt-1 text-xs leading-relaxed text-foreground">
-                  The magic is in our Weekly Schedule—curated prayer, workouts & affirmations Mon–Sat.
-                </p>
-                <p className="mt-1.5 text-[12px] font-semibold text-sky-blue">View schedule →</p>
+        <div className="mt-5 grid transform-gpu grid-cols-1 gap-2 sm:grid-cols-2 md:mt-6 lg:grid-cols-4 lg:gap-3">
+          <ScrollReveal className="min-w-0" delayMs={0} {...FEATURES_CARD_REVEAL}>
+            <article className={FEATURE_CARD_SHELL}>
+              <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
+                <Link href="/#schedule" className="absolute inset-0 z-10">
+                  <span className="sr-only">Weekly schedule — curated prayer, movement and affirmations Mon–Sat</span>
+                </Link>
+                {showLockIcon && (
+                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                    <LockIcon size="sm" className="text-white" />
+                  </span>
+                )}
+                <Image
+                  src="/weekly-schedule-feature.png"
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className={FEATURE_IMAGE_HOVER}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/22 via-black/[0.04] to-black/10" aria-hidden />
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] px-3 pt-5 text-center sm:px-4 sm:pt-6">
+                  <p className={FEATURE_TOP_KICKER}>The</p>
+                  <p className={FEATURE_TOP_TITLE}>Weekly Schedule</p>
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] px-3 pb-4 text-center sm:px-4 sm:pb-5">
+                  <p className={FEATURE_BOTTOM_LINE}>Workouts &amp; meditations · Mon–Sat</p>
+                </div>
               </div>
-            </div>
-            <div className="hidden px-3 py-2.5 md:px-4 md:py-3">
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-gray">Workouts & Meditations</p>
-              <p className="mt-1 max-h-0 overflow-hidden text-xs leading-relaxed text-foreground opacity-0 transition-[max-height,opacity] duration-300 group-hover:max-h-[5rem] group-hover:opacity-100 md:group-hover:max-h-[5.5rem]">
-                The magic is in our Weekly Schedule—curated prayer, workouts & affirmations Mon–Sat so you stay consistent in mind & body.
-              </p>
-              <Link href="/#schedule" className={CARD_LINK_CLASS}>
-                View schedule →
-              </Link>
-            </div>
-          </article>
+            </article>
+          </ScrollReveal>
 
-          <article className={FEATURE_CARD_SHELL}>
-            <div className="relative aspect-[5/4] min-h-0 w-full max-h-[390px] md:max-h-[450px] overflow-hidden bg-sand">
-              {showLockIcon && (
-                <span className="absolute right-2 bottom-3 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
-                  <LockIcon size="sm" className="text-white" />
-                </span>
-              )}
-              <Image src="/day-previews/beachstretch.png" alt="Workouts — Pilates, yoga & strength" fill sizes="(max-width: 768px) 72vw, (max-width: 1024px) 50vw, 25vw" className={FEATURE_IMAGE_HOVER} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-transparent" aria-hidden />
-              <Link
-                href="/workouts"
-                className="absolute inset-x-0 top-0 z-20 rounded-none bg-[#788287]/95 px-4 py-2.5 text-center text-[13px] font-semibold leading-tight text-[#FFFCE9] [font-family:var(--font-headline),sans-serif]"
-              >
-                <span className="font-semibold">Workouts</span>
-              </Link>
-              <div
-                className={`${FEATURE_HOVER_PANEL_BASE} ${showLockIcon ? "pr-10" : ""}`}
-              >
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray">On-demand</p>
-                <p className="mt-1 text-xs leading-relaxed text-foreground">Pilates, yoga & strength—short sessions you can keep.</p>
-                <p className="mt-1.5 text-[12px] font-semibold text-sky-blue">Explore workouts →</p>
+          <ScrollReveal className="min-w-0" delayMs={100} {...FEATURES_CARD_REVEAL}>
+            <article className={FEATURE_CARD_SHELL}>
+              <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
+                <Link href="/movement" className="absolute inset-0 z-10">
+                  <span className="sr-only">Movement — Pilates, yoga, and strength on demand</span>
+                </Link>
+                {showLockIcon && (
+                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                    <LockIcon size="sm" className="text-white" />
+                  </span>
+                )}
+                <Image
+                  src="/movement-feature.png"
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className={FEATURE_IMAGE_HOVER}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/22 via-black/[0.04] to-black/10" aria-hidden />
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] px-3 pt-5 text-center sm:px-4 sm:pt-6">
+                  <p className={FEATURE_TOP_KICKER}>On-demand</p>
+                  <p className={FEATURE_TOP_TITLE}>Movement</p>
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] px-3 pb-4 text-center sm:px-4 sm:pb-5">
+                  <p className={FEATURE_BOTTOM_LINE}>Pilates &amp; strength · meet you where you are</p>
+                </div>
               </div>
-            </div>
-            <div className="hidden px-3 py-2.5 md:px-4 md:py-3">
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-gray">On-demand</p>
-              <p className="mt-1 max-h-0 overflow-hidden text-xs leading-relaxed text-foreground opacity-0 transition-[max-height,opacity] duration-300 group-hover:max-h-[5rem] group-hover:opacity-100 md:group-hover:max-h-[5.5rem]">
-                Pilates, yoga & strength—stream classes that meet you where you are and build a practice you can keep.
-              </p>
-              <Link href="/workouts" className={CARD_LINK_CLASS}>
-                Explore workouts →
-              </Link>
-            </div>
-          </article>
+            </article>
+          </ScrollReveal>
 
-          <article className={FEATURE_CARD_SHELL}>
-            <div className="relative aspect-[5/4] min-h-0 w-full max-h-[390px] md:max-h-[450px] overflow-hidden bg-sand">
-              {showLockIcon && (
-                <span className="absolute right-2 bottom-3 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
-                  <LockIcon size="sm" className="text-white" />
-                </span>
-              )}
-              <Image
-                src={PRAYER_COVER_PATHS[1]}
-                alt="Prayer and audio library — scripture-led sessions"
-                fill
-                sizes="(max-width: 768px) 72vw, (max-width: 1024px) 50vw, 25vw"
-                className={FEATURE_IMAGE_HOVER}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-transparent" aria-hidden />
-              <Link
-                href="/prayer"
-                className="absolute inset-x-0 top-0 z-20 rounded-none bg-[#788287]/95 px-4 py-2.5 text-center text-[13px] font-semibold leading-tight text-[#FFFCE9] [font-family:var(--font-headline),sans-serif]"
-              >
-                <span className="font-semibold">Prayer & Audio</span>
-              </Link>
-              <div
-                className={`${FEATURE_HOVER_PANEL_BASE} ${showLockIcon ? "pr-10" : ""}`}
-              >
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray">Scripture-led</p>
-                <p className="mt-1 text-xs leading-relaxed text-foreground">Guided prayer and devotionals rooted in scripture.</p>
-                <p className="mt-1.5 text-[12px] font-semibold text-sky-blue">Prayer & Audio →</p>
+          <ScrollReveal className="min-w-0" delayMs={200} {...FEATURES_CARD_REVEAL}>
+            <article className={FEATURE_CARD_SHELL}>
+              <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
+                <Link href="/prayer" className="absolute inset-0 z-10">
+                  <span className="sr-only">Prayer and audio — scripture-led sessions</span>
+                </Link>
+                {showLockIcon && (
+                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                    <LockIcon size="sm" className="text-white" />
+                  </span>
+                )}
+                <Image
+                  src="/audio-feature.png"
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className={`${FEATURE_IMAGE_HOVER} object-[center_35%]`}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/22 via-black/[0.04] to-black/10" aria-hidden />
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] px-3 pt-5 text-center sm:px-4 sm:pt-6">
+                  <p className={FEATURE_TOP_KICKER}>Scripture-led</p>
+                  <p className={FEATURE_TOP_TITLE}>Prayer &amp; Audio</p>
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] px-3 pb-4 text-center sm:px-4 sm:pb-5">
+                  <p className={FEATURE_BOTTOM_LINE}>Guided prayer &amp; devotionals</p>
+                </div>
               </div>
-            </div>
-            <div className="hidden px-3 py-2.5 md:px-4 md:py-3">
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-gray">Scripture-led devotionals</p>
-              <p className="mt-1 max-h-0 overflow-hidden text-xs leading-relaxed text-foreground opacity-0 transition-[max-height,opacity] duration-300 group-hover:max-h-[5rem] group-hover:opacity-100 md:text-sm md:group-hover:max-h-[5.5rem]">
-                Start or end your day with guided prayer and devotionals rooted in scripture—designed to align your heart and mind.
-              </p>
-              <Link href="/prayer" className={CARD_LINK_CLASS}>
-                Prayer & Audio →
-              </Link>
-            </div>
-          </article>
+            </article>
+          </ScrollReveal>
 
-          <article className={FEATURE_CARD_SHELL}>
-            <div className="relative aspect-[5/4] min-h-0 w-full max-h-[390px] md:max-h-[450px] overflow-hidden bg-sand">
-              {showLockIcon && (
-                <span className="absolute right-2 bottom-3 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
-                  <LockIcon size="sm" className="text-white" />
-                </span>
-              )}
-              <Image src="/community.png" alt="Prayer and praise — The Bloom Scroll and praise wall" fill sizes="(max-width: 768px) 72vw, (max-width: 1024px) 50vw, 25vw" className={FEATURE_IMAGE_HOVER} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-transparent" aria-hidden />
-              <Link
-                href="/community"
-                className="absolute inset-x-0 top-0 z-20 rounded-none bg-[#788287]/95 px-4 py-2.5 text-center text-[13px] font-semibold leading-tight text-[#FFFCE9] [font-family:var(--font-headline),sans-serif]"
-              >
-                <span className="font-semibold">Prayer & Praise</span>
-              </Link>
-              <div
-                className={`${FEATURE_HOVER_PANEL_BASE} ${showLockIcon ? "pr-10" : ""}`}
-              >
-                <p className="text-[10px] font-medium uppercase tracking-wider text-gray">The Bloom Scroll · Praise wall</p>
-                <p className="mt-1 text-xs leading-relaxed text-foreground">Share requests, pray for each other, and celebrate what God is doing.</p>
-                <p className="mt-1.5 text-[12px] font-semibold text-sky-blue">Open prayer &amp; praise →</p>
+          <ScrollReveal className="min-w-0" delayMs={300} {...FEATURES_CARD_REVEAL}>
+            <article className={FEATURE_CARD_SHELL}>
+              <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
+                <Link href="/community" className="absolute inset-0 z-10">
+                  <span className="sr-only">Community — Bloom Scroll and praise wall</span>
+                </Link>
+                {showLockIcon && (
+                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                    <LockIcon size="sm" className="text-white" />
+                  </span>
+                )}
+                <Image
+                  src="/community-feature.png"
+                  alt=""
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className={FEATURE_IMAGE_HOVER}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/22 via-black/[0.04] to-black/10" aria-hidden />
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] px-3 pt-5 text-center sm:px-4 sm:pt-6">
+                  <p className={FEATURE_TOP_KICKER}>Together</p>
+                  <p className={FEATURE_TOP_TITLE}>Community</p>
+                </div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] px-3 pb-4 text-center sm:px-4 sm:pb-5">
+                  <p className={FEATURE_BOTTOM_LINE}>Bloom scroll · prayer &amp; praise wall</p>
+                </div>
               </div>
-            </div>
-            <div className="hidden px-3 py-2.5 md:px-4 md:py-3">
-              <p className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-gray">The Bloom Scroll · Praise wall</p>
-              <p className="mt-1 max-h-0 overflow-hidden text-xs leading-relaxed text-foreground opacity-0 transition-[max-height,opacity] duration-300 group-hover:max-h-[5rem] group-hover:opacity-100 md:text-sm md:group-hover:max-h-[5.5rem]">
-                Two simple walls: lift up prayer requests and share praise reports—nothing else.
-              </p>
-              <Link href="/community" className={CARD_LINK_CLASS}>
-                Prayer & Praise →
-              </Link>
-            </div>
-          </article>
+            </article>
+          </ScrollReveal>
         </div>
+
+        <ScrollReveal
+          className="mt-8 flex justify-center md:mt-10 mb-2 md:mb-3"
+          delayMs={120}
+          threshold={0.08}
+          rootMargin="0px 0px -8% 0px"
+          hiddenSlideY="min(14vh, 4rem)"
+          motionDurationMs={960}
+          motionEase="cubic-bezier(0.25, 1, 0.35, 1)"
+          runwayPaddingBottom={{
+            hidden: "min(14vh, 4rem)",
+            visible: "0px",
+          }}
+        >
+          <Link
+            href="/more"
+            className="inline-flex items-center justify-center rounded-full border-2 border-[#788287] px-8 py-3 text-sm font-medium text-[#788287] [font-family:var(--font-headline),sans-serif] transition hover:bg-[#788287]/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#788287] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Learn more
+          </Link>
+        </ScrollReveal>
       </div>
     </section>
   );

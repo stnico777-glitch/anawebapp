@@ -7,9 +7,14 @@ export default function DailyVerseScheduleCard({
 }: {
   verse: DailyVerse | null;
 }) {
+  /** Parity: ScheduleScreen verseCard — same gradient as day-card body (#FFF6E6 → #F3E7CC, diagonal). */
+  const verseCardShell =
+    "relative mb-10 overflow-hidden rounded-lg border border-sand px-4 py-4 shadow-[0_1px_2px_rgba(120,130,135,0.06)] [font-family:var(--font-body),sans-serif] md:mb-12 md:px-5 md:py-5";
+  const verseCardGradient = { backgroundImage: "linear-gradient(135deg, #FFF6E6 0%, #F3E7CC 100%)" } as const;
+
   if (!verse) {
     return (
-      <div className="mb-10 rounded-sm border border-sand bg-white/90 px-4 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)] [font-family:var(--font-body),sans-serif] md:mb-12 md:px-5 md:py-5">
+      <div className={verseCardShell} style={verseCardGradient}>
         <p className="text-sm text-gray">
           Today&apos;s scripture will appear here once your team adds verses in the admin.
         </p>
@@ -21,12 +26,12 @@ export default function DailyVerseScheduleCard({
   const journalLink = `/journaling?verseRef=${encodeURIComponent(verse.reference)}&verseText=${encodeURIComponent(journalLinkSrc)}`;
 
   return (
-    <div className="mb-10 rounded-sm border border-sand bg-white/90 px-4 py-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)] [font-family:var(--font-body),sans-serif] md:mb-12 md:px-5 md:py-5">
+    <div className={verseCardShell} style={verseCardGradient}>
       <p className="text-xs uppercase tracking-[0.14em] text-gray/90">Verse of the day</p>
-      <h2 className="mt-2 text-lg font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
+      <h2 className="mt-2 text-lg font-semibold text-sky-blue [font-family:var(--font-headline),sans-serif]">
         {verse.reference}
         {verse.translation ? (
-          <span className="text-sm font-normal text-gray"> · {verse.translation}</span>
+          <span className="text-sm font-normal"> · {verse.translation}</span>
         ) : null}
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-gray md:text-base line-clamp-4 md:line-clamp-none">

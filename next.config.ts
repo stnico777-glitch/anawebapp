@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/prayer-wall", destination: "/prayer", permanent: true },
+      { source: "/workouts", destination: "/movement", permanent: true },
+      { source: "/workouts/:path*", destination: "/movement/:path*", permanent: true },
     ];
   },
 };

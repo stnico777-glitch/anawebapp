@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
     ]);
 
   const cards = [
-    { href: "/admin/workouts", label: "Workouts", count: workoutCount },
+    { href: "/admin/workouts", label: "Movement", count: workoutCount },
     { href: "/admin/prayer", label: "Prayer / Audio", count: prayerCount },
     { href: "/admin/schedules", label: "Schedules", count: scheduleCount },
     { href: "/admin/daily-verse", label: "Daily verses", count: verseCount },
@@ -25,7 +25,7 @@ export default async function AdminDashboard() {
         CMS Admin
       </h1>
       <p className="mt-1 text-stone-500 dark:text-stone-400">
-        Manage workouts, prayer audio, schedules, daily verses, and carousel.
+        Manage movement sessions, prayer audio, schedules, daily verses, and carousel.
       </p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map(({ href, label, count }) => (

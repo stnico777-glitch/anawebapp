@@ -37,7 +37,7 @@ const publicPaths = [
   "/forgot-password",
   "/subscribe",
   "/schedule",
-  "/workouts",
+  "/movement",
   "/prayer",
   "/journaling",
   "/community",
@@ -46,6 +46,11 @@ const publicPaths = [
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
+  if (pathname === "/workouts" || pathname.startsWith("/workouts/")) {
+    const url = req.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/workouts/, "/movement");
+    return NextResponse.redirect(url);
+  }
   const isLoggedIn = !!req.auth;
 
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {

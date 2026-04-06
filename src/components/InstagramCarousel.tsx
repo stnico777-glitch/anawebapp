@@ -7,7 +7,7 @@ const INSTAGRAM_HANDLE = "awakeandalign_";
 
 /** Natural content height — avoids a tall empty band between the feed and the sun/footer */
 const INSTAGRAM_SECTION_LAYOUT =
-  "flex flex-col border-t border-sand bg-transparent px-4 pt-16 pb-8 md:px-8 md:pt-20 md:pb-10";
+  "flex flex-col overflow-visible bg-transparent px-4 pt-16 pb-8 md:px-8 md:pt-20 md:pb-10";
 
 const INSTAGRAM_INNER_LAYOUT = "relative mx-auto flex w-full max-w-6xl flex-col";
 
@@ -256,10 +256,10 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
   }, [updateScrollState]);
 
   const igHeadlineClass =
-    `text-xl font-light text-sky-blue md:text-2xl [font-family:var(--font-headline),sans-serif] ${!reduceMotion && !headingRevealed ? "opacity-0" : ""} ${!reduceMotion && headingRevealed ? "instagram-heading-animate" : ""}`;
+    `text-lg font-normal leading-[1.4] tracking-[0.135em] text-sky-blue [font-synthesis:none] md:text-xl [font-family:var(--font-headline),sans-serif] ${!reduceMotion && !headingRevealed ? "opacity-0" : ""} ${!reduceMotion && headingRevealed ? "instagram-heading-animate" : ""}`;
 
   const igFollowClass =
-    `text-sm font-medium text-sky-blue hover:underline ${!reduceMotion && !headingRevealed ? "opacity-0" : ""} ${!reduceMotion && headingRevealed ? "instagram-heading-animate" : ""}`;
+    `text-sm font-medium text-sky-blue [font-family:var(--font-body),sans-serif] hover:underline ${!reduceMotion && !headingRevealed ? "opacity-0" : ""} ${!reduceMotion && headingRevealed ? "instagram-heading-animate" : ""}`;
 
   if (useWidget) {
     return (
@@ -279,7 +279,8 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
                   : undefined
               }
             >
-              Join the movement @{INSTAGRAM_HANDLE}
+              <span className="capitalize">Join the movement</span>{" "}
+              <span className="normal-case">@{INSTAGRAM_HANDLE}</span>
             </h2>
             <HeadingWaveMarks revealed={headingRevealed} reduceMotion={reduceMotion} />
           </div>
@@ -334,7 +335,8 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
                   : undefined
               }
             >
-              Join the movement @{INSTAGRAM_HANDLE}
+              <span className="capitalize">Join the movement</span>{" "}
+              <span className="normal-case">@{INSTAGRAM_HANDLE}</span>
             </h2>
             <HeadingWaveMarks revealed={headingRevealed} reduceMotion={reduceMotion} />
           </div>

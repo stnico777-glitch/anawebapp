@@ -56,7 +56,7 @@ export default function WorkoutForm({ workout }: { workout?: Workout }) {
   }
 
   async function handleDelete() {
-    if (!workout || !confirm("Delete this workout?")) return;
+    if (!workout || !confirm("Delete this movement session?")) return;
     const res = await fetch(`/api/admin/workouts/${workout.id}`, {
       method: "DELETE",
     });
@@ -69,7 +69,7 @@ export default function WorkoutForm({ workout }: { workout?: Workout }) {
         onClick={() => setOpen(true)}
         className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
       >
-        {workout ? "Edit" : "Add Workout"}
+        {workout ? "Edit" : "Add movement"}
       </button>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -78,7 +78,7 @@ export default function WorkoutForm({ workout }: { workout?: Workout }) {
             className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 dark:bg-stone-900"
           >
             <h2 className="text-lg font-semibold">
-              {workout ? "Edit Workout" : "Add Workout"}
+              {workout ? "Edit movement" : "Add movement"}
             </h2>
             <div className="mt-4 space-y-3">
               <div>

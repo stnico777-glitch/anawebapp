@@ -29,16 +29,10 @@ export default async function PrayerPraiseCommunityRoute() {
   return (
     <div className="py-6 md:py-8">
       <div className="mx-auto max-w-6xl px-4">
-        <header className="mb-6 text-center md:text-left">
+        <header className="mb-6 text-center">
           <h1 className="text-2xl font-medium text-foreground [font-family:var(--font-headline),sans-serif]">
             Prayer &amp; Praise
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-gray">
-            Browse <span className="font-medium text-foreground">The Bloom Scroll</span>{" "}
-            above, then scroll the two-column feed — prayers and praise side by side (10
-            posts per column, with pages). Tap any note to open it. Use the + button to
-            post. Pray, encourage, or celebrate anytime, with or without an account.
-          </p>
         </header>
       </div>
 

@@ -24,11 +24,11 @@ const DETAILS_CLASS =
 const faqItems: { q: string; a: string }[] = [
   {
     q: "What is awake + align?",
-    a: "A faith-forward rhythm for your week—prayer, movement, and rest—with audio, workouts, and community so you can remember, return, and rejoice.",
+    a: "A faith-forward rhythm for your week—prayer, movement, and rest—with audio, guided sessions, and community so you can remember, return, and rejoice.",
   },
   {
     q: "How does my subscription work?",
-    a: "Members get full access to the weekly schedule, workout library, prayer audio, prayer journal, and Prayer & Praise. Start with a free trial from the homepage, then choose the plan that fits you.",
+    a: "Members get full access to the weekly schedule, movement library, prayer audio, prayer journal, and Prayer & Praise. Start with a free trial from the homepage, then choose the plan that fits you.",
   },
   {
     q: "Can I use the app on more than one device?",

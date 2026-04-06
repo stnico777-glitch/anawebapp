@@ -5,13 +5,14 @@
 
 :root {
   --background: #FFFCE9;
-  /** Lighter wash for logged-in app (schedule, workouts, prayer, journal, community). */
+  /** Lighter wash for logged-in app (schedule, movement, prayer, journal, community). */
   --app-surface: #fffcf7;
-  --foreground: #4A4039;
   --cream: #FCF3B3;
   --light-yellow: #FCF3B3;
   --sky-blue: #6EADE4;
+  /** Primary text (replaces former brown #4A4039); matches `--gray` for theme consistency. */
   --gray: #788287;
+  --foreground: var(--gray);
   --accent-pink: #E34369;
   --accent-amber: #E6B15C;
   /** Hint of homepage sunset; kept pale so UI reads mostly white (~75% white mix). */
@@ -152,6 +153,32 @@ body {
   border-color: rgb(255 255 255 / 0.95);
 }
 
+/** Movement tab “Explore” — cream (#FFFCE9) instead of white; matches `text-background`. */
+.essentials-explore-glass-cream {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.125rem;
+  border: 1px solid rgb(255 252 233 / 0.8);
+  background-color: transparent;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--background);
+  font-family: var(--font-body), system-ui, sans-serif;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.group:hover .essentials-explore-glass-cream {
+  background-color: rgb(255 252 233 / 0.1);
+  border-color: rgb(255 252 233 / 0.95);
+}
+
 /**
  * Homepage: same layer recipe as WelcomeMessageBubble “glow layer”, scaled for a tall scroll surface.
  * Painted on ::before so it always stacks correctly; ellipses use plain % (min() in ellipse broke
@@ -160,7 +187,8 @@ body {
 .homepage-imessage-surface {
   position: relative;
   isolation: isolate;
-  background-color: #ffffff;
+  /* Let transparent sections (e.g. about wave strips) show the ::before gradient, not a solid white slab */
+  background-color: transparent;
 }
 
 .homepage-imessage-surface::before {

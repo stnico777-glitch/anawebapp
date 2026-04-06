@@ -1,10 +1,10 @@
 import ScheduleDayCard from "@/components/ScheduleDayCard";
+import ScheduleSabbathTile from "@/components/ScheduleSabbathTile";
 import DailyVerseScheduleCard from "@/components/DailyVerseScheduleCard";
 import { getDailyVerseForDateInput } from "@/lib/daily-verse";
 import { getCurrentWeekSchedule, getMonday, formatWeekRange } from "@/lib/schedule";
 import { getSessionForApp } from "@/lib/auth";
 import { getDemoDailyVerse, getDemoWeekSchedule } from "@/lib/demo-preview-data";
-import Link from "next/link";
 
 /** 0 = Monday, 5 = Saturday; Sunday = 7 for "no week day" */
 function getTodayDayIndex(): number {
@@ -24,34 +24,14 @@ export default async function SchedulePage() {
     <div className="min-h-screen bg-app-surface">
       <div className="mx-auto max-w-7xl px-4 pt-10 md:px-6 md:pt-14">
         <DailyVerseScheduleCard verse={verseToday} />
-        <p className="mb-3 max-w-2xl text-sm leading-relaxed text-gray [font-family:var(--font-body),sans-serif] md:mb-4 md:text-base">
-          Your weekly rhythm—prayer, movement, and affirmation mapped to each day.
-        </p>
-        <p className="mb-10 text-xs lowercase tracking-[0.14em] text-gray/90 [font-family:var(--font-body),sans-serif] md:mb-12 md:text-[0.8125rem]">
-          rhythm · intention · rest
-        </p>
 
-        <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
+        <header className="mb-8 sm:mb-10">
           <h1
             id="schedule-heading"
             className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl [font-family:var(--font-headline),sans-serif]"
           >
             Weekly Schedule
           </h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Link
-              href="/prayer"
-              className="text-sm font-medium text-gray underline-offset-4 transition [font-family:var(--font-body),sans-serif] hover:text-foreground"
-            >
-              Audio library
-            </Link>
-            <Link
-              href="/workouts"
-              className="text-sm font-medium text-gray underline-offset-4 transition [font-family:var(--font-body),sans-serif] hover:text-foreground"
-            >
-              Workouts
-            </Link>
-          </div>
         </header>
 
         <ScheduleContent userId={userId ?? undefined} isLocked={!isSubscriber} />
@@ -79,13 +59,33 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
 
   return (
     <div className="space-y-8 pb-12 md:space-y-10 md:pb-16">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm font-medium tracking-wide text-gray [font-family:var(--font-body),sans-serif]">
-          {formatWeekRange(weekStart)}
-        </p>
-        <div className="rounded-sm border border-sand bg-white px-3 py-1.5 text-sm font-medium text-foreground shadow-[0_1px_4px_rgba(0,0,0,0.06)] [font-family:var(--font-body),sans-serif]">
-          {overallDone}/6 days complete
+      {/* Parity: ScheduleScreen scheduleMetaRow + scheduleDivider (awake-align mobile) */}
+      <div>
+        <div className="mb-2 flex flex-row items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            <svg
+              className="h-[15px] w-[15px] shrink-0 text-gray"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 017.5 9h9a2.25 2.25 0 012.25 2.25v7.5"
+              />
+            </svg>
+            <p className="min-w-0 truncate text-base font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
+              {formatWeekRange(weekStart)}
+            </p>
+          </div>
+          <p className="shrink-0 text-sm font-semibold uppercase tracking-[0.04em] text-sky-blue [font-family:var(--font-body),sans-serif]">
+            {overallDone}/7 complete
+          </p>
         </div>
+        <div className="h-px bg-[rgba(232,228,212,0.9)]" aria-hidden />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
@@ -112,15 +112,11 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
             isLocked={isLocked}
           />
         ))}
-      </div>
-
-      <div className="rounded-none border border-sand bg-white/80 px-4 py-4 text-center [font-family:var(--font-body),sans-serif] md:px-6">
-        <p className="text-sm leading-relaxed text-gray">
-          <span className="font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
-            Sunday — Sabbath rest.
-          </span>{" "}
-          Use this day for rest, reflection, and worship.
-        </p>
+        <div className="col-span-2 flex justify-center sm:col-span-2 lg:col-span-1 lg:col-start-2">
+          <div className="w-full sm:max-w-[calc((100%-1rem)/2)] lg:max-w-none">
+            <ScheduleSabbathTile isToday={todayDayIndex === 7} />
+          </div>
+        </div>
       </div>
     </div>
   );

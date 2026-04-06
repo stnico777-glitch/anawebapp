@@ -71,7 +71,7 @@ function actionBtnClass(active: boolean, busy?: boolean) {
   return `${base} border-transparent bg-transparent text-foreground hover:bg-app-surface`;
 }
 
-type FeedView = "split" | "groups";
+type FeedView = "prayer" | "praise" | "groups";
 
 const FEED_PAGE_SIZE = 10;
 
@@ -89,7 +89,7 @@ export default function PrayerPraiseFeed({
   defaultCommentName?: string;
 }) {
   const [items, setItems] = useState(initialItems);
-  const [feedView, setFeedView] = useState<FeedView>("split");
+  const [feedView, setFeedView] = useState<FeedView>("prayer");
   const [prayerPage, setPrayerPage] = useState(0);
   const [praisePage, setPraisePage] = useState(0);
   const [openEncourageId, setOpenEncourageId] = useState<string | null>(null);
@@ -256,9 +256,10 @@ export default function PrayerPraiseFeed({
       <div
         className="flex flex-wrap border-b border-sand px-2 sm:flex-nowrap sm:overflow-x-auto sm:px-3"
         role="tablist"
-        aria-label="Feed view"
+        aria-label="Prayer, praise, or groups"
       >
-        {viewTab("split", "Prayer & praise")}
+        {viewTab("prayer", "Prayer")}
+        {viewTab("praise", "Praise")}
         {viewTab("groups", "Groups")}
       </div>
 
@@ -272,8 +273,8 @@ export default function PrayerPraiseFeed({
             together.
           </p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x md:divide-sand">
+      ) : feedView === "prayer" ? (
+        <div className="min-w-0">
           <section className="flex min-h-0 min-w-0 flex-col" aria-label="Prayer requests">
             <header className="border-b border-sand bg-pastel-blue-light/35 px-4 py-3 sm:px-5">
               <h2 className="text-sm font-semibold text-foreground">Prayer</h2>
@@ -460,7 +461,9 @@ export default function PrayerPraiseFeed({
               </button>
             </footer>
           </section>
-
+        </div>
+      ) : (
+        <div className="min-w-0">
           <section className="flex min-h-0 min-w-0 flex-col" aria-label="Praise reports">
             <header className="border-b border-sand bg-[#FFF6DD]/60 px-4 py-3 sm:px-5">
               <h2 className="text-sm font-semibold text-foreground">Praise</h2>

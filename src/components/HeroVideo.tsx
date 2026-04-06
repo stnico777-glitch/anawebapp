@@ -6,10 +6,10 @@ const HERO_FORWARD = "/hero-video.mp4#t=0.001";
 /** Time-reversed encode of the same clip — plays forward for smooth “backward” motion (see `npm run hero:reverse`). */
 const HERO_REVERSE = "/hero-video-reverse.mp4#t=0.001";
 
+/** Opening clip, then Awake + Align hero (see `public/hero-carousel-awake-align.mp4`). */
 const HERO_CAROUSEL = [
   "/hero-video.mp4#t=0.001",
-  "/hero-video2.mp4#t=0.001",
-  "/hero-video3.mp4#t=0.001",
+  "/hero-carousel-awake-align.mp4#t=0.001",
 ] as const;
 
 /** First carousel clip only — longer on-screen (timeline still runs to `ended`). */
@@ -17,6 +17,24 @@ const FIRST_HERO_CLIP_PLAYBACK_RATE = 0.75;
 
 function playbackRateForHeroCarouselSrc(src: string): number {
   return src.startsWith("/hero-video.mp4") ? FIRST_HERO_CLIP_PLAYBACK_RATE : 1;
+}
+
+function playWhenReady(
+  el: HTMLVideoElement,
+  onStarted: () => void,
+): void {
+  const run = () => {
+    void el.play().then(onStarted).catch(() => {});
+  };
+  if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+    run();
+    return;
+  }
+  const onCanPlay = () => {
+    el.removeEventListener("canplay", onCanPlay);
+    run();
+  };
+  el.addEventListener("canplay", onCanPlay);
 }
 
 function scheduleSwapOnFirstFrame(
@@ -65,6 +83,8 @@ function HeroVideoCarousel({
   const ref1 = useRef<HTMLVideoElement>(null);
   const visibleSlotRef = useRef(0);
   const currentIndexRef = useRef(0);
+  /** Avoid treating a bogus `ended` at load as real (WebKit); some UIs reset `currentTime` to 0 on real `ended`. */
+  const playedPastStartRef = useRef<[boolean, boolean]>([false, false]);
   const [visibleSlot, setVisibleSlot] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -99,7 +119,8 @@ function HeroVideoCarousel({
       endedEl &&
       Number.isFinite(endedEl.duration) &&
       endedEl.duration > 1 &&
-      endedEl.currentTime < 0.05
+      endedEl.currentTime < 0.05 &&
+      !playedPastStartRef.current[slot]
     ) {
       return;
     }
@@ -124,25 +145,31 @@ function HeroVideoCarousel({
       // reloading its `src` cannot fire before useEffect runs (see black-flash report).
       visibleSlotRef.current = h;
       setVisibleSlot(h);
-      setCurrentIndex((i) => (i + 1) % HERO_CAROUSEL.length);
+      setCurrentIndex((i) => {
+        playedPastStartRef.current[0] = false;
+        playedPastStartRef.current[1] = false;
+        return (i + 1) % HERO_CAROUSEL.length;
+      });
     };
 
-    void hiddenEl
-      .play()
-      .then(() => {
-        scheduleSwapOnFirstFrame(hiddenEl, doSwap);
-      })
-      .catch(() => {});
+    playWhenReady(hiddenEl, () => {
+      scheduleSwapOnFirstFrame(hiddenEl, doSwap);
+    });
   }, []);
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
+      {/*
+        Stack both clips at full opacity (z-index only). Opacity:0 on the “hidden”
+        slot prevents reliable decode/play on some browsers (esp. WebKit), so the
+        second carousel file never appeared after the first clip ended.
+      */}
       <video
         ref={ref0}
         src={src0}
         className={`absolute inset-0 h-full w-full ${coverClass}`}
         style={{
-          opacity: visibleSlot === 0 ? 1 : 0,
+          zIndex: visibleSlot === 0 ? 2 : 1,
           pointerEvents: visibleSlot === 0 ? "auto" : "none",
         }}
         autoPlay={visibleSlot === 0 && currentIndex === 0}
@@ -152,6 +179,9 @@ function HeroVideoCarousel({
         onLoadedMetadata={(e) => {
           e.currentTarget.playbackRate = playbackRateForHeroCarouselSrc(src0);
         }}
+        onTimeUpdate={(e) => {
+          if (e.currentTarget.currentTime > 0.12) playedPastStartRef.current[0] = true;
+        }}
         onEnded={() => onSlotEnded(0)}
       />
       <video
@@ -159,7 +189,7 @@ function HeroVideoCarousel({
         src={src1}
         className={`absolute inset-0 h-full w-full ${coverClass}`}
         style={{
-          opacity: visibleSlot === 1 ? 1 : 0,
+          zIndex: visibleSlot === 1 ? 2 : 1,
           pointerEvents: visibleSlot === 1 ? "auto" : "none",
         }}
         muted
@@ -168,9 +198,12 @@ function HeroVideoCarousel({
         onLoadedMetadata={(e) => {
           e.currentTarget.playbackRate = playbackRateForHeroCarouselSrc(src1);
         }}
+        onTimeUpdate={(e) => {
+          if (e.currentTarget.currentTime > 0.12) playedPastStartRef.current[1] = true;
+        }}
         onEnded={() => onSlotEnded(1)}
       />
-      <div className="absolute inset-0 bg-black/10" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 z-[3] bg-black/10" aria-hidden />
     </div>
   );
 }

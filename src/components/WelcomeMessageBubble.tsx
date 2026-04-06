@@ -164,7 +164,7 @@ export default function WelcomeMessageBubble() {
       onClick={dismiss}
     >
       <div
-        className="welcome-bubble relative flex h-[700px] max-h-[calc(100vh-3rem)] w-[min(375px,100%)] flex-col overflow-hidden rounded-[2rem] bg-transparent shadow-2xl ring-1 ring-black/10 animate-welcome-bubble-in"
+        className="welcome-bubble relative flex h-[700px] max-h-[calc(100vh-3rem)] w-[min(375px,100%)] flex-col overflow-hidden rounded-[2rem] bg-transparent font-[family-name:var(--font-body),sans-serif] shadow-2xl ring-1 ring-black/10 animate-welcome-bubble-in"
         role="dialog"
         aria-modal="true"
         aria-label="Message from Kat"

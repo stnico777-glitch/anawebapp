@@ -12,7 +12,7 @@ export default async function AdminLayout({
 
   const nav = [
     { href: "/admin", label: "Dashboard" },
-    { href: "/admin/workouts", label: "Workouts" },
+    { href: "/admin/workouts", label: "Movement" },
     { href: "/admin/prayer", label: "Prayer / Audio" },
     { href: "/admin/schedules", label: "Schedules" },
     { href: "/admin/daily-verse", label: "Daily verses" },

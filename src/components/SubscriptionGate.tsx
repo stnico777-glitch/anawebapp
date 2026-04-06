@@ -28,7 +28,7 @@ export default function SubscriptionGate({
         {title}
       </h2>
       <p className="mt-2 text-gray">
-        Subscribe to unlock full access to workouts, prayer sessions, prayer journal,
+        Subscribe to unlock full access to movement sessions, prayer sessions, prayer journal,
         and prayer & praise.
       </p>
       <Link

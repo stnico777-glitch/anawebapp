@@ -291,10 +291,9 @@ export default function CommunityBulletinBanner({
           className="absolute left-1/2 top-3 z-20 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-[#6B5344] bg-sky-blue shadow-md ring-2 ring-white/50 md:top-4 md:h-5 md:w-5"
           aria-hidden
         />
-        <p className="mb-2 px-4 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-foreground/90">
-          The Bloom Scroll — two rows, opposite scroll · tap any note
+        <p className="mb-4 max-w-2xl px-4 text-center text-sm leading-snug text-foreground/90 [font-family:var(--font-body),sans-serif] md:mx-auto md:mb-5 md:text-[0.9375rem]">
+          The Bloom Scroll is a living stream of community prayer and praise—tap a note to read it in full.
         </p>
-
         <BulletinMarqueeRow
           label="Prayer requests"
           rowItems={prayerRow}
@@ -313,7 +312,7 @@ export default function CommunityBulletinBanner({
           )}
 
         <BulletinMarqueeRow
-          label="Praise reports — rolling the other way"
+          label="Praise reports"
           rowItems={praiseRow}
           reduceMotion={reduceMotion}
           direction="reverse"

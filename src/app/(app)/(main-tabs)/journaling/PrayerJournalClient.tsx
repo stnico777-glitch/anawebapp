@@ -581,9 +581,26 @@ function PrayerJournalInner() {
                             <p className="max-w-[14rem] text-right text-[11px] leading-snug tracking-wide text-gray dark:text-stone-400 [font-family:var(--font-body),sans-serif] sm:max-w-[12.5rem]">
                               <span className="font-medium text-stone-700 dark:text-stone-300">
                                 He answered?
-                              </span>{" "}
-                              Tap the sparkle to celebrate &amp; mark it.
+                              </span>
                             </p>
+                            <div className="flex items-center gap-1 sm:gap-1.5">
+                              <span className="whitespace-nowrap text-right text-[11px] leading-snug tracking-wide text-gray dark:text-stone-400 [font-family:var(--font-body),sans-serif]">
+                                Tap here
+                              </span>
+                              <svg
+                                className="h-3.5 w-3.5 shrink-0 text-stone-500 dark:text-stone-400"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                viewBox="0 0 24 24"
+                                aria-hidden
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                                />
+                              </svg>
                             <button
                               type="button"
                               aria-label="Mark this prayer as answered — opens celebration, then saves as answered"
@@ -612,6 +629,7 @@ function PrayerJournalInner() {
                                 />
                               </svg>
                             </button>
+                            </div>
                           </>
                         ) : (
                           <div
@@ -649,7 +667,7 @@ function PrayerJournalInner() {
             onClick={() => !celebrateSaving && setCelebrateEntry(null)}
           >
             <div
-              className="prayer-celebrate-modal-inner relative w-full max-w-md overflow-hidden rounded-xl border-2 border-sand bg-app-surface shadow-[0_24px_48px_-12px_rgba(74,64,57,0.22)] dark:border-stone-600 dark:bg-stone-900"
+              className="prayer-celebrate-modal-inner relative w-full max-w-md overflow-hidden rounded-xl border-2 border-sand bg-app-surface shadow-[0_24px_48px_-12px_rgba(120,130,135,0.22)] dark:border-stone-600 dark:bg-stone-900"
               onClick={(ev) => ev.stopPropagation()}
             >
               {/* Solid theme layers — less “glassy” */}

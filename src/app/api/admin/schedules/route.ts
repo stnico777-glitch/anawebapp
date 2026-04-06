@@ -2,7 +2,7 @@ import { withAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMonday } from "@/lib/schedule";
-import { DAY_NAMES } from "@/constants/schedule";
+import { DAY_NAMES, WORKOUT_SPLIT } from "@/constants/schedule";
 
 export const GET = withAdmin(async () => {
   const schedules = await prisma.weekSchedule.findMany({
@@ -54,7 +54,7 @@ export const POST = withAdmin(async (_, request) => {
         create: DAY_NAMES.map((name, i) => ({
           dayIndex: i,
           prayerTitle: `Morning Prayer – ${name}`,
-          workoutTitle: "Session",
+          workoutTitle: WORKOUT_SPLIT[i],
           affirmationText: `"I am strong in body and spirit." – Day ${i + 1}`,
         })),
       },

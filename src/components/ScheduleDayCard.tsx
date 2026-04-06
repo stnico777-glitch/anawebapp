@@ -6,8 +6,6 @@ import Image from "next/image";
 import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 import LockIcon from "@/components/LockIcon";
 
-const WEEKLY_IMAGES = ["/weekly-workouts.png", "/weekly-workouts2.png", "/weekly-workouts3.png"];
-
 interface ScheduleDayCardProps {
   day: {
     id: string;
@@ -28,10 +26,15 @@ interface ScheduleDayCardProps {
   isLocked?: boolean;
 }
 
+/** Prayer row — single four-point sparkle (main star from Heroicons sparkles; avoids busy multi-sparkle cluster). */
 function IconPrayer() {
   return (
     <svg className="h-4 w-4 shrink-0 text-gray" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M8 6h8l-3 5 3 5H8l3-5-3-5z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"
+      />
     </svg>
   );
 }
@@ -61,7 +64,6 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
   const total = 3;
   const done = (prayerDone ? 1 : 0) + (workoutDone ? 1 : 0) + (affirmationDone ? 1 : 0);
   const progress = Math.round((done / total) * 100);
-  const isComplete = done === total;
 
   async function toggle(type: "prayer" | "workout" | "affirmation") {
     if (loading) return;
@@ -91,26 +93,32 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
   }
 
   const prayerHref = "/prayer";
-  const workoutHref = day.workoutId ? `/workouts/${day.workoutId}` : "/workouts";
+  const workoutHref = day.workoutId ? `/movement/${day.workoutId}` : "/movement";
+
+  const allDone = done === total;
+  let startHref = "/schedule";
+  if (!prayerDone) startHref = prayerHref;
+  else if (!workoutDone) startHref = workoutHref;
+  else if (!affirmationDone) startHref = "/journaling";
 
   return (
     <article
-      className={`relative overflow-hidden rounded-none border transition-all duration-300 ease-out will-change-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
-        isComplete ? "border-sky-blue bg-app-surface" : "border-sand bg-white"
-      } ${isToday ? "ring-2 ring-sky-blue ring-offset-2 ring-offset-app-surface" : ""}`}
+      className={`relative overflow-hidden rounded-lg bg-app-surface shadow-[0_1px_2px_rgba(120,130,135,0.06)] transition-all duration-300 ease-out will-change-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+        isToday ? "border-2 border-sky-blue" : "border border-sand"
+      }`}
     >
       {isToday && (
-        <span className="absolute right-3 top-3 z-10 rounded-sm bg-sky-blue px-2 py-0.5 text-xs font-medium text-white">
+        <span className="absolute right-2 top-2 z-10 rounded-sm bg-sky-blue px-2 py-1 text-xs font-semibold text-white [font-family:var(--font-body),sans-serif]">
           Today
         </span>
       )}
       {isLocked && (
-        <span className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-sm bg-white/95 shadow ring-1 ring-sand" title="Subscribe to unlock">
-          <LockIcon size="sm" />
+        <span className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 shadow backdrop-blur-[2px]" title="Subscribe to unlock">
+          <LockIcon size="sm" className="text-white" />
         </span>
       )}
 
-      <div className="relative aspect-[16/10] min-h-[7.5rem] overflow-hidden bg-sand sm:min-h-[8rem]">
+      <div className="relative aspect-[16/13] min-h-[11rem] overflow-hidden bg-sand sm:min-h-[13rem] md:aspect-[16/14] md:min-h-[14rem]">
         <Image
           src={WEEKLY_DAY_CARD_IMAGES[day.dayIndex % WEEKLY_DAY_CARD_IMAGES.length]}
           alt=""
@@ -118,84 +126,109 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
           className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 from-40% to-transparent" aria-hidden />
-        <div className="absolute inset-x-0 bottom-0 p-3 md:p-3.5">
-          <h3 className="text-base font-semibold tracking-tight text-white [font-family:var(--font-headline),sans-serif] [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
+        {/* Parity: ScheduleScreen dayImageShade — uniform 20% black */}
+        <div className="absolute inset-0 bg-black/20" aria-hidden />
+        <div className="absolute inset-x-0 bottom-0 p-2">
+          <h3 className="text-lg font-semibold tracking-tight text-white [font-family:var(--font-headline),sans-serif]">
             {DAY_NAMES[day.dayIndex] ?? ""}
           </h3>
         </div>
       </div>
 
-      <div className="p-4 [font-family:var(--font-body),sans-serif]">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm font-medium tracking-wide text-gray">
+      {/* Parity: expo-linear-gradient colors #FFF6E6 → #F3E7CC, start (0,0) end (1,1) */}
+      <div
+        className="relative p-1 [font-family:var(--font-body),sans-serif]"
+        style={{
+          backgroundImage: "linear-gradient(135deg, #FFF6E6 0%, #F3E7CC 100%)",
+        }}
+      >
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-sm font-normal text-gray">
             {done}/{total} complete
           </span>
-          <div className="h-1.5 w-14 overflow-hidden rounded-sm bg-sand">
+          <div className="h-1 w-[70px] shrink-0 overflow-hidden rounded-sm bg-sand">
             <div
-              className="h-full bg-sky-blue transition-all duration-300"
+              className="h-full bg-accent-amber transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("prayer")}
               disabled={loading}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 transition-colors ${
-                prayerDone ? "border-sky-blue bg-background" : "border-sand hover:bg-background"
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+                prayerDone ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
               }`}
               aria-pressed={prayerDone}
             >
-              {prayerDone ? <span className="text-sm text-sky-blue">✓</span> : null}
+              {prayerDone ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             <Link
               href={prayerHref}
-              className="min-w-0 flex-1 text-sm text-foreground hover:text-sky-blue hover:underline"
+              className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
             >
               {day.prayerTitle ?? "Prayer"}
             </Link>
             <IconPrayer />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("workout")}
               disabled={loading}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 transition-colors ${
-                workoutDone ? "border-sky-blue bg-app-surface" : "border-sand hover:bg-app-surface"
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+                workoutDone ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
               }`}
               aria-pressed={workoutDone}
             >
-              {workoutDone ? <span className="text-sm text-sky-blue">✓</span> : null}
+              {workoutDone ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             <Link
               href={workoutHref}
-              className="min-w-0 flex-1 text-sm text-foreground hover:text-sky-blue hover:underline"
+              className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
             >
-              {day.workoutTitle ?? "Workout"}
+              {day.workoutTitle ?? "Movement"}
             </Link>
             <IconWorkout />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("affirmation")}
               disabled={loading}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 transition-colors ${
-                affirmationDone ? "border-sky-blue bg-app-surface" : "border-sand hover:bg-app-surface"
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+                affirmationDone ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
               }`}
               aria-pressed={affirmationDone}
             >
-              {affirmationDone ? <span className="text-sm text-sky-blue">✓</span> : null}
+              {affirmationDone ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             <span className="min-w-0 flex-1 text-sm italic text-gray">
               {day.affirmationText ?? "Affirmation"}
             </span>
             <IconAffirmation />
           </div>
+        </div>
+
+        <div className="mt-1 flex min-h-[52px] items-center justify-center">
+          {allDone ? (
+            <span
+              className="inline-flex min-w-[132px] cursor-default items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white opacity-90 [font-family:var(--font-body),sans-serif]"
+              aria-live="polite"
+            >
+              Well done
+            </span>
+          ) : (
+            <Link
+              href={startHref}
+              className="inline-flex min-w-[132px] items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white transition-opacity [font-family:var(--font-body),sans-serif] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+            >
+              Start
+            </Link>
+          )}
         </div>
       </div>
     </article>

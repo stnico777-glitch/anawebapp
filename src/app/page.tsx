@@ -9,6 +9,7 @@ import WelcomeMessageBubble from "@/components/WelcomeMessageBubble";
 import FloatingMessageBubble from "@/components/FloatingMessageBubble";
 import ScheduleSection from "@/components/ScheduleSection";
 import FeaturesSection from "@/components/FeaturesSection";
+import AboutBrandSection from "@/components/AboutBrandSection";
 import InstagramCarousel from "@/components/InstagramCarousel";
 import Footer from "@/components/Footer";
 import { getInstagramEmbedConfig } from "@/lib/instagram-embed";
@@ -39,8 +40,10 @@ async function HomeContent() {
 
   return (
     <>
-      <SiteHeader />
-      <HeroSection />
+      <div className="relative">
+        <SiteHeader />
+        <HeroSection />
+      </div>
       <div className="homepage-imessage-surface">
         <div className="relative z-[1]">
           <TrialBanner />
@@ -48,7 +51,8 @@ async function HomeContent() {
           <FloatingMessageBubble />
           <ScheduleSection schedule={schedule} showLockIcon={!isSignedIn} />
           <FeaturesSection showLockIcon={!isSignedIn} />
-          <section className="mb-16 md:mb-20">
+          <AboutBrandSection />
+          <section className="mb-16 overflow-visible md:mb-20">
             <InstagramCarousel
               posts={carouselPosts}
               {...getInstagramEmbedConfig()}
@@ -63,7 +67,7 @@ async function HomeContent() {
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen bg-white">
+    <div className="relative min-h-screen bg-white font-[family-name:var(--font-body),sans-serif]">
       <a href="#main-content" className="skip-link sr-only">
         Skip to main content
       </a>

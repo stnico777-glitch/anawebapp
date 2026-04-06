@@ -110,7 +110,7 @@ export default function SchedulesClient({
           className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
         >
           <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-700">
-            <h2 className="font-semibold">{formatWeekRange(new Date(schedule.weekStart))}</h2>
+            <h2 className="font-semibold">{formatWeekRange(new Date(schedule.weekStart), { includeYear: true })}</h2>
             <button
               onClick={() => duplicateSchedule(schedule.id)}
               disabled={duplicating === schedule.id}
@@ -125,7 +125,7 @@ export default function SchedulesClient({
                 <tr className="border-b border-stone-200 dark:border-stone-700">
                   <th className="px-4 py-2 text-left">Day</th>
                   <th className="px-4 py-2 text-left">Prayer</th>
-                  <th className="px-4 py-2 text-left">Workout</th>
+                  <th className="px-4 py-2 text-left">Movement</th>
                   <th className="px-4 py-2 text-left">Affirmation</th>
                 </tr>
               </thead>

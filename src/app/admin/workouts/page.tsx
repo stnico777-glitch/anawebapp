@@ -10,7 +10,7 @@ export default async function AdminWorkoutsPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-          Workouts
+          Movement
         </h1>
         <WorkoutForm />
       </div>
