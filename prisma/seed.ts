@@ -14,7 +14,7 @@ import {
   DEFAULT_AUDIO_ESSENTIAL_TILES,
   DEFAULT_MUSIC_SPOTLIGHT_ALBUMS,
 } from "../src/lib/audio-layout-defaults";
-import { ensureMovementLayoutSeeded } from "../src/lib/movement-layout";
+import { ensureMovementLayoutSeeded, seedMovementHeroAndQuickieIfEmpty } from "../src/lib/movement-layout";
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 if (!databaseUrl) {
@@ -525,6 +525,7 @@ async function main() {
 
   await seedAudioTabLayout();
   await ensureMovementLayoutSeeded();
+  await seedMovementHeroAndQuickieIfEmpty();
 
   const removedDupSchedules = await dedupeWeekSchedulesByWeekStart(prisma);
   if (removedDupSchedules > 0) {

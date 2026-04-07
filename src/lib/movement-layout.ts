@@ -59,6 +59,11 @@ function mapQuickie(row: {
   };
 }
 
+/**
+ * Ensures the singleton landing-copy row exists (taglines for Movement tab).
+ * Does **not** insert hero tiles or quickie cards — those are CMS-managed; inserting defaults
+ * on every read was undoing deletes when a section was emptied.
+ */
 export async function ensureMovementLayoutSeeded(): Promise<void> {
   try {
     await prisma.movementLandingCopy.upsert({
@@ -70,7 +75,18 @@ export async function ensureMovementLayoutSeeded(): Promise<void> {
       },
       update: {},
     });
+  } catch {
+    /* ignore */
+  }
+}
 
+/**
+ * Inserts default hero/quickie rows only when tables are empty. Used by `prisma/seed` (and
+ * optional one-off setup), **not** on every public page load — that previously re-created rows
+ * after admins deleted them.
+ */
+export async function seedMovementHeroAndQuickieIfEmpty(): Promise<void> {
+  try {
     const nH = await prisma.movementHeroTile.count();
     if (nH === 0) {
       await prisma.movementHeroTile.createMany({
@@ -102,7 +118,7 @@ export async function ensureMovementLayoutSeeded(): Promise<void> {
   }
 }
 
-async function loadMovementLayout(): Promise<MovementLayoutDTO> {
+async function loadMovementLayout(options: { forAdmin: boolean }): Promise<MovementLayoutDTO> {
   await ensureMovementLayoutSeeded();
   const [copyRow, heroTiles, quickieCards] = await Promise.all([
     prisma.movementLandingCopy.findUnique({ where: { id: "main" } }),
@@ -114,9 +130,15 @@ async function loadMovementLayout(): Promise<MovementLayoutDTO> {
     }),
   ]);
 
-  const copy = copyRow
-    ? mapCopy(copyRow)
-    : DEFAULT_MOVEMENT_LANDING_COPY;
+  const copy = copyRow ? mapCopy(copyRow) : DEFAULT_MOVEMENT_LANDING_COPY;
+
+  if (options.forAdmin) {
+    return {
+      copy,
+      heroTiles: heroTiles.map(mapHero),
+      quickieCards: quickieCards.map(mapQuickie),
+    };
+  }
 
   return {
     copy,
@@ -127,7 +149,7 @@ async function loadMovementLayout(): Promise<MovementLayoutDTO> {
 
 export async function getMovementLayoutForDisplay(): Promise<MovementLayoutDTO> {
   try {
-    return await loadMovementLayout();
+    return await loadMovementLayout({ forAdmin: false });
   } catch {
     return {
       copy: DEFAULT_MOVEMENT_LANDING_COPY,
@@ -137,6 +159,15 @@ export async function getMovementLayoutForDisplay(): Promise<MovementLayoutDTO> 
   }
 }
 
+/** CMS: reflects DB exactly (empty rails stay empty). Member display still uses defaults when DB has no rows. */
 export async function getMovementLayoutForAdmin(): Promise<MovementLayoutDTO> {
-  return getMovementLayoutForDisplay();
+  try {
+    return await loadMovementLayout({ forAdmin: true });
+  } catch {
+    return {
+      copy: DEFAULT_MOVEMENT_LANDING_COPY,
+      heroTiles: [],
+      quickieCards: [],
+    };
+  }
 }

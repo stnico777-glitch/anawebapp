@@ -77,7 +77,7 @@ export default function AdminWorkoutRailCard({
             {adminWorkoutRailHoverSummary(workout)}
           </p>
         </div>
-        <div className="absolute right-2 top-2 z-30 flex flex-wrap justify-end gap-1">
+        <div className="pointer-events-none absolute right-2 top-2 z-[50] flex flex-wrap justify-end gap-1">
           <div className="pointer-events-auto">
             <WorkoutForm
               workout={workout}
@@ -85,7 +85,7 @@ export default function AdminWorkoutRailCard({
               triggerLabel="Edit"
             />
           </div>
-          <button type="button" className={delBtnClass} onClick={handleDelete}>
+          <button type="button" className={`pointer-events-auto ${delBtnClass}`} onClick={handleDelete}>
             Delete
           </button>
         </div>
