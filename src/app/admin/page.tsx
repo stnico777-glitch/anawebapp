@@ -2,12 +2,21 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminDashboard() {
-  const [workoutCount, prayerCount, scheduleCount, verseCount] = await Promise.all([
-    prisma.workout.count(),
-    prisma.prayerAudio.count(),
-    prisma.weekSchedule.count(),
-    prisma.dailyVerse.count(),
-  ]);
+  let workoutCount: number;
+  let prayerCount: number;
+  let scheduleCount: number;
+  let verseCount: number;
+  try {
+    [workoutCount, prayerCount, scheduleCount, verseCount] = await Promise.all([
+      prisma.workout.count(),
+      prisma.prayerAudio.count(),
+      prisma.weekSchedule.count(),
+      prisma.dailyVerse.count(),
+    ]);
+  } catch (e) {
+    console.error("[admin] Prisma counts failed (check Vercel logs + DATABASE_URL / SSL):", e);
+    throw e;
+  }
 
   const cards = [
     { href: "/admin/workouts", label: "Movement", count: workoutCount },

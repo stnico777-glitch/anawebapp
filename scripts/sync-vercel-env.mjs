@@ -11,7 +11,19 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(scriptDir, "..");
 process.chdir(root);
 
-const PRODUCTION_SITE_URL = "https://anawebapp.vercel.app";
+/** Default if .env still has localhost — change in Vercel or set VERCEL_PRODUCTION_SITE_URL in .env */
+const DEFAULT_PRODUCTION_SITE_URL = "https://anawebapp.vercel.app";
+
+function resolveSiteUrl(target) {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (fromEnv && !/localhost|127\.0\.0\.1/i.test(fromEnv)) {
+    return fromEnv.replace(/\/$/, "");
+  }
+  const preview = process.env.VERCEL_PREVIEW_SITE_URL?.trim();
+  if (target === "preview" && preview) return preview.replace(/\/$/, "");
+  const prod = process.env.VERCEL_PRODUCTION_SITE_URL?.trim();
+  return (prod || DEFAULT_PRODUCTION_SITE_URL).replace(/\/$/, "");
+}
 
 function vercelEnvAdd(name, target, value, { sensitive = false } = {}) {
   const args = ["vercel", "env", "add", name, target];
@@ -40,8 +52,8 @@ for (const target of targets) {
     console.error(`→ ${name} (${target})`);
     vercelEnvAdd(name, target, v, { sensitive });
   }
-  const siteUrl = target === "production" ? PRODUCTION_SITE_URL : PRODUCTION_SITE_URL;
-  console.error(`→ NEXT_PUBLIC_SITE_URL (${target})`);
+  const siteUrl = resolveSiteUrl(target);
+  console.error(`→ NEXT_PUBLIC_SITE_URL (${target}) = ${siteUrl}`);
   vercelEnvAdd("NEXT_PUBLIC_SITE_URL", target, siteUrl, { sensitive: false });
 }
 

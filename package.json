@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "npx tsx prisma/seed.ts",
+    "vercel:sync-env": "node scripts/sync-vercel-env.mjs",
     "hero:reverse": "ffmpeg -y -i public/hero-video.mp4 -vf reverse -an -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -movflags +faststart public/hero-video-reverse.mp4"
   },
   "prisma": {

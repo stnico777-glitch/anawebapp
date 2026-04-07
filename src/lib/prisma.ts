@@ -1,18 +1,39 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { Pool, type PoolConfig } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   pool?: Pool;
 };
 
+/**
+ * Supabase Postgres is always reached over TLS. On Vercel, `pg` often needs explicit
+ * `ssl` or connections fail at runtime (generic Next.js digest; local dev may still work).
+ * Serverless: keep pool tiny (one connection per lambda is enough for Prisma here).
+ */
+function createPool(connectionString: string): Pool {
+  const isSupabase = /supabase\.co|pooler\.supabase\.com/i.test(connectionString);
+  const config: PoolConfig = {
+    connectionString,
+    max: process.env.VERCEL ? 1 : 10,
+    connectionTimeoutMillis: 20_000,
+    idleTimeoutMillis: 30_000,
+  };
+  if (isSupabase) {
+    config.ssl = { rejectUnauthorized: false };
+  }
+  return new Pool(config);
+}
+
 function createPrisma(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString?.trim()) {
-    throw new Error("DATABASE_URL is required (PostgreSQL / Supabase connection string).");
+    throw new Error(
+      "DATABASE_URL is required: add your Supabase Postgres URL in Vercel (or .env locally). For Vercel serverless, use the Supabase pooler (port 6543) with ?pgbouncer=true on the connection string.",
+    );
   }
-  const pool = globalForPrisma.pool ?? new Pool({ connectionString });
+  const pool = globalForPrisma.pool ?? createPool(connectionString);
   if (process.env.NODE_ENV !== "production") {
     globalForPrisma.pool = pool;
   }
