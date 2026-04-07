@@ -1,6 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import dns from "node:dns";
 import { Pool, type PoolConfig } from "pg";
+
+/** Vercel → Supabase often resolves `db.*.supabase.co` to IPv6 first; Node can then fail with ENETUNREACH. Prefer IPv4. */
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
