@@ -1,7 +1,10 @@
 import WorkoutLibrarySection from "@/components/WorkoutLibrarySection";
+import MovementLibraryRealtime from "./MovementLibraryRealtime";
 import { getMovementLayoutForDisplay } from "@/lib/movement-layout";
 import { prisma } from "@/lib/prisma";
 import type { WorkoutRailCardWorkout } from "@/lib/workout-rail-display";
+
+export const dynamic = "force-dynamic";
 
 export default async function MovementPage() {
   const [movementLayout, workouts] = await Promise.all([
@@ -26,5 +29,10 @@ export default async function MovementPage() {
     })(),
   ]);
 
-  return <WorkoutLibrarySection movementLayout={movementLayout} workouts={workouts} />;
+  return (
+    <>
+      <MovementLibraryRealtime />
+      <WorkoutLibrarySection movementLayout={movementLayout} workouts={workouts} />
+    </>
+  );
 }
