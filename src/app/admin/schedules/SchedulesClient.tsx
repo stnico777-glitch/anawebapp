@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DAY_NAMES } from "@/constants/schedule";
+import CalendarWeekIcon from "@/components/CalendarWeekIcon";
+import ScheduleDayCard from "@/components/ScheduleDayCard";
+import ScheduleSabbathTile from "@/components/ScheduleSabbathTile";
 import { formatWeekRange } from "@/lib/dateFormat";
+import {
+  getMondayUTC,
+  parseScheduleDateInput,
+  utcMidnightForUtcDate,
+  weekScheduleAnchorKeyUTC,
+} from "@/lib/weekScheduleCalendar";
+import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import ScheduleDayEditModal, {
+  type ScheduleDayEditPayload,
+} from "./ScheduleDayEditModal";
 
 interface Schedule {
   id: string;
@@ -16,6 +28,9 @@ interface Schedule {
     workoutTitle: string | null;
     workoutId: string | null;
     affirmationText: string | null;
+    dayImageUrl: string | null;
+    dayVideoUrl: string | null;
+    daySubtext: string | null;
   }[];
 }
 
@@ -39,173 +54,225 @@ export default function SchedulesClient({
   prayers: Prayer[];
 }) {
   const router = useRouter();
-  const [creating, setCreating] = useState(false);
-  const [duplicating, setDuplicating] = useState<string | null>(null);
+  const sorted = useMemo(
+    () =>
+      [...schedules].sort(
+        (a, b) => new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime(),
+      ),
+    [schedules],
+  );
 
-  async function createSchedule() {
+  const [selectedId, setSelectedId] = useState<string>(() => sorted[0]?.id ?? "");
+  const [creating, setCreating] = useState(false);
+  const [editDay, setEditDay] = useState<ScheduleDayEditPayload | null>(null);
+  const [selectWeekDate, setSelectWeekDate] = useState(() =>
+    sorted[0] ? sorted[0].weekStart.slice(0, 10) : "",
+  );
+
+  useEffect(() => {
+    if (sorted.length === 0) {
+      setSelectedId("");
+      return;
+    }
+    if (!sorted.some((s) => s.id === selectedId)) {
+      setSelectedId(sorted[0]!.id);
+    }
+  }, [sorted, selectedId]);
+
+  const selected = sorted.find((s) => s.id === selectedId) ?? null;
+
+  useEffect(() => {
+    if (selected) {
+      setSelectWeekDate(selected.weekStart.slice(0, 10));
+    }
+  }, [selected?.id, selected?.weekStart]);
+
+  async function createSchedule(weekStart?: string) {
     setCreating(true);
     try {
-      const res = await fetch("/api/admin/schedules", {
+      const res = await adminJson("/api/admin/schedules", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify(weekStart ? { weekStart } : {}),
       });
-      if (res.ok) router.refresh();
+      if (!res.ok) {
+        alert(await readAdminError(res));
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as { id?: string } | null;
+      if (data?.id) setSelectedId(data.id);
+      router.refresh();
     } finally {
       setCreating(false);
     }
   }
 
-  async function duplicateSchedule(id: string) {
-    setDuplicating(id);
-    try {
-      const res = await fetch("/api/admin/schedules", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ duplicateFromId: id }),
-      });
-      if (res.ok) router.refresh();
-    } finally {
-      setDuplicating(null);
+  async function applySelectWeek() {
+    if (!selectWeekDate.trim()) return;
+    const parsed = parseScheduleDateInput(selectWeekDate);
+    if (Number.isNaN(parsed.getTime())) return;
+    const key = weekScheduleAnchorKeyUTC(parsed);
+    const matches = sorted.filter(
+      (s) => weekScheduleAnchorKeyUTC(new Date(s.weekStart)) === key,
+    );
+    if (matches.length > 0) {
+      setSelectedId(matches[0]!.id);
+      if (matches.length > 1) {
+        alert(
+          `This week has ${matches.length} schedules in the database. One is selected—delete extras or run \`npx prisma db seed\` to dedupe.`,
+        );
+      }
+      return;
     }
+    const mondayUtc = utcMidnightForUtcDate(getMondayUTC(parsed));
+    if (
+      !confirm(
+        `No schedule for ${formatWeekRange(mondayUtc, { includeYear: true })}. Create a blank week?`,
+      )
+    ) {
+      return;
+    }
+    await createSchedule(selectWeekDate);
   }
 
-  async function updateDay(
-    scheduleId: string,
-    dayIndex: number,
-    data: Partial<{
-      prayerTitle: string;
-      prayerId: string;
-      workoutTitle: string;
-      workoutId: string;
-      affirmationText: string;
-    }>
-  ) {
-    const res = await fetch(
-      `/api/admin/schedules/${scheduleId}/days/${dayIndex}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }
-    );
-    if (res.ok) router.refresh();
-  }
+  const toolbarBtnClass =
+    "rounded-md border border-sand bg-white px-3 py-2 text-sm font-medium text-foreground transition hover:bg-sunset-peach/40 [font-family:var(--font-body),sans-serif]";
 
   return (
-    <div className="mt-6 space-y-6">
-      <div className="flex gap-3">
-        <button
-          onClick={createSchedule}
-          disabled={creating}
-          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
-        >
-          {creating ? "Creating..." : "Create New Week"}
-        </button>
+    <div className="mt-2 space-y-8 pb-12 md:space-y-10 md:pb-16">
+      {sorted.length > 0 ? (
+        <div className="rounded-lg border border-sand bg-white/90 p-4 shadow-[0_1px_2px_rgba(120,130,135,0.06)]">
+          <p className="mb-3 text-sm font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
+            All weeks in database ({sorted.length})
+          </p>
+          <p className="mb-3 text-xs text-gray [font-family:var(--font-body),sans-serif]">
+            Tap a week to open it in the grid below. Newest first.
+          </p>
+          <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto sm:max-h-none sm:flex-row sm:flex-wrap">
+            {sorted.map((s) => {
+              const active = s.id === selectedId;
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedId(s.id);
+                      setSelectWeekDate(s.weekStart.slice(0, 10));
+                    }}
+                    className={`w-full rounded-md border px-3 py-2 text-left text-sm transition sm:w-auto [font-family:var(--font-body),sans-serif] ${
+                      active
+                        ? "border-sky-blue bg-sky-blue/10 font-semibold text-foreground"
+                        : "border-sand bg-white text-gray hover:bg-sunset-peach/30 hover:text-foreground"
+                    }`}
+                  >
+                    {formatWeekRange(new Date(s.weekStart), { includeYear: true })}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col gap-4 rounded-lg border border-sand bg-white/90 p-4 shadow-[0_1px_2px_rgba(120,130,135,0.06)] md:flex-row md:flex-wrap md:items-start md:gap-3">
+        <label className="flex min-w-[min(100%,18rem)] flex-1 flex-col gap-1 text-sm font-medium text-gray [font-family:var(--font-body),sans-serif]">
+          Select week
+          <span className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={selectWeekDate}
+              onChange={(e) => setSelectWeekDate(e.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-sand bg-white px-3 py-2 text-sm text-foreground focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue [font-family:var(--font-body),sans-serif]"
+            />
+            <button
+              type="button"
+              onClick={() => void applySelectWeek()}
+              disabled={!selectWeekDate || creating}
+              className={toolbarBtnClass}
+            >
+              Go
+            </button>
+          </span>
+          <span className="text-xs font-normal text-gray/90">
+            Any date in the week works; we snap to the same Monday the app stores for that week.
+          </span>
+        </label>
       </div>
 
-      {schedules.map((schedule) => (
-        <div
-          key={schedule.id}
-          className="overflow-hidden rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900"
-        >
-          <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-700">
-            <h2 className="font-semibold">{formatWeekRange(new Date(schedule.weekStart), { includeYear: true })}</h2>
-            <button
-              onClick={() => duplicateSchedule(schedule.id)}
-              disabled={duplicating === schedule.id}
-              className="text-sm text-amber-600 hover:underline disabled:opacity-50"
-            >
-              {duplicating === schedule.id ? "Duplicating..." : "Duplicate"}
-            </button>
+      {sorted.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-sand bg-app-surface/80 p-8 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
+          No schedules yet. Choose a week above and tap <strong className="font-semibold text-foreground">Go</strong>{" "}
+          to create the first one.
+        </p>
+      ) : selected ? (
+        <div className="space-y-8 md:space-y-10">
+          <div>
+            <div className="mb-2 flex flex-row items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-1">
+                <CalendarWeekIcon className="h-[15px] w-[15px] shrink-0 text-gray" />
+                <p className="min-w-0 truncate text-base font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
+                  {formatWeekRange(new Date(selected.weekStart))}
+                </p>
+              </div>
+              <p className="shrink-0 text-sm font-semibold uppercase tracking-[0.04em] text-sky-blue [font-family:var(--font-body),sans-serif]">
+                0/7 complete
+              </p>
+            </div>
+            <div className="h-px bg-[rgba(232,228,212,0.9)]" aria-hidden />
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 dark:border-stone-700">
-                  <th className="px-4 py-2 text-left">Day</th>
-                  <th className="px-4 py-2 text-left">Prayer</th>
-                  <th className="px-4 py-2 text-left">Movement</th>
-                  <th className="px-4 py-2 text-left">Affirmation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {schedule.days.map((day) => (
-                  <tr
-                    key={day.id}
-                    className="border-b border-stone-100 dark:border-stone-800"
-                  >
-                    <td className="px-4 py-2 font-medium">
-                      {DAY_NAMES[day.dayIndex]}
-                    </td>
-                    <td className="px-4 py-2">
-                      <select
-                        value={day.prayerId ?? ""}
-                        onChange={(e) =>
-                          updateDay(schedule.id, day.dayIndex, {
-                            prayerId: e.target.value || "",
-                            prayerTitle:
-                              prayers.find((p) => p.id === e.target.value)
-                                ?.title ?? "",
-                          })
-                        }
-                        className="rounded border border-stone-300 px-2 py-1 dark:bg-stone-800 dark:border-stone-600"
-                      >
-                        <option value="">—</option>
-                        {prayers.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.title}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-2">
-                      <select
-                        value={day.workoutId ?? ""}
-                        onChange={(e) =>
-                          updateDay(schedule.id, day.dayIndex, {
-                            workoutId: e.target.value || "",
-                            workoutTitle:
-                              workouts.find((w) => w.id === e.target.value)
-                                ?.title ?? "",
-                          })
-                        }
-                        className="rounded border border-stone-300 px-2 py-1 dark:bg-stone-800 dark:border-stone-600"
-                      >
-                        <option value="">—</option>
-                        {workouts.map((w) => (
-                          <option key={w.id} value={w.id}>
-                            {w.title}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        value={day.affirmationText ?? ""}
-                        onChange={(e) =>
-                          updateDay(schedule.id, day.dayIndex, {
-                            affirmationText: e.target.value,
-                          })
-                        }
-                        placeholder="Affirmation..."
-                        className="w-full max-w-xs rounded border border-stone-300 px-2 py-1 dark:bg-stone-800 dark:border-stone-600"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+            {selected.days.map((day) => (
+              <ScheduleDayCard
+                key={day.id}
+                day={{
+                  id: day.id,
+                  dayIndex: day.dayIndex,
+                  prayerTitle: day.prayerTitle,
+                  workoutTitle: day.workoutTitle,
+                  affirmationText: day.affirmationText,
+                  prayerId: day.prayerId,
+                  workoutId: day.workoutId,
+                  dayImageUrl: day.dayImageUrl,
+                  dayVideoUrl: day.dayVideoUrl,
+                  daySubtext: day.daySubtext,
+                  completion: null,
+                }}
+                isToday={false}
+                isLocked={false}
+                cmsMode
+                onEditCard={() =>
+                  setEditDay({
+                    scheduleId: selected.id,
+                    id: day.id,
+                    dayIndex: day.dayIndex,
+                    prayerTitle: day.prayerTitle,
+                    prayerId: day.prayerId,
+                    workoutTitle: day.workoutTitle,
+                    workoutId: day.workoutId,
+                    affirmationText: day.affirmationText,
+                    dayImageUrl: day.dayImageUrl,
+                    dayVideoUrl: day.dayVideoUrl,
+                    daySubtext: day.daySubtext,
+                  })
+                }
+              />
+            ))}
+            <div className="col-span-2 flex justify-center sm:col-span-2 lg:col-span-1 lg:col-start-2">
+              <div className="w-full sm:max-w-[calc((100%-1rem)/2)] lg:max-w-none">
+                <ScheduleSabbathTile isToday={false} />
+              </div>
+            </div>
           </div>
         </div>
-      ))}
+      ) : null}
 
-      {schedules.length === 0 && (
-        <p className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-stone-600 dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-400">
-          No schedules yet. Click &quot;Create New Week&quot; to add one.
-        </p>
-      )}
+      <ScheduleDayEditModal
+        open={editDay != null}
+        onClose={() => setEditDay(null)}
+        day={editDay}
+        workouts={workouts}
+        prayers={prayers}
+      />
     </div>
   );
 }

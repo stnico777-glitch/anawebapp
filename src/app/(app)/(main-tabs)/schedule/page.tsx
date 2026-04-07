@@ -2,8 +2,9 @@ import CalendarWeekIcon from "@/components/CalendarWeekIcon";
 import ScheduleDayCard from "@/components/ScheduleDayCard";
 import ScheduleSabbathTile from "@/components/ScheduleSabbathTile";
 import DailyVerseScheduleCard from "@/components/DailyVerseScheduleCard";
+import ScheduleWeekRealtime from "@/app/(app)/(main-tabs)/schedule/ScheduleWeekRealtime";
 import { getDailyVerseForDateInput } from "@/lib/daily-verse";
-import { getCurrentWeekSchedule, getMonday, formatWeekRange } from "@/lib/schedule";
+import { getCurrentWeekSchedule, formatWeekRange } from "@/lib/schedule";
 import { getSessionForApp } from "@/lib/auth";
 import { getDemoDailyVerse, getDemoWeekSchedule } from "@/lib/demo-preview-data";
 
@@ -45,7 +46,7 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
   const schedule =
     (await getCurrentWeekSchedule(userId)) ?? getDemoWeekSchedule();
 
-  const weekStart = getMonday(new Date());
+  const weekStart = new Date(schedule.weekStart);
   const todayDayIndex = getTodayDayIndex();
   const overallDone = schedule.days.reduce(
     (acc, d) => {
@@ -60,6 +61,7 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
 
   return (
     <div className="space-y-8 pb-12 md:space-y-10 md:pb-16">
+      <ScheduleWeekRealtime weekScheduleId={schedule.id} />
       {/* Parity: ScheduleScreen scheduleMetaRow + scheduleDivider (awake-align mobile) */}
       <div>
         <div className="mb-2 flex flex-row items-center justify-between gap-2">
@@ -88,6 +90,9 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
               affirmationText: day.affirmationText,
               prayerId: day.prayerId ?? null,
               workoutId: day.workoutId ?? null,
+              dayImageUrl: day.dayImageUrl ?? null,
+              dayVideoUrl: day.dayVideoUrl ?? null,
+              daySubtext: day.daySubtext ?? null,
               completion: day.completion
                 ? {
                     prayerDone: day.completion.prayerDone,

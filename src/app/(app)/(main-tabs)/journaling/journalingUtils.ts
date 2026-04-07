@@ -1,12 +1,18 @@
 import { PRESET_CATEGORY_SLUGS, STATUS_NAV, slugToLabel } from "@/constants/prayerJournalNav";
 
-export function parseArr(raw: string): string[] {
-  try {
-    const v = JSON.parse(raw) as unknown;
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
-  } catch {
-    return [];
+export function parseArr(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((x): x is string => typeof x === "string");
   }
+  if (typeof raw === "string") {
+    try {
+      const v = JSON.parse(raw) as unknown;
+      return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }
 
 /** First preset slug found in tags, else first valid slug-like tag. */

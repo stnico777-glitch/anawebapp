@@ -1,60 +1,201 @@
 import "dotenv/config";
-import path from "path";
+import { createClient } from "@supabase/supabase-js";
 import { PrayerRequestInteractionKind, PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { hash } from "bcryptjs";
-import { getMonday } from "../src/lib/schedule";
-import { DAY_NAMES, WORKOUT_SPLIT } from "../src/constants/schedule";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+import { addDaysUtc, utcMondayMidnightForInstant } from "../src/lib/weekScheduleCalendar";
+import { dedupeWeekSchedulesByWeekStart } from "../src/lib/schedule";
+import { getDefaultScheduleDaysForSeed } from "../src/lib/schedule-default-week";
 import { AUDIO_LIBRARY_SEED_COVER_BY_TITLE } from "../src/constants/audioLibraryCovers";
 import { toEntryDate } from "../src/lib/journal";
 import { ensureWelcomePrayerJournalEntries } from "../src/lib/welcome-prayer-journal";
+import {
+  DEFAULT_AUDIO_COLLECTION_CARDS,
+  DEFAULT_AUDIO_ESSENTIAL_TILES,
+  DEFAULT_MUSIC_SPOTLIGHT_ALBUMS,
+} from "../src/lib/audio-layout-defaults";
+import { ensureMovementLayoutSeeded } from "../src/lib/movement-layout";
 
-const url =
-  process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), "prisma", "dev.db")}`;
-const dbPath = url.startsWith("file:") ? path.resolve(url.replace("file:", "")) : path.resolve(url);
-const adapter = new PrismaBetterSqlite3({ url: dbPath });
-const prisma = new PrismaClient({ adapter });
+const databaseUrl = process.env.DATABASE_URL?.trim();
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is required for db:seed (Supabase Postgres connection string).");
+}
+const pool = new Pool({ connectionString: databaseUrl });
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
-async function main() {
-  const passwordHash = await hash("password123", 12);
-  const user = await prisma.user.upsert({
-    where: { email: "demo@awakealign.com" },
-    update: { isAdmin: true },
-      create: {
-        email: "demo@awakealign.com",
-        name: "Demo User",
-        passwordHash,
-        isSubscriber: true,
-        isAdmin: true,
-      },
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+async function upsertAuthProfile(options: {
+  email: string;
+  password: string;
+  displayName: string;
+  isAdmin?: boolean;
+  isSubscriber?: boolean;
+}): Promise<string> {
+  if (!supabaseUrl || !serviceRole) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required to create seed users in auth.users.",
+    );
+  }
+  const admin = createClient(supabaseUrl, serviceRole, {
+    auth: { autoRefreshToken: false, persistSession: false },
   });
+  const perPage = 200;
+  let page = 1;
+  let existing: { id: string } | undefined;
+  for (;;) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data.users ?? [];
+    existing = users.find((u) => u.email?.toLowerCase() === options.email.toLowerCase());
+    if (existing || users.length < perPage) break;
+    page += 1;
+  }
 
-  const weekStart = getMonday(new Date());
-  weekStart.setHours(0, 0, 0, 0);
-  const nextMonday = new Date(weekStart);
-  nextMonday.setDate(nextMonday.getDate() + 7);
-  const dayNames = [...DAY_NAMES];
-  const workoutTypes = ["Strength", "Cardio", "Yoga", "HIIT", "Restorative", "Full Body"];
+  let userId: string;
+  if (existing) {
+    userId = existing.id;
+    const { error } = await admin.auth.admin.updateUserById(userId, {
+      password: options.password,
+      user_metadata: { full_name: options.displayName, name: options.displayName },
+    });
+    if (error) throw error;
+  } else {
+    const { data, error } = await admin.auth.admin.createUser({
+      email: options.email,
+      password: options.password,
+      email_confirm: true,
+      user_metadata: { full_name: options.displayName, name: options.displayName },
+    });
+    if (error || !data.user) throw error ?? new Error("auth.admin.createUser failed");
+    userId = data.user.id;
+  }
 
-  const existingThisWeek = await prisma.weekSchedule.findFirst({
-    where: {
-      weekStart: { gte: weekStart, lt: nextMonday },
+  await prisma.profile.update({
+    where: { id: userId },
+    data: {
+      displayName: options.displayName,
+      isAdmin: options.isAdmin ?? false,
+      isSubscriber: options.isSubscriber ?? false,
     },
   });
-  if (!existingThisWeek) {
-    await prisma.weekSchedule.create({
-      data: {
-        weekStart,
-        days: {
-          create: dayNames.map((name, i) => ({
-            dayIndex: i,
-            prayerTitle: `Morning Prayer – ${name}`,
-            workoutTitle: WORKOUT_SPLIT[i],
-            affirmationText: `"I am strong in body and spirit." – Day ${i + 1}`,
-          })),
-        },
-      },
+
+  return userId;
+}
+
+async function profileIdForEmail(email: string): Promise<string | null> {
+  if (!supabaseUrl || !serviceRole) return null;
+  const admin = createClient(supabaseUrl, serviceRole, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const perPage = 200;
+  let page = 1;
+  for (;;) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) return null;
+    const users = data.users ?? [];
+    const hit = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    if (hit) return hit.id;
+    if (users.length < perPage) return null;
+    page += 1;
+  }
+}
+
+async function seedAudioTabLayout() {
+  const nC = await prisma.audioCollectionCard.count();
+  if (nC === 0) {
+    await prisma.audioCollectionCard.createMany({
+      data: DEFAULT_AUDIO_COLLECTION_CARDS.map((row, i) => ({
+        title: row.title,
+        metaLine: row.metaLine,
+        imageUrl: row.imageUrl,
+        summary: row.summary,
+        linkHref: row.linkHref,
+        sortOrder: i,
+      })),
     });
+  }
+  const nE = await prisma.audioEssentialTile.count();
+  if (nE === 0) {
+    await prisma.audioEssentialTile.createMany({
+      data: DEFAULT_AUDIO_ESSENTIAL_TILES.map((row, i) => ({
+        title: row.title,
+        subtitle: row.subtitle,
+        imageUrl: row.imageUrl,
+        linkHref: row.linkHref,
+        sortOrder: i,
+      })),
+    });
+  }
+  const nS = await prisma.musicSpotlightEntry.count();
+  if (nS === 0) {
+    await prisma.musicSpotlightEntry.createMany({
+      data: DEFAULT_MUSIC_SPOTLIGHT_ALBUMS.map((row, i) => ({
+        title: row.title,
+        artist: row.artist,
+        coverUrl: row.coverUrl,
+        listenUrl: row.listenUrl,
+        sortOrder: i,
+      })),
+    });
+  }
+}
+
+async function main() {
+  /** First: week rows (Prisma only) so CMS has data even if Supabase Auth seed fails. */
+  const thisMonday = utcMondayMidnightForInstant(new Date());
+  const defaultDays = getDefaultScheduleDaysForSeed().map((d) => ({
+    dayIndex: d.dayIndex,
+    prayerTitle: d.prayerTitle,
+    workoutTitle: d.workoutTitle,
+    affirmationText: d.affirmationText,
+    dayImageUrl: d.dayImageUrl,
+    dayVideoUrl: d.dayVideoUrl,
+    daySubtext: d.daySubtext,
+  }));
+  for (let offset = -4; offset <= 4; offset++) {
+    const weekStart = addDaysUtc(thisMonday, offset * 7);
+    const nextMonday = addDaysUtc(weekStart, 7);
+    const existingWeek = await prisma.weekSchedule.findFirst({
+      where: { weekStart: { gte: weekStart, lt: nextMonday } },
+    });
+    if (!existingWeek) {
+      await prisma.weekSchedule.create({
+        data: {
+          weekStart,
+          days: { create: defaultDays },
+        },
+      });
+    }
+  }
+
+  const masterEmail =
+    process.env.MASTER_ACCOUNT_EMAIL ?? "master@awakealign.com";
+  const masterPasswordPlain =
+    process.env.MASTER_ACCOUNT_PASSWORD ?? "AwakeAlignMaster!2026";
+
+  let demoUserId: string | null = null;
+  try {
+    demoUserId = await upsertAuthProfile({
+      email: "demo@awakealign.com",
+      password: "password123",
+      displayName: "Demo User",
+      isAdmin: true,
+      isSubscriber: true,
+    });
+    await upsertAuthProfile({
+      email: masterEmail,
+      password: masterPasswordPlain,
+      displayName: "Master CMS",
+      isAdmin: true,
+      isSubscriber: true,
+    });
+  } catch (e) {
+    console.warn(
+      "[seed] Supabase Auth user creation failed (schedules still seeded). Fix Auth in dashboard or run again.",
+      e,
+    );
   }
 
   const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
@@ -366,22 +507,38 @@ async function main() {
   }
 
   /** Standard welcome prayers (`team-welcome` tag); idempotent. Optional `SEED_PRAYER_JOURNAL_EMAIL` targets another user. */
-  let journalUserId = user.id;
-  const journalEmailOverride = process.env.SEED_PRAYER_JOURNAL_EMAIL?.trim();
-  if (journalEmailOverride) {
-    const uj = await prisma.user.findUnique({ where: { email: journalEmailOverride } });
-    if (uj) journalUserId = uj.id;
-    else
-      console.warn(
-        `[seed] SEED_PRAYER_JOURNAL_EMAIL=${journalEmailOverride} not found — welcome journal on demo user`,
-      );
+  if (demoUserId) {
+    let journalUserId = demoUserId;
+    const journalEmailOverride = process.env.SEED_PRAYER_JOURNAL_EMAIL?.trim();
+    if (journalEmailOverride) {
+      const jid = await profileIdForEmail(journalEmailOverride);
+      if (jid) journalUserId = jid;
+      else
+        console.warn(
+          `[seed] SEED_PRAYER_JOURNAL_EMAIL=${journalEmailOverride} not found — welcome journal on demo user`,
+        );
+    }
+    await ensureWelcomePrayerJournalEntries(journalUserId, prisma);
+  } else {
+    console.warn("[seed] Skipped welcome journal entries (no demo user id).");
   }
-  await ensureWelcomePrayerJournalEntries(journalUserId, prisma);
+
+  await seedAudioTabLayout();
+  await ensureMovementLayoutSeeded();
+
+  const removedDupSchedules = await dedupeWeekSchedulesByWeekStart(prisma);
+  if (removedDupSchedules > 0) {
+    console.log(
+      `[seed] Removed ${removedDupSchedules} duplicate week schedule(s) (same Monday anchor; kept oldest).`,
+    );
+  }
 
   console.log(
-    "Seed complete. Demo user:",
-    user.email,
-        "| Schedule, movement, prayers, daily verses, community posts, welcome journal entries ensured",
+    "Seed complete.",
+    demoUserId
+      ? `Auth: demo@awakealign.com | Master: ${masterEmail}`
+      : "Auth users skipped (see warning above).",
+    "| Weeks (±4), movement, prayers, daily verses, community ensured",
   );
 }
 
@@ -392,4 +549,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });

@@ -12,7 +12,16 @@ export const PATCH = withAdmin<
   }
 
   const body = await request.json();
-  const { prayerTitle, prayerId, workoutTitle, workoutId, affirmationText } = body;
+  const {
+    prayerTitle,
+    prayerId,
+    workoutTitle,
+    workoutId,
+    affirmationText,
+    dayImageUrl,
+    dayVideoUrl,
+    daySubtext,
+  } = body;
 
   const day = await prisma.scheduleDay.findUnique({
     where: { weekScheduleId_dayIndex: { weekScheduleId: id, dayIndex: idx } },
@@ -25,10 +34,19 @@ export const PATCH = withAdmin<
     where: { id: day.id },
     data: {
       ...(prayerTitle != null && { prayerTitle }),
-      ...(prayerId != null && { prayerId }),
+      ...(prayerId !== undefined && { prayerId: prayerId || null }),
       ...(workoutTitle != null && { workoutTitle }),
-      ...(workoutId != null && { workoutId }),
+      ...(workoutId !== undefined && { workoutId: workoutId || null }),
       ...(affirmationText != null && { affirmationText }),
+      ...(dayImageUrl !== undefined && {
+        dayImageUrl: dayImageUrl === "" ? null : dayImageUrl,
+      }),
+      ...(dayVideoUrl !== undefined && {
+        dayVideoUrl: dayVideoUrl === "" ? null : dayVideoUrl,
+      }),
+      ...(daySubtext !== undefined && {
+        daySubtext: daySubtext === "" ? null : daySubtext,
+      }),
     },
   });
 

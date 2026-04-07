@@ -1,8 +1,20 @@
 import { withAdmin } from "@/lib/admin";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getMonday } from "@/lib/schedule";
-import { DAY_NAMES, WORKOUT_SPLIT } from "@/constants/schedule";
+import {
+  addDaysUtc,
+  utcDateInputStringForInstant,
+  utcMondayMidnightForInstant,
+  weekStartMondayUtcFromDateInput,
+} from "@/lib/weekScheduleCalendar";
+import { getDefaultScheduleDaysForSeed } from "@/lib/schedule-default-week";
+
+async function findWeekScheduleClashing(weekStartMondayUtc: Date) {
+  const next = addDaysUtc(weekStartMondayUtc, 7);
+  return prisma.weekSchedule.findFirst({
+    where: { weekStart: { gte: weekStartMondayUtc, lt: next } },
+  });
+}
 
 export const GET = withAdmin(async () => {
   const schedules = await prisma.weekSchedule.findMany({
@@ -25,8 +37,18 @@ export const POST = withAdmin(async (_, request) => {
       return NextResponse.json({ error: "Source schedule not found" }, { status: 404 });
     }
     const newWeekStart = weekStart
-      ? getMonday(new Date(weekStart))
-      : getMonday(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
+      ? weekStartMondayUtcFromDateInput(weekStart)
+      : addDaysUtc(utcMondayMidnightForInstant(new Date()), 7);
+    const duplicateClash = await findWeekScheduleClashing(newWeekStart);
+    if (duplicateClash) {
+      return NextResponse.json(
+        {
+          error:
+            "A schedule already exists for that week. Pick another week or delete the duplicate first.",
+        },
+        { status: 409 },
+      );
+    }
     const schedule = await prisma.weekSchedule.create({
       data: {
         weekStart: newWeekStart,
@@ -38,6 +60,9 @@ export const POST = withAdmin(async (_, request) => {
             workoutTitle: d.workoutTitle,
             workoutId: d.workoutId,
             affirmationText: d.affirmationText,
+            dayImageUrl: d.dayImageUrl,
+            dayVideoUrl: d.dayVideoUrl,
+            daySubtext: d.daySubtext,
           })),
         },
       },
@@ -46,16 +71,31 @@ export const POST = withAdmin(async (_, request) => {
     return NextResponse.json(schedule);
   }
 
-  const start = weekStart ? getMonday(new Date(weekStart)) : getMonday(new Date());
+  const start = weekStart
+    ? weekStartMondayUtcFromDateInput(weekStart)
+    : weekStartMondayUtcFromDateInput(utcDateInputStringForInstant(new Date()));
+  const blankClash = await findWeekScheduleClashing(start);
+  if (blankClash) {
+    return NextResponse.json(
+      {
+        error:
+          "A schedule already exists for that week. Use Select week and Go to open it, or pick a different week.",
+      },
+      { status: 409 },
+    );
+  }
   const schedule = await prisma.weekSchedule.create({
     data: {
       weekStart: start,
       days: {
-        create: DAY_NAMES.map((name, i) => ({
-          dayIndex: i,
-          prayerTitle: `Morning Prayer – ${name}`,
-          workoutTitle: WORKOUT_SPLIT[i],
-          affirmationText: `"I am strong in body and spirit." – Day ${i + 1}`,
+        create: getDefaultScheduleDaysForSeed().map((d) => ({
+          dayIndex: d.dayIndex,
+          prayerTitle: d.prayerTitle,
+          workoutTitle: d.workoutTitle,
+          affirmationText: d.affirmationText,
+          dayImageUrl: d.dayImageUrl,
+          dayVideoUrl: d.dayVideoUrl,
+          daySubtext: d.daySubtext,
         })),
       },
     },

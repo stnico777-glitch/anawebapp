@@ -20,7 +20,12 @@ export async function GET() {
     const fromDb = new Set<string>();
     for (const row of rows) {
       try {
-        const arr = parseJsonStringArray(row.tags, "tags");
+        const arr =
+          Array.isArray(row.tags) && row.tags.every((x) => typeof x === "string")
+            ? (row.tags as string[])
+            : typeof row.tags === "string"
+              ? parseJsonStringArray(row.tags, "tags")
+              : [];
         for (const raw of arr) {
           const s = raw.trim().toLowerCase();
           if (s && /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length <= 48) fromDb.add(s);

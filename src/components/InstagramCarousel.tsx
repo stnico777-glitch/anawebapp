@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect, type CSSProperties } from "react";
-import Image from "next/image";
+import { useRef, useState, useEffect, type CSSProperties } from "react";
 
 const INSTAGRAM_HANDLE = "awakeandalign_";
 
@@ -79,25 +78,6 @@ function InstagramSunBelowIcon() {
   );
 }
 
-export type CarouselPost = {
-  id: string;
-  imageUrl: string;
-  linkUrl: string;
-  alt: string | null;
-};
-
-/** Fallback when no posts are configured in admin – use existing public assets */
-const PLACEHOLDER_IMAGES = ["/weekly-workouts.png", "/weekly-workouts2.png", "/weekly-workouts3.png"];
-const PLACEHOLDER_POSTS: CarouselPost[] = PLACEHOLDER_IMAGES.flatMap((imageUrl, i) => [
-  { id: `p${i}-1`, imageUrl, linkUrl: `https://instagram.com/${INSTAGRAM_HANDLE}`, alt: "Join the movement" },
-  { id: `p${i}-2`, imageUrl, linkUrl: `https://instagram.com/${INSTAGRAM_HANDLE}`, alt: "Join the movement" },
-]);
-
-/** Limit feed to 1–2 rows to reduce repetition (was 3 rows) */
-const MAX_POSTS = 6;
-
-const SCROLL_AMOUNT = 280;
-
 /** Renders EmbedSocial widget via their script + div (data-ref). */
 function EmbedSocialWidget({ dataRef }: { dataRef: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,32 +95,22 @@ function EmbedSocialWidget({ dataRef }: { dataRef: string }) {
 
   return (
     <div ref={containerRef} className="instagram-embed-inner min-h-[480px] w-full md:min-h-[520px]">
-      <div
-        className="embedsocial-hashtag"
-        data-ref={dataRef}
-      />
+      <div className="embedsocial-hashtag" data-ref={dataRef} />
     </div>
   );
 }
 
 type InstagramCarouselProps = {
-  posts?: CarouselPost[];
-  /** From server: EmbedSocial data-ref. When set, show widget only (no carousel). */
+  /** EmbedSocial data-ref from server env. */
   embedRef?: string | null;
-  /** From server: iframe embed URL. When set, show iframe only (no carousel). */
+  /** Optional iframe embed URL from server env. */
   embedIframeUrl?: string | null;
 };
 
-export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl }: InstagramCarouselProps) {
-  const useWidget = Boolean(embedRef || embedIframeUrl);
-
+export default function InstagramCarousel({ embedRef, embedIframeUrl }: InstagramCarouselProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [headingRevealed, setHeadingRevealed] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-
-  const [livePosts, setLivePosts] = useState<CarouselPost[] | null>(null);
-  const [adminPosts, setAdminPosts] = useState<CarouselPost[] | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -172,156 +142,11 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
     return () => ob.disconnect();
   }, [reduceMotion]);
 
-  useEffect(() => {
-    if (useWidget) return;
-    let cancelled = false;
-    fetch("/api/instagram/feed")
-      .then((r) => r.json())
-      .then((body: { posts?: CarouselPost[] }) => {
-        if (cancelled) return;
-        if (Array.isArray(body.posts) && body.posts.length > 0) {
-          setLivePosts(body.posts);
-          return;
-        }
-        return fetch("/api/carousel").then((r) => r.json());
-      })
-      .then((body?: { posts?: CarouselPost[] }) => {
-        if (cancelled) return;
-        if (body && Array.isArray(body.posts) && body.posts.length > 0) setAdminPosts(body.posts);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [useWidget]);
-
-  const rawPosts =
-    livePosts?.length
-      ? livePosts
-      : adminPosts?.length
-        ? adminPosts
-        : posts?.length
-          ? posts
-          : PLACEHOLDER_POSTS;
-  const displayPosts = rawPosts.slice(0, MAX_POSTS);
-
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef({ x: 0, scrollLeft: 0 });
-
-  const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 2);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 2);
-  }, []);
-
-  const scroll = (direction: "left" | "right") => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const amount = direction === "left" ? -SCROLL_AMOUNT : SCROLL_AMOUNT;
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  };
-
-  const onScroll = () => updateScrollState();
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX, scrollLeft: el.scrollLeft };
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    const dx = e.clientX - dragStart.current.x;
-    el.scrollLeft = dragStart.current.scrollLeft - dx;
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    const el = scrollRef.current;
-    if (el) el.releasePointerCapture(e.pointerId);
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    const run = () => requestAnimationFrame(updateScrollState);
-    run();
-    if (el) el.addEventListener("scroll", run);
-    window.addEventListener("resize", run);
-    return () => {
-      if (el) el.removeEventListener("scroll", run);
-      window.removeEventListener("resize", run);
-    };
-  }, [updateScrollState]);
-
   const igHeadlineClass =
     `text-lg font-normal leading-[1.4] tracking-[0.135em] text-sky-blue [font-synthesis:none] md:text-xl [font-family:var(--font-headline),sans-serif] ${!reduceMotion && !headingRevealed ? "opacity-0" : ""} ${!reduceMotion && headingRevealed ? "instagram-heading-animate" : ""}`;
 
   const igFollowClass =
     `text-sm font-medium text-sky-blue [font-family:var(--font-body),sans-serif] hover:underline ${!reduceMotion && !headingRevealed ? "opacity-0" : ""} ${!reduceMotion && headingRevealed ? "instagram-heading-animate" : ""}`;
-
-  if (useWidget) {
-    return (
-      <section
-        ref={sectionRef}
-        className={INSTAGRAM_SECTION_LAYOUT}
-        aria-labelledby="instagram-carousel-heading"
-      >
-        <div className={INSTAGRAM_INNER_LAYOUT}>
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <h2
-              id="instagram-carousel-heading"
-              className={igHeadlineClass}
-              style={
-                !reduceMotion && headingRevealed
-                  ? ({ "--ig-reveal-delay": `${IG_HEADLINE_DELAY_MS}ms` } as CSSProperties)
-                  : undefined
-              }
-            >
-              <span className="capitalize">Join the movement</span>{" "}
-              <span className="normal-case">@{INSTAGRAM_HANDLE}</span>
-            </h2>
-            <HeadingWaveMarks revealed={headingRevealed} reduceMotion={reduceMotion} />
-          </div>
-          <a
-            href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`mt-2 inline-block ${igFollowClass}`}
-            style={
-              !reduceMotion && headingRevealed
-                ? ({ "--ig-reveal-delay": `${IG_FOLLOW_DELAY_MS}ms` } as CSSProperties)
-                : undefined
-            }
-          >
-            Follow on Instagram →
-          </a>
-          <div className="instagram-embed-mobile-scroll mt-6 overflow-hidden rounded-lg border border-sand bg-background/90 md:overflow-visible">
-            <div className="instagram-embed-scroll-container flex max-h-[420px] overflow-x-auto overflow-y-hidden px-[calc((100vw-280px)/2)] -mx-4 md:mx-0 md:px-0 md:max-h-none md:overflow-visible md:block scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              {embedIframeUrl ? (
-                <iframe
-                  src={embedIframeUrl}
-                  title="Instagram feed"
-                  className="h-[420px] min-w-full shrink-0 border-0 md:h-[520px] md:min-w-0"
-                  loading="lazy"
-                />
-              ) : embedRef ? (
-                <EmbedSocialWidget dataRef={embedRef} />
-              ) : null}
-            </div>
-          </div>
-          <InstagramSunBelowIcon />
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section
@@ -330,67 +155,26 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
       aria-labelledby="instagram-carousel-heading"
     >
       <div className={INSTAGRAM_INNER_LAYOUT}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
-            <h2
-              id="instagram-carousel-heading"
-              className={`min-w-0 ${igHeadlineClass}`}
-              style={
-                !reduceMotion && headingRevealed
-                  ? ({ "--ig-reveal-delay": `${IG_HEADLINE_DELAY_MS}ms` } as CSSProperties)
-                  : undefined
-              }
-            >
-              <span className="capitalize">Join the movement</span>{" "}
-              <span className="normal-case">@{INSTAGRAM_HANDLE}</span>
-            </h2>
-            <HeadingWaveMarks revealed={headingRevealed} reduceMotion={reduceMotion} />
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <div className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => scroll("left")}
-                disabled={!canScrollLeft}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-blue/60 bg-white text-sky-blue transition hover:border-sky-blue hover:bg-light-yellow/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-none"
-                aria-label="Scroll carousel left"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={() => scroll("right")}
-                disabled={!canScrollRight}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-sky-blue/60 bg-white text-sky-blue transition hover:border-sky-blue hover:bg-light-yellow/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 disabled:opacity-40 disabled:pointer-events-none"
-                aria-label="Scroll carousel right"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-            <a
-              href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`hidden sm:inline ${igFollowClass}`}
-              style={
-                !reduceMotion && headingRevealed
-                  ? ({ "--ig-reveal-delay": `${IG_FOLLOW_DELAY_MS}ms` } as CSSProperties)
-                  : undefined
-              }
-            >
-              Follow on Instagram
-            </a>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <h2
+            id="instagram-carousel-heading"
+            className={igHeadlineClass}
+            style={
+              !reduceMotion && headingRevealed
+                ? ({ "--ig-reveal-delay": `${IG_HEADLINE_DELAY_MS}ms` } as CSSProperties)
+                : undefined
+            }
+          >
+            <span className="capitalize">Join the movement</span>{" "}
+            <span className="normal-case">@{INSTAGRAM_HANDLE}</span>
+          </h2>
+          <HeadingWaveMarks revealed={headingRevealed} reduceMotion={reduceMotion} />
         </div>
         <a
           href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`mt-3 inline-flex sm:hidden ${igFollowClass}`}
+          className={`mt-2 inline-block ${igFollowClass}`}
           style={
             !reduceMotion && headingRevealed
               ? ({ "--ig-reveal-delay": `${IG_FOLLOW_DELAY_MS}ms` } as CSSProperties)
@@ -399,52 +183,19 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
         >
           Follow on Instagram →
         </a>
-        <div
-          ref={scrollRef}
-          onScroll={onScroll}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
-          className="mt-6 flex gap-4 overflow-x-auto scroll-smooth py-2 scrollbar-hide touch-pan-x"
-          style={{
-            scrollbarWidth: "none",
-            WebkitOverflowScrolling: "touch",
-            cursor: isDragging ? "grabbing" : "grab",
-          }}
-          role="list"
-          aria-label="Instagram posts"
-        >
-          {displayPosts.map((post) => (
-            <a
-              key={post.id}
-              href={post.linkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => isDragging && e.preventDefault()}
-              className={`relative flex h-72 w-52 shrink-0 overflow-hidden rounded-lg bg-sand ring-1 ring-sand transition hover:ring-accent-amber/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 ${isDragging ? "pointer-events-none" : ""}`}
-              role="listitem"
-            >
-              {post.imageUrl.startsWith("http") ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={post.imageUrl}
-                  alt={post.alt || "Instagram post"}
-                  className="h-full w-full object-cover select-none"
-                  draggable={false}
-                />
-              ) : (
-                <Image
-                  src={post.imageUrl}
-                  alt={post.alt || "Instagram post"}
-                  fill
-                  sizes="208px"
-                  className="object-cover select-none"
-                  draggable={false}
-                />
-              )}
-            </a>
-          ))}
+        <div className="instagram-embed-mobile-scroll mt-6 overflow-hidden rounded-lg border border-sand bg-background/90 md:overflow-visible">
+          <div className="instagram-embed-scroll-container flex max-h-[420px] overflow-x-auto overflow-y-hidden px-[calc((100vw-280px)/2)] -mx-4 md:mx-0 md:px-0 md:max-h-none md:overflow-visible md:block scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {embedIframeUrl ? (
+              <iframe
+                src={embedIframeUrl}
+                title="Instagram feed"
+                className="h-[420px] min-w-full shrink-0 border-0 md:h-[520px] md:min-w-0"
+                loading="lazy"
+              />
+            ) : embedRef ? (
+              <EmbedSocialWidget dataRef={embedRef} />
+            ) : null}
+          </div>
         </div>
         <InstagramSunBelowIcon />
       </div>

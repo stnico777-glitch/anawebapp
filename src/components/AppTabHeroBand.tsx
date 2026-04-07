@@ -5,6 +5,7 @@ import HeroBrandOverlay from "@/components/HeroBrandOverlay";
 import HeroVideo from "@/components/HeroVideo";
 
 function ariaLabelForPath(pathname: string): string {
+  if (pathname.startsWith("/admin")) return "CMS — edit content";
   if (pathname.startsWith("/movement")) return "Movement";
   if (pathname.startsWith("/prayer")) return "Audio";
   if (pathname.startsWith("/journaling")) return "Prayer journal";

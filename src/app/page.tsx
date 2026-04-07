@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
 import { getCurrentWeekSchedule } from "@/lib/schedule";
-import { getDemoWeekSchedule, DEMO_CAROUSEL_POSTS } from "@/lib/demo-preview-data";
+import { getDemoWeekSchedule } from "@/lib/demo-preview-data";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSection from "@/components/HeroSection";
 import TrialBanner from "@/components/TrialBanner";
@@ -16,26 +15,10 @@ import { getInstagramEmbedConfig } from "@/lib/instagram-embed";
 
 export const dynamic = "force-dynamic";
 
-async function getCarouselPosts() {
-  try {
-    const posts = await prisma.carouselPost.findMany({
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-      select: { id: true, imageUrl: true, linkUrl: true, alt: true },
-    });
-    return posts;
-  } catch {
-    return [];
-  }
-}
-
 async function HomeContent() {
   const session = await auth();
-  const [scheduleRaw, carouselRaw] = await Promise.all([
-    getCurrentWeekSchedule(),
-    getCarouselPosts(),
-  ]);
+  const scheduleRaw = await getCurrentWeekSchedule();
   const schedule = scheduleRaw ?? getDemoWeekSchedule();
-  const carouselPosts = carouselRaw.length > 0 ? carouselRaw : DEMO_CAROUSEL_POSTS;
   const isSignedIn = !!session?.user;
 
   return (
@@ -53,10 +36,7 @@ async function HomeContent() {
           <FeaturesSection showLockIcon={!isSignedIn} />
           <AboutBrandSection />
           <section className="mb-16 overflow-visible md:mb-20">
-            <InstagramCarousel
-              posts={carouselPosts}
-              {...getInstagramEmbedConfig()}
-            />
+            <InstagramCarousel {...getInstagramEmbedConfig()} />
           </section>
           <Footer bleedBackground />
         </div>

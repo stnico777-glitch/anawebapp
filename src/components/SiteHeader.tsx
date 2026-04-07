@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { tryCreateSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   APP_PRIMARY_NAV,
   PRIMARY_NAV,
@@ -22,10 +22,61 @@ function pathMatchesNav(pathname: string, href: string): boolean {
   return false;
 }
 
+type NavItem = { readonly href: string; readonly label: string };
+
 export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const navItems = variant === "app" ? APP_PRIMARY_NAV : PRIMARY_NAV;
+  const router = useRouter();
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (variant !== "app") return;
+    const client = tryCreateSupabaseBrowserClient();
+    if (!client) return;
+    let cancelled = false;
+
+    async function syncSession(sb: NonNullable<ReturnType<typeof tryCreateSupabaseBrowserClient>>) {
+      const {
+        data: { user },
+      } = await sb.auth.getUser();
+      if (cancelled) return;
+      if (!user) {
+        setSessionEmail(null);
+        setIsAdmin(false);
+        return;
+      }
+      const { data: profile } = await sb
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setSessionEmail(user.email ?? null);
+        setIsAdmin(profile?.is_admin ?? false);
+      }
+    }
+
+    void syncSession(client);
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange(() => {
+      void syncSession(client);
+      router.refresh();
+    });
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [variant, router]);
+
+  const baseAppNav: readonly NavItem[] = APP_PRIMARY_NAV;
+  const navItems: readonly NavItem[] =
+    variant === "app" && isAdmin
+      ? [...baseAppNav, { href: "/admin", label: "CMS" }]
+      : variant === "app"
+        ? baseAppNav
+        : PRIMARY_NAV;
   const logoHref = variant === "app" ? "/schedule" : "/";
 
   const [marketingScrolled, setMarketingScrolled] = useState(false);
@@ -125,15 +176,16 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
               ))}
               {variant === "app" ? (
                 <>
-                  {session?.user?.isAdmin ? (
-                    <Link href="/admin" className={PRIMARY_NAV_LINK_CLASS_MOBILE}>
-                      Admin
-                    </Link>
-                  ) : null}
                   <button
                     type="button"
                     className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
-                    onClick={() => signOut({ callbackUrl: "/" })}
+                    onClick={async () => {
+                      const supabase = tryCreateSupabaseBrowserClient();
+                      if (!supabase) return;
+                      await supabase.auth.signOut();
+                      router.push("/");
+                      router.refresh();
+                    }}
                   >
                     Sign out
                   </button>
@@ -169,22 +221,20 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
             </>
           ) : (
             <>
-              {session?.user?.isAdmin ? (
-                <Link
-                  href="/admin"
-                  className="hidden text-xs font-medium uppercase tracking-wider text-gray transition hover:opacity-80 sm:inline"
-                >
-                  Admin
-                </Link>
-              ) : null}
-              {session?.user?.email ? (
+              {sessionEmail ? (
                 <span className="hidden max-w-[10rem] truncate text-xs text-gray [font-family:var(--font-body),sans-serif] md:inline lg:max-w-[14rem]">
-                  {session.user.email}
+                  {sessionEmail}
                 </span>
               ) : null}
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={async () => {
+                  const supabase = tryCreateSupabaseBrowserClient();
+                  if (!supabase) return;
+                  await supabase.auth.signOut();
+                  router.push("/");
+                  router.refresh();
+                }}
                 className="rounded-sm border border-sand px-3 py-2 text-xs font-medium uppercase tracking-wider text-gray transition hover:bg-background hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
               >
                 Sign out

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import DailyVerseForm from "./DailyVerseForm";
 import { formatEntryDate } from "@/lib/journal";
@@ -11,42 +10,39 @@ export default async function AdminDailyVersePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <Link
-            href="/admin"
-            className="text-sm font-medium text-sky-blue hover:underline dark:text-sky-blue"
-          >
-            ← CMS Admin
-          </Link>
-          <h1 className="mt-1 text-2xl font-bold text-stone-900 dark:text-stone-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl [font-family:var(--font-headline),sans-serif]">
             Daily verses
           </h1>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-            One row per calendar day (UTC). Shown on the schedule and via{" "}
-            <code className="rounded bg-stone-100 px-1 dark:bg-stone-800">/api/daily-verse</code>.
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray">
+            One row per calendar day. Shown on the schedule and via{" "}
+            <code className="rounded border border-sand bg-white px-1.5 py-0.5 text-xs text-foreground">
+              /api/daily-verse
+            </code>
+            .
           </p>
         </div>
         <DailyVerseForm />
-      </div>
-      <div className="mt-6 space-y-3">
+      </header>
+      <div className="space-y-3">
         {verses.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-stone-300 bg-stone-50 p-8 text-center text-stone-500 dark:border-stone-600 dark:bg-stone-800/50 dark:text-stone-400">
+          <p className="rounded-lg border border-dashed border-sand bg-white/80 p-8 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
             No verses yet. Seed the database or add dates here.
           </p>
         ) : (
           verses.map((v) => (
             <div
               key={v.id}
-              className="rounded-lg border border-stone-200 bg-white px-4 py-3 dark:border-stone-700 dark:bg-stone-900"
+              className="rounded-lg border border-sand bg-white px-4 py-3 shadow-[0_1px_2px_rgba(120,130,135,0.06)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-medium text-stone-900 dark:text-stone-100">
+                  <p className="font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
                     {formatEntryDate(v.verseDate)} · {v.reference}
                     {v.translation ? ` (${v.translation})` : ""}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-sm text-stone-600 dark:text-stone-400">
+                  <p className="mt-1 line-clamp-2 text-sm text-gray [font-family:var(--font-body),sans-serif]">
                     {v.text}
                   </p>
                 </div>

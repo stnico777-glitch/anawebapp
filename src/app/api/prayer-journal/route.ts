@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
-import { tagsToJson, photosToJson, parseStatus, parseTagFilter } from "@/lib/prayer-journal";
+import { Prisma } from "@prisma/client";
+import { parseStatus, parseTagFilter } from "@/lib/prayer-journal";
 import { ensureWelcomePrayerJournalEntries } from "@/lib/welcome-prayer-journal";
 import { getDemoPrayerJournalApiRows } from "@/lib/demo-prayer-journal-api";
 
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
       where: {
         userId: user.id,
         ...(status ? { status } : {}),
-        ...(tag ? { tags: { contains: `"${tag}"` } } : {}),
+        ...(tag ? { tags: { string_contains: `"${tag}"` } } : {}),
       },
       orderBy: { createdAt: "desc" },
       take,
@@ -73,8 +74,8 @@ export async function POST(request: Request) {
       userId: user.id,
       title: title ?? null,
       content,
-      tags: tagsToJson(tags ?? []),
-      photos: photosToJson(photos ?? []),
+      tags: (tags ?? []) as Prisma.InputJsonValue,
+      photos: (photos ?? []) as Prisma.InputJsonValue,
       status: resolvedStatus,
       answeredAt: resolvedStatus === PrayerJournalStatus.ANSWERED ? new Date() : null,
       answerNote:

@@ -1,7 +1,6 @@
-import { type PrismaClient, PrayerJournalStatus } from "@prisma/client";
+import { type PrismaClient, Prisma, PrayerJournalStatus } from "@prisma/client";
 import { TEAM_WELCOME_TAG } from "@/constants/teamWelcomeJournal";
 import { prisma } from "@/lib/prisma";
-import { photosToJson, tagsToJson } from "@/lib/prayer-journal";
 
 const SIGN_OFF = `— The Awake & Align team (your movement family)`;
 
@@ -78,7 +77,7 @@ export async function ensureWelcomePrayerJournalEntries(
   const existing = await db.prayerJournalEntry.findFirst({
     where: {
       userId,
-      tags: { contains: `"${TEAM_WELCOME_TAG}"` },
+      title: WELCOME_ENTRIES[0]!.title,
     },
     select: { id: true },
   });
@@ -94,8 +93,8 @@ export async function ensureWelcomePrayerJournalEntries(
           userId,
           title: entry.title,
           content: entry.content,
-          tags: tagsToJson(entry.tags),
-          photos: photosToJson([]),
+          tags: entry.tags as Prisma.InputJsonValue,
+          photos: [] as Prisma.InputJsonValue,
           status: PrayerJournalStatus.ACTIVE,
           createdAt: new Date(base + i * staggerMs),
         },

@@ -1,5 +1,7 @@
 import WorkoutLibrarySection from "@/components/WorkoutLibrarySection";
+import { getMovementLayoutForDisplay } from "@/lib/movement-layout";
 
-export default function MovementPage() {
-  return <WorkoutLibrarySection />;
+export default async function MovementPage() {
+  const movementLayout = await getMovementLayoutForDisplay();
+  return <WorkoutLibrarySection movementLayout={movementLayout} />;
 }

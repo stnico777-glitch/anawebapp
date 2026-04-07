@@ -15,6 +15,10 @@ interface ScheduleDayCardProps {
     affirmationText: string | null;
     prayerId?: string | null;
     workoutId?: string | null;
+    dayImageUrl?: string | null;
+    /** Per-day video URL; when set with workoutId, schedule-day player prefers this */
+    dayVideoUrl?: string | null;
+    daySubtext?: string | null;
     completion: {
       prayerDone: boolean;
       workoutDone: boolean;
@@ -24,6 +28,12 @@ interface ScheduleDayCardProps {
   isToday?: boolean;
   /** When true, show lock icon (content gated for non-subscribers). */
   isLocked?: boolean;
+  /**
+   * CMS: same visuals as the member card, but checklist is read-only and the primary
+   * action opens the editor instead of “Start”.
+   */
+  cmsMode?: boolean;
+  onEditCard?: () => void;
 }
 
 /** Prayer row — single four-point sparkle (main star from Heroicons sparkles; avoids busy multi-sparkle cluster). */
@@ -53,7 +63,13 @@ function IconAffirmation() {
   );
 }
 
-export default function ScheduleDayCard({ day, isToday = false, isLocked = false }: ScheduleDayCardProps) {
+export default function ScheduleDayCard({
+  day,
+  isToday = false,
+  isLocked = false,
+  cmsMode = false,
+  onEditCard,
+}: ScheduleDayCardProps) {
   const [prayerDone, setPrayerDone] = useState(day.completion?.prayerDone ?? false);
   const [workoutDone, setWorkoutDone] = useState(day.completion?.workoutDone ?? false);
   const [affirmationDone, setAffirmationDone] = useState(
@@ -61,11 +77,17 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
   );
   const [loading, setLoading] = useState(false);
 
+  const prayerDoneShow = cmsMode ? false : prayerDone;
+  const workoutDoneShow = cmsMode ? false : workoutDone;
+  const affirmationDoneShow = cmsMode ? false : affirmationDone;
+
   const total = 3;
-  const done = (prayerDone ? 1 : 0) + (workoutDone ? 1 : 0) + (affirmationDone ? 1 : 0);
+  const done =
+    (prayerDoneShow ? 1 : 0) + (workoutDoneShow ? 1 : 0) + (affirmationDoneShow ? 1 : 0);
   const progress = Math.round((done / total) * 100);
 
   async function toggle(type: "prayer" | "workout" | "affirmation") {
+    if (cmsMode) return;
     if (loading) return;
     setLoading(true);
     const updates = {
@@ -93,13 +115,20 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
   }
 
   const prayerHref = "/prayer";
-  const workoutHref = day.workoutId ? `/movement/${day.workoutId}` : "/movement";
+  const demoDay = day.id.startsWith("demo-schedule-day-");
+  const workoutHref = demoDay
+    ? day.workoutId
+      ? `/movement/${day.workoutId}`
+      : "/movement"
+    : day.dayVideoUrl?.trim() || day.workoutId
+      ? `/movement/schedule-day/${day.id}`
+      : "/movement";
 
   const allDone = done === total;
   let startHref = "/schedule";
-  if (!prayerDone) startHref = prayerHref;
-  else if (!workoutDone) startHref = workoutHref;
-  else if (!affirmationDone) startHref = "/journaling";
+  if (!prayerDoneShow) startHref = prayerHref;
+  else if (!workoutDoneShow) startHref = workoutHref;
+  else if (!affirmationDoneShow) startHref = "/journaling";
 
   return (
     <article
@@ -119,19 +148,35 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
       )}
 
       <div className="relative aspect-[16/13] min-h-[11rem] overflow-hidden bg-sand sm:min-h-[13rem] md:aspect-[16/14] md:min-h-[14rem]">
-        <Image
-          src={WEEKLY_DAY_CARD_IMAGES[day.dayIndex % WEEKLY_DAY_CARD_IMAGES.length]}
-          alt=""
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
-          className="object-cover object-center"
-        />
+        {day.dayImageUrl ? (
+          <Image
+            src={day.dayImageUrl}
+            alt=""
+            fill
+            unoptimized
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
+            className="object-cover object-center"
+          />
+        ) : (
+          <Image
+            src={WEEKLY_DAY_CARD_IMAGES[day.dayIndex % WEEKLY_DAY_CARD_IMAGES.length]}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
+            className="object-cover object-center"
+          />
+        )}
         {/* Parity: ScheduleScreen dayImageShade — uniform 20% black */}
         <div className="absolute inset-0 bg-black/20" aria-hidden />
         <div className="absolute inset-x-0 bottom-0 p-2">
           <h3 className="text-lg font-semibold tracking-tight text-white [font-family:var(--font-headline),sans-serif]">
             {DAY_NAMES[day.dayIndex] ?? ""}
           </h3>
+          {day.daySubtext ? (
+            <p className="mt-0.5 line-clamp-2 text-xs font-medium text-white/90 [font-family:var(--font-body),sans-serif]">
+              {day.daySubtext}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -158,13 +203,14 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
           <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("prayer")}
-              disabled={loading}
+              disabled={loading || cmsMode}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                prayerDone ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
-              }`}
-              aria-pressed={prayerDone}
+                prayerDoneShow ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
+              } ${cmsMode ? "cursor-default opacity-60" : ""}`}
+              aria-pressed={prayerDoneShow}
+              type="button"
             >
-              {prayerDone ? <span className="text-[11px] leading-none text-white">✓</span> : null}
+              {prayerDoneShow ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             <Link
               href={prayerHref}
@@ -178,13 +224,14 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
           <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("workout")}
-              disabled={loading}
+              disabled={loading || cmsMode}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                workoutDone ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
-              }`}
-              aria-pressed={workoutDone}
+                workoutDoneShow ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
+              } ${cmsMode ? "cursor-default opacity-60" : ""}`}
+              aria-pressed={workoutDoneShow}
+              type="button"
             >
-              {workoutDone ? <span className="text-[11px] leading-none text-white">✓</span> : null}
+              {workoutDoneShow ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             <Link
               href={workoutHref}
@@ -198,13 +245,14 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
           <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("affirmation")}
-              disabled={loading}
+              disabled={loading || cmsMode}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
-                affirmationDone ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
-              }`}
-              aria-pressed={affirmationDone}
+                affirmationDoneShow ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
+              } ${cmsMode ? "cursor-default opacity-60" : ""}`}
+              aria-pressed={affirmationDoneShow}
+              type="button"
             >
-              {affirmationDone ? <span className="text-[11px] leading-none text-white">✓</span> : null}
+              {affirmationDoneShow ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             <span className="min-w-0 flex-1 text-sm italic text-gray">
               {day.affirmationText ?? "Affirmation"}
@@ -214,7 +262,15 @@ export default function ScheduleDayCard({ day, isToday = false, isLocked = false
         </div>
 
         <div className="mt-1 flex min-h-[52px] items-center justify-center">
-          {allDone ? (
+          {cmsMode && onEditCard ? (
+            <button
+              type="button"
+              onClick={onEditCard}
+              className="inline-flex min-w-[132px] items-center justify-center rounded-md border border-sand bg-white px-8 py-2 text-base font-semibold text-foreground transition-opacity [font-family:var(--font-body),sans-serif] hover:bg-sunset-peach/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+            >
+              Edit card
+            </button>
+          ) : allDone ? (
             <span
               className="inline-flex min-w-[132px] cursor-default items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white opacity-90 [font-family:var(--font-body),sans-serif]"
               aria-live="polite"

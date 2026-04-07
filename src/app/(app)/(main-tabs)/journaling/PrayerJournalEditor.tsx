@@ -65,7 +65,7 @@ export function PrayerJournalEditor({
   onDeleted: () => void;
   onCategoriesNeedReload: () => void;
 }) {
-  const initialTags = parseArr(entry?.tags ?? "[]");
+  const initialTags = parseArr(entry?.tags ?? []);
   const initialPrimary = primaryCategorySlug(initialTags);
   const initialExtra = tagsWithoutPrimary(initialTags, initialPrimary).join(", ");
 
@@ -82,7 +82,7 @@ export function PrayerJournalEditor({
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [extraTagsStr, setExtraTagsStr] = useState(initialExtra);
   const [showMoreTags, setShowMoreTags] = useState(Boolean(initialExtra));
-  const [photos, setPhotos] = useState<string[]>(parseArr(entry?.photos ?? "[]"));
+  const [photos, setPhotos] = useState<string[]>(parseArr(entry?.photos ?? []));
   const [photoUrlInput, setPhotoUrlInput] = useState("");
   const [markAnswered, setMarkAnswered] = useState(entry?.status === "ANSWERED");
   const [answerNote, setAnswerNote] = useState(entry?.answerNote ?? "");

@@ -75,11 +75,11 @@ export function FormBrowseLandscapeLink({
   );
 }
 
-const RAIL_CARD_WIDTH =
+export const RAIL_CARD_WIDTH =
   "w-[min(82vw,300px)] sm:w-[280px] md:w-[min(32vw,320px)] lg:w-[340px]";
 
 /** Browse rails: lift only — no drop shadow on hover. */
-const RAIL_CARD_INTERACTION =
+export const RAIL_CARD_INTERACTION =
   "transition-all duration-300 ease-out will-change-transform hover:z-[45] hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 /** Wide program / workout strip — sizing only */

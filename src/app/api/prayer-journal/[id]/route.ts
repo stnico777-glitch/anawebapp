@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
-import { tagsToJson, photosToJson } from "@/lib/prayer-journal";
+import { Prisma } from "@prisma/client";
 
 const statusSchema = z.enum(["ACTIVE", "ANSWERED", "PAUSED"]);
 
@@ -63,8 +63,8 @@ export async function PATCH(
 
   if (d.title !== undefined) data.title = d.title;
   if (d.content !== undefined) data.content = d.content;
-  if (d.tags !== undefined) data.tags = tagsToJson(d.tags);
-  if (d.photos !== undefined) data.photos = photosToJson(d.photos);
+  if (d.tags !== undefined) data.tags = d.tags as Prisma.InputJsonValue;
+  if (d.photos !== undefined) data.photos = d.photos as Prisma.InputJsonValue;
   if (d.answerNote !== undefined) data.answerNote = d.answerNote;
 
   if (d.status !== undefined) {

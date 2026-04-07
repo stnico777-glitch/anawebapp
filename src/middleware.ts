@@ -1,23 +1,30 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/auth-edge";
 import {
   COMMUNITY_VISITOR_COOKIE,
   COMMUNITY_VID_HEADER,
 } from "@/lib/community-participant";
 
-/** Visitor id for /community: Set-Cookie plus request header so the first RSC render matches API identity. */
-function withCommunityVisitor(req: NextRequest): NextResponse {
+function withCommunityVisitor(
+  req: NextRequest,
+  base: NextResponse,
+): NextResponse {
   const { pathname } = req.nextUrl;
   if (pathname !== "/community" && !pathname.startsWith("/community/")) {
-    return NextResponse.next();
+    return base;
   }
   let vid = req.cookies.get(COMMUNITY_VISITOR_COOKIE)?.value ?? null;
   const createdNew = !vid;
   if (!vid) vid = crypto.randomUUID();
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set(COMMUNITY_VID_HEADER, vid);
-  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  const res = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  base.cookies.getAll().forEach((c) => {
+    res.cookies.set(c.name, c.value);
+  });
   if (createdNew) {
     res.cookies.set(COMMUNITY_VISITOR_COOKIE, vid, {
       httpOnly: true,
@@ -44,35 +51,83 @@ const publicPaths = [
   "/more",
 ];
 
-export default auth((req) => {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (pathname === "/workouts" || pathname.startsWith("/workouts/")) {
     const url = req.nextUrl.clone();
     url.pathname = pathname.replace(/^\/workouts/, "/movement");
     return NextResponse.redirect(url);
   }
-  const isLoggedIn = !!req.auth;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl?.trim() || !supabaseAnon?.trim()) {
+    if (pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/schedule", req.url));
+    }
+    return withCommunityVisitor(req, NextResponse.next());
+  }
+
+  let supabaseResponse = NextResponse.next({ request: req });
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnon, {
+    cookies: {
+      getAll() {
+        return req.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+        supabaseResponse = NextResponse.next({ request: req });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options),
+        );
+      },
+    },
+  });
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    isAdmin = profile?.is_admin ?? false;
+  }
+
+  const isLoggedIn = !!user;
 
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     if (isLoggedIn && (pathname === "/login" || pathname === "/register")) {
-      return Response.redirect(new URL("/schedule", req.url));
+      const r = NextResponse.redirect(new URL("/schedule", req.url));
+      supabaseResponse.cookies.getAll().forEach((c) => r.cookies.set(c.name, c.value));
+      return r;
     }
-    return withCommunityVisitor(req);
+    return withCommunityVisitor(req, supabaseResponse);
   }
 
   if (!isLoggedIn) {
-    return Response.redirect(new URL("/login", req.url));
+    const r = NextResponse.redirect(new URL("/login", req.url));
+    supabaseResponse.cookies.getAll().forEach((c) => r.cookies.set(c.name, c.value));
+    return r;
   }
 
-  if (pathname.startsWith("/admin") && !req.auth?.user?.isAdmin) {
-    return Response.redirect(new URL("/schedule", req.url));
+  if (pathname.startsWith("/admin") && !isAdmin) {
+    const r = NextResponse.redirect(new URL("/schedule", req.url));
+    supabaseResponse.cookies.getAll().forEach((c) => r.cookies.set(c.name, c.value));
+    return r;
   }
 
-  return withCommunityVisitor(req);
-});
+  return withCommunityVisitor(req, supabaseResponse);
+}
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|auth|.*\\..*).*)",
   ],
 };

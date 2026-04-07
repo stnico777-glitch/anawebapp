@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { auth } from "@/auth";
 import {
   DAY_CARD_IMAGE_HOVER,
   DAY_CARD_SHELL_HOVER,
@@ -47,10 +48,34 @@ const faqItems: { q: string; a: string }[] = [
 const DAY_TILE_FRAME =
   "group relative z-0 w-full aspect-[4/3.92] max-w-[min(100%,240px)] overflow-hidden rounded-none bg-transparent";
 
-export default function MorePage() {
+export default async function MorePage() {
+  const session = await auth();
+  const isAdmin = session?.user?.isAdmin === true;
+
   return (
     <div className="min-h-screen bg-app-surface">
       <div className="mx-auto max-w-6xl px-4 pt-10 pb-12 md:px-6 md:pt-14 md:pb-16">
+        {isAdmin ? (
+          <aside
+            className="mb-8 rounded-lg border border-amber-200 bg-amber-50/90 p-4 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/40 md:mb-10 md:p-5"
+            aria-label="Content management"
+          >
+            <p className="text-sm font-semibold text-amber-950 dark:text-amber-100 [font-family:var(--font-headline),sans-serif]">
+              Master account — edit content
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-amber-950/85 dark:text-amber-100/85 [font-family:var(--font-body),sans-serif]">
+              Open the CMS to manage the weekly schedule (dates, images, prayer & movement), movement library, prayer
+              audio, and verse of the day. You’ll also see <strong className="font-semibold">CMS</strong>{" "}
+              in the top navigation.
+            </p>
+            <Link
+              href="/admin"
+              className="mt-3 inline-flex rounded-md bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 dark:bg-amber-600 dark:hover:bg-amber-500"
+            >
+              Open CMS →
+            </Link>
+          </aside>
+        ) : null}
         <p className="mb-3 max-w-2xl text-sm leading-relaxed text-gray [font-family:var(--font-body),sans-serif] md:mb-4 md:text-base">
           Everything else you might need—questions, community, the book, and the heart behind the Movement.
         </p>

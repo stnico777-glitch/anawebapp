@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import SchedulesClient from "./SchedulesClient";
 
 export default async function AdminSchedulesPage() {
@@ -18,12 +17,22 @@ export default async function AdminSchedulesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
-        Weekly Schedules
-      </h1>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Create schedules, duplicate prior weeks, assign content to days.
-      </p>
+      <header className="mb-8 sm:mb-10">
+        <h1
+          className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl [font-family:var(--font-headline),sans-serif]"
+        >
+          Weekly schedules
+        </h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-gray md:text-base">
+          Pick a week with <strong className="font-semibold text-foreground">Select week</strong> (any day
+          in that week), then tap <strong className="font-semibold text-foreground">Go</strong>—if that
+          week doesn&apos;t exist yet, you can create it from the prompt. The grid
+          matches the member schedule; use{" "}
+          <strong className="font-semibold text-foreground">Edit card</strong> on each day to set image,
+          subtext, prayer, movement, and affirmation. Changes go live on the next load (same public API
+          as the app).
+        </p>
+      </header>
 
       <SchedulesClient
         schedules={schedules.map((s) => ({

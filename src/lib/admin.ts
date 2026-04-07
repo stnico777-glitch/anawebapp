@@ -1,8 +1,9 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import type { Session } from "next-auth";
 
-export async function requireAdmin() {
+export type AppSession = NonNullable<Awaited<ReturnType<typeof auth>>>;
+
+export async function requireAdmin(): Promise<AppSession> {
   const session = await auth();
   if (!session?.user?.id || !session.user.isAdmin) {
     throw new Error("Unauthorized");
@@ -14,10 +15,13 @@ type AdminRouteContext = { params?: Promise<Record<string, string>> };
 
 /**
  * Wraps an admin API route handler. Runs requireAdmin() first; returns 401 on failure.
- * Your handler receives (session, request, context).
  */
 export function withAdmin<T extends AdminRouteContext = AdminRouteContext>(
-  handler: (session: Session, request: Request, context: T) => Promise<NextResponse>
+  handler: (
+    session: AppSession,
+    request: Request,
+    context: T,
+  ) => Promise<NextResponse>,
 ) {
   return async (request: Request, context?: T) => {
     try {

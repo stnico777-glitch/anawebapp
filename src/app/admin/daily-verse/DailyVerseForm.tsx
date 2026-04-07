@@ -15,6 +15,10 @@ function ymdFromIso(iso: string) {
   return iso.slice(0, 10);
 }
 
+const inputClass =
+  "mt-1 w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-foreground focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue [font-family:var(--font-body),sans-serif]";
+const labelClass = "block text-sm font-medium text-gray [font-family:var(--font-body),sans-serif]";
+
 export default function DailyVerseForm({ verse }: { verse?: DailyVerseRow }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -65,76 +69,72 @@ export default function DailyVerseForm({ verse }: { verse?: DailyVerseRow }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+        className={
+          verse
+            ? "rounded-md border border-sand bg-white px-3 py-1.5 text-sm font-medium text-gray transition hover:border-sky-blue/50 hover:text-sky-blue [font-family:var(--font-body),sans-serif]"
+            : "rounded-md bg-sky-blue px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 [font-family:var(--font-body),sans-serif]"
+        }
       >
         {verse ? "Edit" : "Add verse"}
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-stone-200 bg-white p-6 shadow-lg dark:border-stone-700 dark:bg-stone-900">
-            <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]">
+            <h3 className="text-lg font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
               {verse ? "Edit daily verse" : "Add daily verse"}
             </h3>
             <form onSubmit={handleSubmit} className="mt-4 space-y-3">
               <div>
-                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Date *
-                </label>
+                <label className={labelClass}>Date *</label>
                 <input
                   type="date"
                   required
                   value={form.verseDate}
                   onChange={(e) => setForm((f) => ({ ...f, verseDate: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Reference *
-                </label>
+                <label className={labelClass}>Reference *</label>
                 <input
                   type="text"
                   required
                   value={form.reference}
                   onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Translation
-                </label>
+                <label className={labelClass}>Translation</label>
                 <input
                   type="text"
                   value={form.translation}
                   onChange={(e) => setForm((f) => ({ ...f, translation: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+                  className={inputClass}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Text *
-                </label>
+                <label className={labelClass}>Text *</label>
                 <textarea
                   required
                   rows={6}
                   value={form.text}
                   onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-stone-300 px-3 py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+                  className={inputClass}
                 />
               </div>
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-md bg-sky-blue px-4 py-2 text-sm font-medium text-white hover:bg-sky-blue/90 disabled:opacity-50"
+                  className="rounded-md bg-sky-blue px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
                 >
                   {saving ? "Saving…" : "Save"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-md border border-stone-300 px-4 py-2 text-sm dark:border-stone-600"
+                  className="rounded-md border border-sand bg-white px-4 py-2 text-sm font-medium text-gray hover:bg-sunset-peach/40"
                 >
                   Cancel
                 </button>
@@ -142,7 +142,7 @@ export default function DailyVerseForm({ verse }: { verse?: DailyVerseRow }) {
                   <button
                     type="button"
                     onClick={handleDelete}
-                    className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 dark:border-red-800 dark:text-red-400"
+                    className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
                   >
                     Delete
                   </button>

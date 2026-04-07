@@ -2,9 +2,11 @@ import { prisma } from "@/lib/prisma";
 import PrayerAudioLibrary, { type PrayerLibraryItem } from "./PrayerAudioLibrary";
 import { getSessionForApp } from "@/lib/auth";
 import { DEMO_PRAYER_LIBRARY } from "@/lib/demo-preview-data";
+import { getAudioLayoutForDisplay } from "@/lib/audio-layout";
 
 export default async function PrayerPage() {
   const { userId, isSubscriber } = await getSessionForApp();
+  const layout = await getAudioLayoutForDisplay();
 
   let prayers: PrayerLibraryItem[] = [];
   let completedIds: string[] = [];
@@ -33,6 +35,7 @@ export default async function PrayerPage() {
       prayers={prayers}
       completedIds={completedIds}
       isSubscriber={isSubscriber}
+      layout={layout}
     />
   );
 }

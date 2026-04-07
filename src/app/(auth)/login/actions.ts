@@ -1,7 +1,7 @@
 "use server";
 
-import { signIn } from "@/auth";
-import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
+import { tryCreateSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string;
@@ -11,20 +11,14 @@ export async function loginAction(formData: FormData) {
     return { error: "Email and password are required" };
   }
 
-  try {
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/schedule",
-    });
-  } catch (err) {
-    if (err instanceof AuthError) {
-      if (err.type === "CredentialsSignin") {
-        return { error: "Invalid email or password" };
-      }
-    }
-    throw err;
+  const supabase = await tryCreateSupabaseServerClient();
+  if (!supabase) {
+    return { error: "Authentication is not configured on this server." };
+  }
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    return { error: "Invalid email or password" };
   }
 
-  return { success: true };
+  redirect("/schedule");
 }

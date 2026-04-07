@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
 import { ensureWelcomePrayerJournalEntries } from "@/lib/welcome-prayer-journal";
 import { z } from "zod";
 
@@ -12,29 +11,45 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, password, name } = registerSchema.parse(body);
-
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (existing) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url?.trim() || !anon?.trim()) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 400 }
+        { error: "Authentication is not configured on this server." },
+        { status: 503 },
       );
     }
 
-    const passwordHash = await hash(password, 12);
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        name: name ?? null,
+    const body = await request.json();
+    const { email, password, name } = registerSchema.parse(body);
+
+    const supabase = createClient(url, anon, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name ?? "", name: name ?? "" },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/auth/callback`,
       },
     });
 
-    await ensureWelcomePrayerJournalEntries(newUser.id);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("already") || msg.includes("registered")) {
+        return NextResponse.json(
+          { error: "An account with this email already exists" },
+          { status: 400 },
+        );
+      }
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    if (data.user?.id) {
+      await ensureWelcomePrayerJournalEntries(data.user.id);
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -42,12 +57,9 @@ export async function POST(request: Request) {
       const first = err.issues[0];
       return NextResponse.json(
         { error: (first && "message" in first ? first.message : null) ?? "Invalid input" },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

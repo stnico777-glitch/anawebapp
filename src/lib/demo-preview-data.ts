@@ -5,8 +5,9 @@
 
 import type { DailyVerse } from "@prisma/client";
 import type { CommunityFeedItem } from "@/lib/community-feed";
-import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES, WORKOUT_SPLIT } from "@/constants/schedule";
-import { getMonday } from "@/lib/schedule";
+import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
+import { getDefaultScheduleDaysForSeed } from "@/lib/schedule-default-week";
+import { utcMondayMidnightForInstant } from "@/lib/weekScheduleCalendar";
 import { toEntryDate } from "@/lib/journal";
 import { AUDIO_LIBRARY_SEED_COVER_BY_TITLE } from "@/constants/audioLibraryCovers";
 
@@ -381,22 +382,25 @@ export function getDemoCommunityFeedItems(): CommunityFeedItem[] {
 }
 
 export function getDemoWeekSchedule() {
-  const weekStart = getMonday(new Date());
-  weekStart.setHours(0, 0, 0, 0);
+  const weekStart = utcMondayMidnightForInstant(new Date());
+  const seeded = getDefaultScheduleDaysForSeed();
   return {
     id: "demo-week-schedule",
     weekStart,
     createdAt: new Date(),
     updatedAt: new Date(),
-    days: DAY_NAMES.map((name, i) => ({
+    days: seeded.map((d, i) => ({
       id: `demo-schedule-day-${i}`,
       weekScheduleId: "demo-week-schedule",
-      dayIndex: i,
-      prayerTitle: `Morning Prayer – ${name}`,
-      workoutTitle: WORKOUT_SPLIT[i],
-      affirmationText: `"I am strong in body and spirit." – Day ${i + 1}`,
+      dayIndex: d.dayIndex,
+      prayerTitle: d.prayerTitle,
+      workoutTitle: d.workoutTitle,
+      affirmationText: d.affirmationText,
       prayerId: `demo-prayer-audio-${i}`,
       workoutId: DEMO_WORKOUT_ROWS[i]?.id ?? null,
+      dayImageUrl: d.dayImageUrl,
+      dayVideoUrl: d.dayVideoUrl,
+      daySubtext: d.daySubtext,
       completion: null,
     })),
   };
@@ -416,38 +420,4 @@ export function getDemoDailyVerse(): DailyVerse {
     updatedAt: now,
   };
 }
-
-export type DemoCarouselPost = {
-  id: string;
-  imageUrl: string;
-  linkUrl: string;
-  alt: string | null;
-};
-
-export const DEMO_CAROUSEL_POSTS: DemoCarouselPost[] = [
-  {
-    id: "demo-carousel-1",
-    imageUrl: "/day-previews/monday.png",
-    linkUrl: "https://www.instagram.com/",
-    alt: "Monday rhythm",
-  },
-  {
-    id: "demo-carousel-2",
-    imageUrl: "/day-previews/beachstretch.png",
-    linkUrl: "https://www.instagram.com/",
-    alt: "Stretch and strength",
-  },
-  {
-    id: "demo-carousel-3",
-    imageUrl: "/community.png",
-    linkUrl: "https://www.instagram.com/",
-    alt: "Community",
-  },
-  {
-    id: "demo-carousel-4",
-    imageUrl: "/music-spotlight/01-trust-in-god.png",
-    linkUrl: "https://www.instagram.com/",
-    alt: "Music spotlight",
-  },
-];
 

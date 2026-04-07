@@ -1,83 +1,56 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { getSupabasePublicEnv } from "@/lib/supabase/env";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  /** Local `next start` and hosts without inferred trust; set `AUTH_URL` in production. */
-  trustHost: true,
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  pages: {
-    signIn: "/login",
-  },
-  providers: [
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+/**
+ * Server-side session shape compatible with previous NextAuth usage.
+ */
+export async function auth() {
+  const env = getSupabasePublicEnv();
+  if (!env) return null;
+
+  const cookieStore = await cookies();
+  const supabase = createServerClient(env.url, env.anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        const { prisma } = await import("@/lib/prisma");
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
-        if (!user?.passwordHash) return null;
-        const valid = await compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-        if (!valid) return null;
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
+      setAll(cookiesToSet) {
         try {
-          const { prisma } = await import("@/lib/prisma");
-          const dbUser = await prisma.user.findUnique({
-            where: { id: user.id },
-          });
-          token.isSubscriber = dbUser?.isSubscriber ?? false;
-          token.isAdmin = dbUser?.isAdmin ?? false;
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
         } catch {
-          token.isSubscriber = false;
-          token.isAdmin = false;
+          /* ignore when cookies cannot be set */
         }
-      }
-      return token;
+      },
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.isSubscriber = token.isSubscriber as boolean;
-        session.user.isAdmin = token.isAdmin as boolean;
-      }
-      return session;
-    },
-  },
-});
+  });
 
-declare module "next-auth" {
-  interface Session {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin, is_subscriber, display_name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
     user: {
-      id: string;
-      email?: string | null;
-      name?: string | null;
-      image?: string | null;
-      isSubscriber?: boolean;
-      isAdmin?: boolean;
-    };
-  }
+      id: user.id,
+      email: user.email,
+      name:
+        profile?.display_name ??
+        (user.user_metadata?.full_name as string | undefined) ??
+        (user.user_metadata?.name as string | undefined),
+      image:
+        profile?.avatar_url ??
+        (user.user_metadata?.avatar_url as string | undefined),
+      isAdmin: profile?.is_admin ?? false,
+      isSubscriber: profile?.is_subscriber ?? false,
+    },
+  };
 }
