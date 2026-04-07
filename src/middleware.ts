@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { User } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
@@ -59,10 +60,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-  if (!supabaseUrl?.trim() || !supabaseAnon?.trim()) {
+  if (!supabaseUrl || !supabaseAnon) {
     if (pathname.startsWith("/admin")) {
       return NextResponse.redirect(new URL("/schedule", req.url));
     }
@@ -70,34 +71,57 @@ export async function middleware(req: NextRequest) {
   }
 
   let supabaseResponse = NextResponse.next({ request: req });
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnon, {
-    cookies: {
-      getAll() {
-        return req.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({ request: req });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  let user: User | null = null;
   let isAdmin = false;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle();
-    isAdmin = profile?.is_admin ?? false;
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnon, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet, responseHeaders) {
+          try {
+            cookiesToSet.forEach(({ name, value }) => {
+              req.cookies.set(name, value);
+            });
+          } catch {
+            /* Some runtimes disallow mutating request cookies; response cookies still apply. */
+          }
+          supabaseResponse = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+          if (responseHeaders && typeof responseHeaders === "object") {
+            for (const [key, value] of Object.entries(responseHeaders)) {
+              if (value !== undefined && value !== null) {
+                supabaseResponse.headers.set(key, String(value));
+              }
+            }
+          }
+        },
+      },
+    });
+
+    const {
+      data: { user: authed },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (!authError && authed) {
+      user = authed;
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", authed.id)
+        .maybeSingle();
+      if (!profileError) {
+        isAdmin = profile?.is_admin ?? false;
+      }
+    }
+  } catch (e) {
+    console.error("[middleware] Supabase session error:", e);
+    supabaseResponse = NextResponse.next({ request: req });
   }
 
   const isLoggedIn = !!user;

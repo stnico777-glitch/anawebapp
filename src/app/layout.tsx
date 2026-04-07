@@ -43,12 +43,33 @@ const orbitron = Orbitron({
   weight: ["400", "500", "600", "700"],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+/** Empty `NEXT_PUBLIC_APP_URL` is truthy for `??`, so `new URL("")` would throw at runtime/build. */
+function resolveMetadataBase(): URL {
+  const fromPublic =
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const vercelHost = process.env.VERCEL_URL?.trim() ?? "";
+  const candidates = [
+    fromPublic
+      ? fromPublic.startsWith("http")
+        ? fromPublic
+        : `https://${fromPublic}`
+      : "",
+    vercelHost ? `https://${vercelHost}` : "",
+    "http://localhost:3000",
+  ].filter(Boolean);
+
+  for (const raw of candidates) {
+    try {
+      return new URL(raw);
+    } catch {
+      /* try next candidate */
+    }
+  }
+  return new URL("http://localhost:3000");
+}
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: resolveMetadataBase(),
   title: "awake+align",
   description:
     "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
