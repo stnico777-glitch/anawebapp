@@ -123,7 +123,9 @@ export default function AudioCollectionForm({
                 <label className={labelClass}>Image URL *</label>
                 <input
                   className={inputClass}
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   value={form.imageUrl}
                   onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
                   required

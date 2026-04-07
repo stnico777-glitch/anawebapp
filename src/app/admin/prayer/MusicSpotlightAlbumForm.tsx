@@ -123,7 +123,9 @@ export default function MusicSpotlightAlbumForm({
                 <label className={labelClass}>Cover image URL *</label>
                 <input
                   className={inputClass}
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   value={form.coverUrl}
                   onChange={(e) => setForm((f) => ({ ...f, coverUrl: e.target.value }))}
                   required
@@ -133,7 +135,9 @@ export default function MusicSpotlightAlbumForm({
                 <label className={labelClass}>Listen URL (optional)</label>
                 <input
                   className={inputClass}
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   value={form.listenUrl}
                   onChange={(e) => setForm((f) => ({ ...f, listenUrl: e.target.value }))}
                   placeholder="https://…"

@@ -168,7 +168,9 @@ export default function ScheduleDayEditModal({
               previewAlt="Card preview"
             />
             <input
-              type="url"
+              type="text"
+              inputMode="url"
+              autoComplete="off"
               className={inputClass}
               value={form.dayImageUrl}
               onChange={(e) => setForm((f) => ({ ...f, dayImageUrl: e.target.value }))}
@@ -196,7 +198,9 @@ export default function ScheduleDayEditModal({
               onUrlDropped={(url) => setForm((f) => ({ ...f, dayVideoUrl: url }))}
             />
             <input
-              type="url"
+              type="text"
+              inputMode="url"
+              autoComplete="off"
               className={inputClass}
               value={form.dayVideoUrl}
               onChange={(e) => setForm((f) => ({ ...f, dayVideoUrl: e.target.value }))}

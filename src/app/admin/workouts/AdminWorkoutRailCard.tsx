@@ -15,6 +15,7 @@ import {
   workoutRailThumb,
   type WorkoutRailCardWorkout,
 } from "@/lib/workout-rail-display";
+import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import WorkoutForm from "./WorkoutForm";
 
 export type AdminWorkoutRailCardWorkout = WorkoutRailCardWorkout & { videoUrl: string };
@@ -36,8 +37,12 @@ export default function AdminWorkoutRailCard({
 
   async function handleDelete() {
     if (!confirm(`Delete “${workout.title}”? This cannot be undone.`)) return;
-    const res = await fetch(`/api/admin/workouts/${workout.id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+    const res = await adminJson(`/api/admin/workouts/${workout.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert(await readAdminError(res));
+      return;
+    }
+    router.refresh();
   }
 
   return (

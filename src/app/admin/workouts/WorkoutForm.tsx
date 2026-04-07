@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upload } from "@vercel/blob/client";
+import { adminJson, readAdminError } from "@/lib/admin-fetch";
 
 interface Workout {
   id: string;
@@ -273,10 +274,8 @@ export default function WorkoutForm({
         ? `/api/admin/workouts/${workout.id}`
         : "/api/admin/workouts";
       const method = workout ? "PATCH" : "POST";
-      const res = await fetch(url, {
+      const res = await adminJson(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
         body: JSON.stringify({
           ...form,
           instructor: form.instructor || undefined,
@@ -285,7 +284,10 @@ export default function WorkoutForm({
           thumbnailUrl: form.thumbnailUrl || undefined,
         }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        alert(await readAdminError(res));
+        return;
+      }
       setOpen(false);
       router.refresh();
     } finally {
@@ -295,11 +297,13 @@ export default function WorkoutForm({
 
   async function handleDelete() {
     if (!workout || !confirm("Delete this movement session?")) return;
-    const res = await fetch(`/api/admin/workouts/${workout.id}`, {
-      method: "DELETE",
-      credentials: "same-origin",
-    });
-    if (res.ok) router.refresh();
+    const res = await adminJson(`/api/admin/workouts/${workout.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert(await readAdminError(res));
+      return;
+    }
+    setOpen(false);
+    router.refresh();
   }
 
   const defaultTriggerClass = workout
@@ -400,7 +404,9 @@ export default function WorkoutForm({
                   value={form.videoUrl}
                   onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
                   required
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   placeholder="https://…"
                   className={`${inputClass} mt-2`}
                 />
@@ -431,7 +437,9 @@ export default function WorkoutForm({
                 <input
                   value={form.thumbnailUrl}
                   onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   placeholder="https://… (optional)"
                   className={`${inputClass} mt-2`}
                 />

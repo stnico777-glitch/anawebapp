@@ -161,7 +161,9 @@ export default function PrayerForm({
                   value={form.audioUrl}
                   onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
                   required
-                  type="url"
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
                   className={inputClass}
                 />
               </div>
