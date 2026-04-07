@@ -1,3 +1,4 @@
+import CalendarWeekIcon from "@/components/CalendarWeekIcon";
 import ScheduleDayCard from "@/components/ScheduleDayCard";
 import ScheduleSabbathTile from "@/components/ScheduleSabbathTile";
 import DailyVerseScheduleCard from "@/components/DailyVerseScheduleCard";
@@ -63,20 +64,7 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
       <div>
         <div className="mb-2 flex flex-row items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <svg
-              className="h-[15px] w-[15px] shrink-0 text-gray"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              aria-hidden
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 017.5 9h9a2.25 2.25 0 012.25 2.25v7.5"
-              />
-            </svg>
+            <CalendarWeekIcon className="h-[15px] w-[15px] shrink-0 text-gray" />
             <p className="min-w-0 truncate text-base font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
               {formatWeekRange(weekStart)}
             </p>

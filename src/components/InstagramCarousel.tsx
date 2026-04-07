@@ -174,9 +174,11 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
 
   useEffect(() => {
     if (useWidget) return;
+    let cancelled = false;
     fetch("/api/instagram/feed")
       .then((r) => r.json())
       .then((body: { posts?: CarouselPost[] }) => {
+        if (cancelled) return;
         if (Array.isArray(body.posts) && body.posts.length > 0) {
           setLivePosts(body.posts);
           return;
@@ -184,9 +186,13 @@ export default function InstagramCarousel({ posts = [], embedRef, embedIframeUrl
         return fetch("/api/carousel").then((r) => r.json());
       })
       .then((body?: { posts?: CarouselPost[] }) => {
+        if (cancelled) return;
         if (body && Array.isArray(body.posts) && body.posts.length > 0) setAdminPosts(body.posts);
       })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [useWidget]);
 
   const rawPosts =

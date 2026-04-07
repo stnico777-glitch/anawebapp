@@ -4,14 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ScrollReveal from "@/components/ScrollReveal";
 import LockIcon from "@/components/LockIcon";
-
-const FEATURES_HEADER_REVEAL = {
-  threshold: 0.1,
-  rootMargin: "0px 0px -8% 0px" as const,
-  hiddenSlideY: "min(6vh, 2rem)",
-  motionDurationMs: 880,
-  motionEase: "cubic-bezier(0.25, 1, 0.35, 1)",
-};
+import { MARKETING_SECTION_HEADER_REVEAL } from "@/constants/marketingScrollReveal";
 
 const FEATURES_CARD_REVEAL = {
   threshold: 0.1,
@@ -50,7 +43,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
         <ScrollReveal
           className="w-full"
           delayMs={0}
-          {...FEATURES_HEADER_REVEAL}
+          {...MARKETING_SECTION_HEADER_REVEAL}
           runwayPaddingBottom={{
             hidden: "min(6vh, 2rem)",
             visible: "0px",
@@ -75,14 +68,14 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
             />
           </div>
         </ScrollReveal>
-        <ScrollReveal className="w-full" delayMs={90} {...FEATURES_HEADER_REVEAL}>
+        <ScrollReveal className="w-full" delayMs={90} {...MARKETING_SECTION_HEADER_REVEAL}>
           <div
             className="mx-auto mt-0.5 h-px w-40 rounded-full md:w-44"
             style={{ backgroundColor: "var(--gray)" }}
             aria-hidden
           />
         </ScrollReveal>
-        <ScrollReveal className="w-full" delayMs={180} {...FEATURES_HEADER_REVEAL}>
+        <ScrollReveal className="w-full" delayMs={180} {...MARKETING_SECTION_HEADER_REVEAL}>
           <h2
             id="features-heading"
             className="mt-1.5 text-center text-3xl font-normal capitalize leading-[1.4] tracking-[0.135em] text-gray [font-synthesis:none] md:mt-2 md:text-4xl [font-family:var(--font-headline),sans-serif]"
@@ -90,7 +83,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
             Everything you need
           </h2>
         </ScrollReveal>
-        <ScrollReveal className="w-full" delayMs={270} {...FEATURES_HEADER_REVEAL}>
+        <ScrollReveal className="w-full" delayMs={270} {...MARKETING_SECTION_HEADER_REVEAL}>
           <p className="mt-1 text-center text-sm lowercase tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:mt-1.5 md:text-base">
             Faith + fitness, all in one place
           </p>

@@ -111,15 +111,13 @@ function PrayerJournalInner() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/prayer-journal/tag-suggestions")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { slugs?: string[] } | null) => {
-        if (!cancelled && data?.slugs) setCategorySlugs(data.slugs);
-      });
+    queueMicrotask(() => {
+      if (!cancelled) void loadTagSuggestions();
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadTagSuggestions]);
 
   useEffect(() => {
     let cancelled = false;

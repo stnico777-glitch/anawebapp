@@ -1,16 +1,8 @@
 import Link from "next/link";
+import { MARKETING_SECTION_HEADER_REVEAL } from "@/constants/marketingScrollReveal";
 import { DAY_NAMES, WORKOUT_SPLIT } from "@/constants/schedule";
 import ScrollReveal from "@/components/ScrollReveal";
 import RoutineDayCardsGrid from "@/components/RoutineDayCardsGrid";
-
-/** Shared scroll-reveal tuning for the weekly routine block (stagger via `delayMs`). */
-const SCHEDULE_HEADER_REVEAL = {
-  threshold: 0.1,
-  rootMargin: "0px 0px -8% 0px" as const,
-  hiddenSlideY: "min(6vh, 2rem)",
-  motionDurationMs: 880,
-  motionEase: "cubic-bezier(0.25, 1, 0.35, 1)",
-};
 
 type ScheduleDay = { id: string; dayIndex: number };
 
@@ -47,7 +39,7 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
         <ScrollReveal
           className="w-full"
           delayMs={0}
-          {...SCHEDULE_HEADER_REVEAL}
+          {...MARKETING_SECTION_HEADER_REVEAL}
           runwayPaddingBottom={{
             hidden: "min(6vh, 2rem)",
             visible: "0px",
@@ -72,13 +64,13 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
             />
           </div>
         </ScrollReveal>
-        <ScrollReveal className="w-full" delayMs={90} {...SCHEDULE_HEADER_REVEAL}>
+        <ScrollReveal className="w-full" delayMs={90} {...MARKETING_SECTION_HEADER_REVEAL}>
           <div
             className="mx-auto mt-1.5 h-px w-40 rounded-full bg-[#788287] md:w-44"
             aria-hidden
           />
         </ScrollReveal>
-        <ScrollReveal className="w-full" delayMs={180} {...SCHEDULE_HEADER_REVEAL}>
+        <ScrollReveal className="w-full" delayMs={180} {...MARKETING_SECTION_HEADER_REVEAL}>
           <h2
             id="schedule-heading"
             className="mt-3 text-center text-3xl font-normal capitalize leading-[1.4] tracking-[0.135em] text-gray [font-synthesis:none] md:mt-3.5 md:text-4xl [font-family:var(--font-headline),sans-serif]"
@@ -86,7 +78,7 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
             Your Weekly Routine
           </h2>
         </ScrollReveal>
-        <ScrollReveal className="w-full" delayMs={270} {...SCHEDULE_HEADER_REVEAL}>
+        <ScrollReveal className="w-full" delayMs={270} {...MARKETING_SECTION_HEADER_REVEAL}>
           <p className="mt-1.5 text-center text-sm lowercase tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:mt-2 md:text-base">
             monday → saturday · movement split &amp; affirmation each day
           </p>
