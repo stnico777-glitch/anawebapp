@@ -14,17 +14,18 @@ export default function AdminError({
     console.error("[admin]", error);
   }, [error]);
 
-  const isDbHint =
-    error.message?.includes("DATABASE_URL") ||
-    error.message?.toLowerCase().includes("postgres");
-  const hint = [
-    "On new deployments, the CMS usually fails if DATABASE_URL is missing on Vercel. Add your Supabase Postgres connection string under Project → Settings → Environment Variables (set it for Preview and Production). For serverless, use the Supabase pooler URL (port 6543) and include ?pgbouncer=true.",
-    isDbHint
-      ? null
-      : "If DATABASE_URL is already set, open this deployment’s Logs in Vercel and search for this digest or “prisma” / “admin”.",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const msg = error.message ?? "";
+  const looksUnreachable =
+    msg.includes("Can't reach database server") ||
+    msg.includes("P1001") ||
+    /db\.[^ ]+\.supabase\.co/i.test(msg);
+
+  const hint = looksUnreachable
+    ? "Your server on Vercel cannot reach the database address in DATABASE_URL. If that address looks like db.something.supabase.co on port 5432, switch to Supabase’s Transaction pooler: Dashboard → Connect → Transaction pooler → copy the URI (port 6543), add your password, append &pgbouncer=true if missing. Paste that as DATABASE_URL in Vercel (Production + Preview), save, redeploy."
+    : [
+        "The CMS needs DATABASE_URL on Vercel pointing at Postgres. Prefer the Transaction pooler (port 6543, ?pgbouncer=true), not direct db.*.supabase.co:5432.",
+        "If it still fails, open this deployment’s Logs and search for prisma or this digest.",
+      ].join(" ");
 
   return (
     <div className="rounded-lg border border-sand bg-white p-8 shadow-[0_1px_2px_rgba(120,130,135,0.06)]">
@@ -34,7 +35,7 @@ export default function AdminError({
         CMS could not load
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-gray md:text-base">{hint}</p>
-      {process.env.NODE_ENV === "development" && error.message ? (
+      {error.message ? (
         <pre className="mt-4 max-h-40 overflow-auto rounded-sm bg-app-surface p-3 text-xs text-foreground">
           {error.message}
         </pre>

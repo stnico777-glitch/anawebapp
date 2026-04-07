@@ -18,7 +18,24 @@ const globalForPrisma = globalThis as unknown as {
  * `ssl` or connections fail at runtime (generic Next.js digest; local dev may still work).
  * Serverless: keep pool tiny (one connection per lambda is enough for Prisma here).
  */
+/**
+ * Direct `db.<ref>.supabase.co:5432` often fails from Vercel (P1001). Use the Transaction
+ * pooler from Supabase Connect (port 6543, `?pgbouncer=true`). See admin error UI + logs.
+ */
+function warnIfDirectSupabaseOnVercel(connectionString: string) {
+  if (process.env.VERCEL !== "1") return;
+  if (
+    /db\.[^.]+\.supabase\.co/i.test(connectionString) &&
+    /:5432\b/.test(connectionString)
+  ) {
+    console.error(
+      "[prisma] DATABASE_URL uses Supabase direct DB (db.*.supabase.co:5432). Vercel often cannot reach it — switch to the Transaction pooler URL (port 6543, add ?pgbouncer=true) in Vercel → Environment Variables, then redeploy.",
+    );
+  }
+}
+
 function createPool(connectionString: string): Pool {
+  warnIfDirectSupabaseOnVercel(connectionString);
   const isSupabase = /supabase\.co|pooler\.supabase\.com/i.test(connectionString);
   const config: PoolConfig = {
     connectionString,
@@ -36,7 +53,7 @@ function createPrisma(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString?.trim()) {
     throw new Error(
-      "DATABASE_URL is required: add your Supabase Postgres URL in Vercel (or .env locally). For Vercel serverless, use the Supabase pooler (port 6543) with ?pgbouncer=true on the connection string.",
+      "DATABASE_URL is required. On Vercel, use Supabase’s Transaction pooler connection string (Connect → Transaction pooler, port 6543, include ?pgbouncer=true), not the direct db.*.supabase.co:5432 URL.",
     );
   }
   const pool = globalForPrisma.pool ?? createPool(connectionString);

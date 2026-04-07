@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminDashboard() {
@@ -15,6 +16,11 @@ export default async function AdminDashboard() {
     ]);
   } catch (e) {
     console.error("[admin] Prisma counts failed (check Vercel logs + DATABASE_URL / SSL):", e);
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P1001") {
+      throw new Error(
+        "Can't reach the database (P1001). On Vercel, set DATABASE_URL to Supabase’s Transaction pooler URI (Connect → Transaction pooler, port 6543, add ?pgbouncer=true) — not db.*.supabase.co:5432.",
+      );
+    }
     throw e;
   }
 
