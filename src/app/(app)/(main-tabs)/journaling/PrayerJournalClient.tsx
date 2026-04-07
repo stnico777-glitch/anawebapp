@@ -123,8 +123,11 @@ function PrayerJournalInner() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      await loadEntries();
-      if (!cancelled) setLoading(false);
+      try {
+        await loadEntries();
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
