@@ -9,36 +9,15 @@ import {
   RAIL_CARD_WIDTH,
 } from "@/components/LibraryBannerStrip";
 import { DAY_CARD_IMAGE_HOVER } from "@/constants/dayCardVisual";
-import { WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
+import {
+  adminWorkoutRailHoverSummary,
+  workoutRailMetaLine,
+  workoutRailThumb,
+  type WorkoutRailCardWorkout,
+} from "@/lib/workout-rail-display";
 import WorkoutForm from "./WorkoutForm";
 
-export type AdminWorkoutRailCardWorkout = {
-  id: string;
-  title: string;
-  instructor: string | null;
-  duration: number;
-  category: string | null;
-  scripture: string | null;
-  videoUrl: string;
-  thumbnailUrl: string | null;
-};
-
-function thumbFor(workout: AdminWorkoutRailCardWorkout): string {
-  if (workout.thumbnailUrl?.trim()) return workout.thumbnailUrl.trim();
-  let h = 0;
-  for (let i = 0; i < workout.id.length; i++) h = (h + workout.id.charCodeAt(i)) % 997;
-  return WEEKLY_DAY_CARD_IMAGES[h % WEEKLY_DAY_CARD_IMAGES.length];
-}
-
-function hoverSummary(w: AdminWorkoutRailCardWorkout): string {
-  const parts = [
-    w.instructor ? `With ${w.instructor}` : null,
-    w.category ? `${w.category} · ${w.duration} min` : `${w.duration} min`,
-    w.scripture ? w.scripture : null,
-    "Tap the image to preview the member player.",
-  ].filter(Boolean);
-  return parts.join(". ") + ".";
-}
+export type AdminWorkoutRailCardWorkout = WorkoutRailCardWorkout & { videoUrl: string };
 
 const editBtnClass =
   "rounded bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-black/80 [font-family:var(--font-body),sans-serif]";
@@ -51,13 +30,9 @@ export default function AdminWorkoutRailCard({
   workout: AdminWorkoutRailCardWorkout;
 }) {
   const router = useRouter();
-  const src = thumbFor(workout);
+  const src = workoutRailThumb(workout);
   const unoptimized = src.startsWith("http://") || src.startsWith("https://");
-  const metaLine = [
-    workout.instructor ?? "Movement",
-    workout.category ?? "Session",
-    `${workout.duration} min`,
-  ].join(" · ");
+  const metaLine = workoutRailMetaLine(workout);
 
   async function handleDelete() {
     if (!confirm(`Delete “${workout.title}”? This cannot be undone.`)) return;
@@ -94,7 +69,7 @@ export default function AdminWorkoutRailCard({
             {workout.title}
           </p>
           <p className="mt-1.5 line-clamp-6 text-xs leading-relaxed text-gray [font-family:var(--font-body),sans-serif]">
-            {hoverSummary(workout)}
+            {adminWorkoutRailHoverSummary(workout)}
           </p>
         </div>
         <div className="absolute right-2 top-2 z-30 flex flex-wrap justify-end gap-1">
