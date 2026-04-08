@@ -13,7 +13,6 @@ export default async function AdminWorkoutsPage() {
   const serialized = workouts.map((w) => ({
     id: w.id,
     title: w.title,
-    instructor: w.instructor,
     duration: w.duration,
     category: w.category,
     scripture: w.scripture,

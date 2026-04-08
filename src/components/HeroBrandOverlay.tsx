@@ -16,12 +16,12 @@ export default function HeroBrandOverlay({ href = "/schedule", textColor = "whit
     <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
       <Link
         href={href}
-        className={`pointer-events-auto rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 ${
+        className={`pointer-events-auto rounded-sm border-0 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 ${
           isCream ? "focus-visible:ring-background/90" : "focus-visible:ring-white/90"
         }`}
       >
         <span
-          className={`text-xl font-normal lowercase leading-[1.4] tracking-[0.135em] [font-family:var(--font-headline),sans-serif] [font-synthesis:none] md:text-2xl ${
+          className={`text-3xl font-normal lowercase leading-[1.35] tracking-[0.12em] [font-family:var(--font-headline),sans-serif] [font-synthesis:none] [text-shadow:0_2px_20px_rgb(0_0_0_/_0.12)] md:text-4xl ${
             isCream ? "text-background" : "text-white"
           }`}
         >

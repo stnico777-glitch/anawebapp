@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useMemo, useState, type RefObject } from "react";
+import { useRouter } from "next/navigation";
 import PrayerAudioLibraryShell from "@/components/PrayerAudioLibraryShell";
 import {
   PrayerLibraryAudioProvider,
@@ -29,6 +30,7 @@ type PrayerAudioLibraryProps = {
   prayers: PrayerLibraryItem[];
   completedIds: string[];
   isSubscriber: boolean;
+  isGuest?: boolean;
   layout: {
     collections: AudioCollectionCardDTO[];
     essentials: AudioEssentialTileDTO[];
@@ -40,10 +42,15 @@ function PrayerAudioLibraryInner({
   prayers,
   completedIds,
   isSubscriber,
+  isGuest = false,
   layout,
 }: PrayerAudioLibraryProps) {
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { setTrack, clearTrack } = usePrayerLibraryAudio();
+  const contentLocked = isGuest || !isSubscriber;
+  const lockHref = isGuest ? "/register" : "/subscribe";
+  const lockHint = isGuest ? "Sign up to unlock" : "Subscribe to unlock";
 
   const selected = useMemo(
     () => (selectedId ? prayers.find((p) => p.id === selectedId) ?? null : null),
@@ -55,7 +62,7 @@ function PrayerAudioLibraryInner({
       clearTrack();
       return;
     }
-    if (!isSubscriber) {
+    if (contentLocked) {
       clearTrack();
       return;
     }
@@ -74,16 +81,23 @@ function PrayerAudioLibraryInner({
       coverUnoptimized: cover.unoptimized,
       locked: false,
     });
-  }, [selected, isSubscriber, prayers, setTrack, clearTrack]);
+  }, [selected, contentLocked, prayers, setTrack, clearTrack]);
 
   const prayerRailCovers = useMemo(() => railCoversDeduped(prayers), [prayers]);
 
-  const selectPrayer = useCallback((id: string) => {
-    setSelectedId(id);
-    requestAnimationFrame(() => {
-      document.getElementById("prayer-library-rail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    });
-  }, []);
+  const selectPrayer = useCallback(
+    (id: string) => {
+      if (contentLocked) {
+        router.push(lockHref);
+        return;
+      }
+      setSelectedId(id);
+      requestAnimationFrame(() => {
+        document.getElementById("prayer-library-rail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    },
+    [contentLocked, lockHref, router],
+  );
 
   const renderLibrary = useCallback(
     (audioLibraryRef: RefObject<HTMLDivElement | null>) => (
@@ -115,8 +129,6 @@ function PrayerAudioLibraryInner({
                 const { src, unoptimized } = prayerRailCovers[index]!;
                 const done = completedIds.includes(p.id);
                 const active = selectedId === p.id;
-                const locked = !isSubscriber;
-
                 return (
                   <FormStyleRailButton
                     key={p.id}
@@ -127,7 +139,8 @@ function PrayerAudioLibraryInner({
                     metaLine={prayerMetaLine(p, done)}
                     hoverSummary={prayerHoverSummary(p)}
                     unoptimized={unoptimized}
-                    showLock={locked}
+                    showLock={contentLocked}
+                    lockHint={lockHint}
                     showDone={done}
                     active={active}
                   />
@@ -138,7 +151,7 @@ function PrayerAudioLibraryInner({
         )}
       </>
     ),
-    [prayers, prayerRailCovers, selected, selectedId, completedIds, isSubscriber, selectPrayer],
+    [prayers, prayerRailCovers, selected, selectedId, completedIds, contentLocked, lockHint, selectPrayer],
   );
 
   return (
@@ -156,6 +169,9 @@ function PrayerAudioLibraryInner({
         spotlightAlbums={layout.spotlight}
         showLibraryArrows={prayers.length > 0}
         renderLibrary={renderLibrary}
+        contentLocked={contentLocked}
+        lockHref={lockHref}
+        lockHint={lockHint}
       />
       <PrayerMiniPlayerBar />
     </PrayerLibraryLayoutPadding>

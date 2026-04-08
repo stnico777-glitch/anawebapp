@@ -8,9 +8,9 @@ import type { AudioEssentialTileDTO } from "@/lib/audio-layout-types";
 import AudioEssentialForm from "./AudioEssentialForm";
 
 const editBtnClass =
-  "rounded bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-black/80 [font-family:var(--font-body),sans-serif]";
+  "rounded bg-black/78 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white transition hover:bg-black/88 [font-family:var(--font-body),sans-serif]";
 const delBtnClass =
-  "rounded bg-red-600/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-red-600 [font-family:var(--font-body),sans-serif]";
+  "rounded bg-red-600 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white transition hover:bg-red-700 [font-family:var(--font-body),sans-serif]";
 
 export default function AdminEssentialTileCard({ tile }: { tile: AudioEssentialTileDTO }) {
   const router = useRouter();

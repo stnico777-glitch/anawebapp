@@ -37,6 +37,7 @@ export default async function PrayerPage() {
       prayers={prayers}
       completedIds={completedIds}
       isSubscriber={isSubscriber}
+      isGuest={!userId}
       layout={layout}
     />
   );

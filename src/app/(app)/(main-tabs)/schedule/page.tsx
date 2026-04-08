@@ -21,6 +21,9 @@ export default async function SchedulePage() {
     getDailyVerseForDateInput(undefined),
   ]);
   const verseToday = verseRaw ?? getDemoDailyVerse();
+  const isGuest = !userId;
+  const scheduleLocked = isGuest || !isSubscriber;
+  const scheduleLockCtaHref = isGuest ? "/register" : "/subscribe";
 
   return (
     <div className="min-h-screen bg-app-surface">
@@ -36,13 +39,25 @@ export default async function SchedulePage() {
           </h1>
         </header>
 
-        <ScheduleContent userId={userId ?? undefined} isLocked={!isSubscriber} />
+        <ScheduleContent
+          userId={userId ?? undefined}
+          isLocked={scheduleLocked}
+          lockCtaHref={scheduleLockCtaHref}
+        />
       </div>
     </div>
   );
 }
 
-async function ScheduleContent({ userId, isLocked = false }: { userId?: string; isLocked?: boolean }) {
+async function ScheduleContent({
+  userId,
+  isLocked = false,
+  lockCtaHref = "/subscribe",
+}: {
+  userId?: string;
+  isLocked?: boolean;
+  lockCtaHref?: string;
+}) {
   const schedule =
     (await getCurrentWeekSchedule(userId)) ?? getDemoWeekSchedule();
 
@@ -103,6 +118,7 @@ async function ScheduleContent({ userId, isLocked = false }: { userId?: string; 
             }}
             isToday={day.dayIndex === todayDayIndex}
             isLocked={isLocked}
+            lockCtaHref={lockCtaHref}
           />
         ))}
         <div className="col-span-2 flex justify-center sm:col-span-2 lg:col-span-1 lg:col-start-2">

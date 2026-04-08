@@ -43,7 +43,7 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
         >
           <div className="flex items-center justify-center">
             <div
-              className="h-[92px] w-[92px] shrink-0 md:h-[100px] md:w-[100px]"
+              className="h-[92px] w-[92px] shrink-0 transition duration-200 ease-out motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.03] motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 md:h-[100px] md:w-[100px]"
               role="img"
               aria-label="Sunrise over waves"
               style={{
@@ -117,7 +117,7 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
         >
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[#788287] px-8 py-3 font-medium text-[#788287] [font-family:var(--font-headline),sans-serif] transition-[transform,color,background-color] duration-300 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#788287]/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#788287] focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#788287] px-8 py-3 font-medium text-[#788287] [font-family:var(--font-headline),sans-serif] transition duration-200 ease-out motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.03] hover:bg-[#788287]/8 motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#788287] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Full Movement Library
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>

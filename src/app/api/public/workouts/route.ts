@@ -13,7 +13,6 @@ export async function GET() {
     workouts: workouts.map((w) => ({
       id: w.id,
       title: w.title,
-      instructor: w.instructor,
       duration: w.duration,
       category: w.category,
       scripture: w.scripture,

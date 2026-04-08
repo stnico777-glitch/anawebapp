@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { CommunityFeedItem } from "@/lib/community-feed";
 import {
   IconCelebrate,
@@ -148,6 +148,7 @@ function BulletinMarqueeRow({
   onOpen,
   cardClassName,
   whenEmpty,
+  pauseAnimation,
 }: {
   label: string;
   rowItems: CommunityFeedItem[];
@@ -158,6 +159,8 @@ function BulletinMarqueeRow({
   /** Optional extra card classes */
   cardClassName?: string;
   whenEmpty?: ReactNode;
+  /** When true, infinite marquee CSS is paused (e.g. section off-screen). */
+  pauseAnimation?: boolean;
 }) {
   if (rowItems.length === 0) {
     if (whenEmpty == null) return null;
@@ -182,6 +185,8 @@ function BulletinMarqueeRow({
       : direction === "forward"
         ? "community-bulletin-marquee-track"
         : "community-bulletin-marquee-track-reverse";
+  const pauseClass =
+    motionClass && pauseAnimation ? " marquee-pause-when-hidden" : "";
 
   return (
     <div className="mt-6 first:mt-0">
@@ -197,7 +202,7 @@ function BulletinMarqueeRow({
           className={`flex gap-3 px-4 pb-1 pt-4 md:gap-4 md:px-6 ${
             reduceMotion
               ? "w-full max-w-full flex-wrap justify-center"
-              : `w-max ${motionClass}`
+              : `w-max ${motionClass}${pauseClass}`
           }`}
         >
           {track.map((h, i) => (
@@ -259,18 +264,36 @@ export default function CommunityBulletinBanner({
   const prayerRow = useMemo(() => prayersFrom(items), [items]);
   const praiseRow = useMemo(() => praisesFrom(items), [items]);
   const [expanded, setExpanded] = useState<CommunityFeedItem | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [bulletinInView, setBulletinInView] = useState(true);
   const reduceMotion = useSyncExternalStore(
     subscribeReducedMotion,
     getReducedMotionSnapshot,
     getReducedMotionServerSnapshot,
   );
 
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setBulletinInView(entry.isIntersecting);
+      },
+      { root: null, rootMargin: "48px 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [prayerRow.length, praiseRow.length]);
+
+  const pauseMarquee = !bulletinInView && !reduceMotion;
+
   if (prayerRow.length === 0 && praiseRow.length === 0) return null;
 
   return (
     <>
       <section
-        className="relative mb-8 w-full overflow-x-hidden border-y border-[#C4B49A] py-6 pt-8 shadow-inner md:py-8 md:pt-10"
+        ref={sectionRef}
+        className="community-bloom-scroll-enter relative mb-8 w-full overflow-x-hidden border-y border-[#C4B49A] py-6 pt-8 shadow-inner md:py-8 md:pt-10"
         style={{
           backgroundColor: "#C9B896",
           backgroundImage: [
@@ -299,6 +322,7 @@ export default function CommunityBulletinBanner({
           direction="forward"
           tilts={TILTS_PRAYER}
           onOpen={setExpanded}
+          pauseAnimation={pauseMarquee}
         />
 
         {(prayerRow.length > 0 || praiseRow.length > 0) &&
@@ -316,6 +340,7 @@ export default function CommunityBulletinBanner({
           direction="reverse"
           tilts={TILTS_PRAISE}
           onOpen={setExpanded}
+          pauseAnimation={pauseMarquee}
           whenEmpty={
             <div className="mx-4 rounded-xl border-2 border-dashed border-[#A69076]/70 bg-[#F8F3EA]/90 px-4 py-8 text-center md:mx-6">
               <p className="text-sm font-medium text-foreground [font-family:var(--font-headline),sans-serif]">

@@ -13,12 +13,12 @@ const ALBUM_CARD_WIDTH_CLASS =
 
 const ALBUM_IMAGE_SIZES = "(max-width: 640px) 44vw, (max-width: 1024px) 188px, 216px";
 
-const SHELL_CLASS = `flex ${ALBUM_CARD_WIDTH_CLASS} shrink-0 flex-col rounded-sm text-left ring-1 ring-sky-blue/35 transition-all duration-300 ease-out will-change-transform hover:z-[2] hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0`;
+const SHELL_CLASS = `flex ${ALBUM_CARD_WIDTH_CLASS} shrink-0 flex-col rounded-sm text-left ring-1 ring-sky-blue/35 transition-transform duration-300 ease-out motion-safe:hover:will-change-transform hover:z-[2] hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0`;
 
 const editBtnClass =
-  "rounded bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-black/80 [font-family:var(--font-body),sans-serif]";
+  "rounded bg-black/78 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white transition hover:bg-black/88 [font-family:var(--font-body),sans-serif]";
 const delBtnClass =
-  "rounded bg-red-600/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-red-600 [font-family:var(--font-body),sans-serif]";
+  "rounded bg-red-600 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white transition hover:bg-red-700 [font-family:var(--font-body),sans-serif]";
 
 export default function AdminMusicSpotlightAlbumTile({ album }: { album: MusicSpotlightAlbumDTO }) {
   const router = useRouter();

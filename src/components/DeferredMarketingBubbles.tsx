@@ -20,37 +20,55 @@ const FloatingMessageBubble = dynamic(() => import("@/components/FloatingMessage
 export default function DeferredMarketingBubbles() {
   const [show, setShow] = useState(false);
   const doneRef = useRef(false);
-
-  const reveal = () => {
-    if (doneRef.current) return;
-    doneRef.current = true;
-    setShow(true);
-  };
+  const idleIdRef = useRef<number | null>(null);
+  const usedIdleCallbackRef = useRef(false);
 
   useEffect(() => {
-    const onScroll = () => {
+    let scrollHandler: (() => void) | null = null;
+
+    const cancelScheduledReveal = () => {
+      const id = idleIdRef.current;
+      if (id == null) return;
+      if (usedIdleCallbackRef.current && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(id);
+      } else {
+        clearTimeout(id);
+      }
+      idleIdRef.current = null;
+    };
+
+    const detachScroll = () => {
+      if (!scrollHandler) return;
+      window.removeEventListener("scroll", scrollHandler);
+      scrollHandler = null;
+    };
+
+    const reveal = () => {
+      if (doneRef.current) return;
+      doneRef.current = true;
+      detachScroll();
+      cancelScheduledReveal();
+      setShow(true);
+    };
+
+    scrollHandler = () => {
       const vh = window.innerHeight;
       if (window.scrollY > Math.min(vh * 0.38, 480)) reveal();
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
+    window.addEventListener("scroll", scrollHandler, { passive: true });
+    scrollHandler();
 
-    let idleId: number;
-    let usedIdleCallback = false;
     if (typeof window.requestIdleCallback === "function") {
-      usedIdleCallback = true;
-      idleId = window.requestIdleCallback(reveal, { timeout: 2000 });
+      usedIdleCallbackRef.current = true;
+      idleIdRef.current = window.requestIdleCallback(reveal, { timeout: 2000 });
     } else {
-      idleId = window.setTimeout(reveal, 600) as unknown as number;
+      usedIdleCallbackRef.current = false;
+      idleIdRef.current = window.setTimeout(reveal, 600) as unknown as number;
     }
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (usedIdleCallback && typeof window.cancelIdleCallback === "function") {
-        window.cancelIdleCallback(idleId);
-      } else {
-        clearTimeout(idleId);
-      }
+      detachScroll();
+      cancelScheduledReveal();
     };
   }, []);
 

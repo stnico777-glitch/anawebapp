@@ -7,6 +7,8 @@ import {
   FormStyleRailButton,
   LibraryCarouselArrows,
 } from "@/components/LibraryBannerStrip";
+import LockIcon from "@/components/LockIcon";
+import { THEMED_LOCK_BADGE_LG_CLASS } from "@/constants/dayCardVisual";
 import type { MovementLayoutDTO } from "@/lib/movement-layout-types";
 
 /**
@@ -25,6 +27,7 @@ export default function WorkoutLibraryShell({
   quickieRail,
   onPlayHeroTile,
   onPlayQuickie,
+  isGuest = false,
 }: {
   libraryRail: ReactNode;
   libraryToolbar?: ReactNode;
@@ -37,6 +40,8 @@ export default function WorkoutLibraryShell({
   quickieRail?: ReactNode;
   onPlayHeroTile?: (tile: MovementLayoutDTO["heroTiles"][number]) => void;
   onPlayQuickie?: (card: MovementLayoutDTO["quickieCards"][number]) => void;
+  /** Logged-out preview: lock affordances on hero + quickie tiles. */
+  isGuest?: boolean;
 }) {
   const programsRef = useRef<HTMLDivElement>(null);
   const newToPilatesRef = useRef<HTMLDivElement>(null);
@@ -107,6 +112,15 @@ export default function WorkoutLibraryShell({
                   onClick={() => onPlayHeroTile?.(tile)}
                   className="group relative aspect-[16/9] w-full overflow-hidden bg-neutral-900 text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
                 >
+                  {isGuest ? (
+                    <span
+                      className={`absolute left-4 top-4 z-10 ${THEMED_LOCK_BADGE_LG_CLASS}`}
+                      title="Sign up to unlock"
+                      aria-hidden
+                    >
+                      <LockIcon size="sm" className="text-white" />
+                    </span>
+                  ) : null}
                   <Image
                     src={tile.imageUrl}
                     alt={tile.title}
@@ -174,6 +188,8 @@ export default function WorkoutLibraryShell({
                   unoptimized={
                     p.imageUrl.startsWith("http://") || p.imageUrl.startsWith("https://")
                   }
+                  showLock={isGuest}
+                  lockHint={isGuest ? "Sign up to unlock" : undefined}
                 />
               ))}
           </div>

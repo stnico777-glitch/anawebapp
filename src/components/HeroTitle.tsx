@@ -50,7 +50,7 @@ export default function HeroTitle() {
       >
         <Link
           href="/login"
-          className="rounded-sm border border-background/85 px-4 py-2 text-sm font-medium text-background [font-family:var(--font-poppins),sans-serif] transition hover:bg-background/12 focus:outline-none focus-visible:ring-2 focus-visible:ring-background/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/25 md:px-5 md:py-2.5 md:text-base"
+          className="inline-flex items-center justify-center rounded-sm border border-background/85 px-4 py-2 text-sm font-medium text-background [font-family:var(--font-poppins),sans-serif] transition duration-200 ease-out motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.03] hover:bg-background/12 motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-background/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/25 md:px-5 md:py-2.5 md:text-base"
         >
           Join the Movement
         </Link>

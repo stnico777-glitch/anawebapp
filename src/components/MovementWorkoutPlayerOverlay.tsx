@@ -63,7 +63,6 @@ export default function MovementWorkoutPlayerOverlay({
           {workout.title}
         </h1>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray">
-          {workout.instructor && <span>{workout.instructor}</span>}
           {workout.category && (
             <span className="rounded-sm bg-sand px-1.5 py-0.5">{workout.category}</span>
           )}

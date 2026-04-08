@@ -53,10 +53,11 @@ export default function RegisterPage() {
     <div className="w-full max-w-md space-y-8 rounded-sm bg-white p-8 shadow-md ring-1 ring-sand">
       <div className="text-center">
         <h1 className="text-2xl font-medium tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
-          Create account
+          awake + align
         </h1>
-        <p className="mt-2 text-sm text-gray">
-          awake + align — Faith + Fitness
+        <p className="mt-2 text-sm text-gray">Power love sound mind</p>
+        <p className="mt-6 text-base font-medium tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
+          Create account
         </p>
       </div>
 

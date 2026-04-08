@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { STATUS_NAV, type JournalStatusFilterKey } from "@/constants/prayerJournalNav";
 import { normalizeTagSlug } from "./journalingUtils";
 
@@ -17,6 +17,7 @@ export function PrayerJournalSidebar({
   onTagChange,
   mobileOpen,
   onCloseMobile,
+  guestNavigate,
 }: {
   statusFilter: StatusFilter;
   tagFilter: string | null;
@@ -28,9 +29,27 @@ export function PrayerJournalSidebar({
   onTagChange: (tag: string | null) => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  /** Logged-out preview: any filter tap opens sign-up instead. */
+  guestNavigate?: () => void;
 }) {
   const [editingCategories, setEditingCategories] = useState(false);
   const [addDraft, setAddDraft] = useState("");
+
+  useEffect(() => {
+    if (guestNavigate) setEditingCategories(false);
+  }, [guestNavigate]);
+
+  function runFilter(fn: () => void) {
+    return () => {
+      if (guestNavigate) {
+        guestNavigate();
+        onCloseMobile();
+        return;
+      }
+      fn();
+      onCloseMobile();
+    };
+  }
 
   function tryAddCategory() {
     const slug = normalizeTagSlug(addDraft);
@@ -52,10 +71,7 @@ export function PrayerJournalSidebar({
           <li>
             <button
               type="button"
-              onClick={() => {
-                onStatusChange("ALL");
-                onCloseMobile();
-              }}
+              onClick={runFilter(() => onStatusChange("ALL"))}
               className={`w-full rounded-lg px-3 py-2 text-left font-medium transition-colors ${
                 statusFilter === "ALL"
                   ? "bg-sky-blue text-white"
@@ -69,10 +85,7 @@ export function PrayerJournalSidebar({
             <li key={key}>
               <button
                 type="button"
-                onClick={() => {
-                  onStatusChange(key);
-                  onCloseMobile();
-                }}
+                onClick={runFilter(() => onStatusChange(key))}
                 className={`w-full rounded-lg px-3 py-2 text-left font-medium transition-colors ${
                   statusFilter === key
                     ? "bg-sky-blue text-white"
@@ -91,29 +104,28 @@ export function PrayerJournalSidebar({
           <h3 className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-stone-500 dark:text-stone-400">
             View by category
           </h3>
-          <button
-            type="button"
-            aria-expanded={editingCategories}
-            aria-controls="journal-category-list"
-            onClick={() => {
-              setEditingCategories((v) => {
-                if (v) setAddDraft("");
-                return !v;
-              });
-            }}
-            className="shrink-0 rounded-md px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-sky-blue hover:bg-sky-blue/10 dark:text-sky-blue dark:hover:bg-sky-blue/15"
-          >
-            {editingCategories ? "Done" : "Edit"}
-          </button>
+          {guestNavigate ? null : (
+            <button
+              type="button"
+              aria-expanded={editingCategories}
+              aria-controls="journal-category-list"
+              onClick={() => {
+                setEditingCategories((v) => {
+                  if (v) setAddDraft("");
+                  return !v;
+                });
+              }}
+              className="shrink-0 rounded-md px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-sky-blue hover:bg-sky-blue/10 dark:text-sky-blue dark:hover:bg-sky-blue/15"
+            >
+              {editingCategories ? "Done" : "Edit"}
+            </button>
+          )}
         </div>
         <ul id="journal-category-list" className="space-y-0.5">
           <li>
             <button
               type="button"
-              onClick={() => {
-                onTagChange(null);
-                onCloseMobile();
-              }}
+              onClick={runFilter(() => onTagChange(null))}
               className={`w-full rounded-lg px-3 py-2 text-left font-medium transition-colors ${
                 tagFilter == null
                   ? "bg-sky-blue/15 text-sky-blue dark:bg-sky-blue/20"
@@ -128,10 +140,7 @@ export function PrayerJournalSidebar({
               <li key={slug} className="flex items-stretch gap-0.5">
                 <button
                   type="button"
-                  onClick={() => {
-                    onTagChange(slug);
-                    onCloseMobile();
-                  }}
+                  onClick={runFilter(() => onTagChange(slug))}
                   className={`min-w-0 flex-1 rounded-lg px-3 py-2 text-left transition-colors ${
                     tagFilter === slug
                       ? "bg-sky-blue/15 font-medium text-sky-blue dark:bg-sky-blue/20"
@@ -156,10 +165,7 @@ export function PrayerJournalSidebar({
               <li key={slug}>
                 <button
                   type="button"
-                  onClick={() => {
-                    onTagChange(slug);
-                    onCloseMobile();
-                  }}
+                  onClick={runFilter(() => onTagChange(slug))}
                   className={`w-full rounded-lg px-3 py-2 text-left transition-colors ${
                     tagFilter === slug
                       ? "bg-sky-blue/15 font-medium text-sky-blue dark:bg-sky-blue/20"

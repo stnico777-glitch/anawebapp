@@ -6,6 +6,7 @@ import {
   SABBATH_CARD_SHADOW_RING,
   SABBATH_CARD_SUBTITLE_CLASS,
   SABBATH_CARD_TITLE_CLASS,
+  THEMED_LOCK_BADGE_CLASS,
   WEEKDAY_CARD_SHADOW_RING,
 } from "@/constants/dayCardVisual";
 import { SUNDAY_WORKOUT_NAME, WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
@@ -35,7 +36,7 @@ export default function RoutineDayCardsGrid({ displayDays, showLockIcon }: Routi
         <div key={id} className="w-full">
           <div className={`${DAY_CARD_FRAME} ${WEEKDAY_CARD_SHADOW_RING} ${DAY_CARD_SHELL_HOVER}`}>
             {showLockIcon && (
-              <span className="absolute right-2 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px]" aria-hidden>
+              <span className={`absolute right-2 top-3 z-10 ${THEMED_LOCK_BADGE_CLASS}`} aria-hidden>
                 <LockIcon size="sm" className="text-white" />
               </span>
             )}

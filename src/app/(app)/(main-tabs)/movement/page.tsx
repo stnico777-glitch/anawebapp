@@ -19,7 +19,6 @@ export default async function MovementPage() {
           select: {
             id: true,
             title: true,
-            instructor: true,
             duration: true,
             category: true,
             scripture: true,
@@ -52,6 +51,7 @@ export default async function MovementPage() {
         movementLayout={movementLayout}
         workouts={workouts}
         completedWorkoutIds={completedWorkoutIds}
+        isGuest={!userId}
       />
     </>
   );

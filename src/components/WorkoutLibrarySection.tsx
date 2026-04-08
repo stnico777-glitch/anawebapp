@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import WorkoutLibraryShell from "@/components/WorkoutLibraryShell";
 import MemberWorkoutRailCard from "@/components/MemberWorkoutRailCard";
 import MovementWorkoutPlayerOverlay from "@/components/MovementWorkoutPlayerOverlay";
@@ -19,17 +20,27 @@ export default function WorkoutLibrarySection({
   movementLayout,
   workouts,
   completedWorkoutIds = [],
+  isGuest = false,
 }: {
   movementLayout: MovementLayoutDTO;
   workouts: WorkoutRailCardWorkout[];
   completedWorkoutIds?: string[];
+  isGuest?: boolean;
 }) {
+  const router = useRouter();
   const [activeWorkout, setActiveWorkout] = useState<WorkoutRailCardWorkout | null>(null);
   const [layoutVideo, setLayoutVideo] = useState<MovementLayoutVideoPayload | null>(null);
 
-  const openPlayer = useCallback((w: WorkoutRailCardWorkout) => {
-    setActiveWorkout(w);
-  }, []);
+  const openPlayer = useCallback(
+    (w: WorkoutRailCardWorkout) => {
+      if (isGuest) {
+        router.push("/register");
+        return;
+      }
+      setActiveWorkout(w);
+    },
+    [isGuest, router],
+  );
 
   const closePlayer = useCallback(() => {
     setActiveWorkout(null);
@@ -39,27 +50,41 @@ export default function WorkoutLibrarySection({
     setLayoutVideo(null);
   }, []);
 
-  const onPlayHeroTile = useCallback((tile: MovementHeroTileDTO) => {
-    const url = tile.videoUrl?.trim();
-    if (!url) return;
-    setLayoutVideo({
-      title: tile.title,
-      subtitle: tile.subtitle,
-      videoUrl: url,
-      poster: tile.imageUrl,
-    });
-  }, []);
+  const onPlayHeroTile = useCallback(
+    (tile: MovementHeroTileDTO) => {
+      if (isGuest) {
+        router.push("/register");
+        return;
+      }
+      const url = tile.videoUrl?.trim();
+      if (!url) return;
+      setLayoutVideo({
+        title: tile.title,
+        subtitle: tile.subtitle,
+        videoUrl: url,
+        poster: tile.imageUrl,
+      });
+    },
+    [isGuest, router],
+  );
 
-  const onPlayQuickie = useCallback((card: MovementQuickieCardDTO) => {
-    const url = card.videoUrl?.trim();
-    if (!url) return;
-    setLayoutVideo({
-      title: card.title,
-      subtitle: card.metaLine,
-      videoUrl: url,
-      poster: card.imageUrl,
-    });
-  }, []);
+  const onPlayQuickie = useCallback(
+    (card: MovementQuickieCardDTO) => {
+      if (isGuest) {
+        router.push("/register");
+        return;
+      }
+      const url = card.videoUrl?.trim();
+      if (!url) return;
+      setLayoutVideo({
+        title: card.title,
+        subtitle: card.metaLine,
+        videoUrl: url,
+        poster: card.imageUrl,
+      });
+    },
+    [isGuest, router],
+  );
 
   const libraryHidden = activeWorkout !== null || layoutVideo !== null;
 
@@ -70,6 +95,7 @@ export default function WorkoutLibrarySection({
           movementLayout={movementLayout}
           onPlayHeroTile={onPlayHeroTile}
           onPlayQuickie={onPlayQuickie}
+          isGuest={isGuest}
           libraryRail={
             workouts.length === 0 ? (
               <div
@@ -88,6 +114,7 @@ export default function WorkoutLibrarySection({
                   onSelect={openPlayer}
                   selected={activeWorkout?.id === w.id}
                   showDone={completedWorkoutIds.includes(w.id)}
+                  showLock={isGuest}
                 />
               ))
             )

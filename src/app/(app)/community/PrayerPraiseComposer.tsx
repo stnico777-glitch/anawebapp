@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import LockIcon from "@/components/LockIcon";
 
 function avatarLetter(name: string, content: string, kind: "prayer" | "praise") {
   const n = name.trim();
@@ -15,8 +16,10 @@ type PanelStep = "choose" | "form";
 
 export default function PrayerPraiseComposer({
   defaultDisplayName,
+  isGuest = false,
 }: {
   defaultDisplayName?: string;
+  isGuest?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -52,6 +55,10 @@ export default function PrayerPraiseComposer({
   }, []);
 
   function openFab() {
+    if (isGuest) {
+      router.push("/register");
+      return;
+    }
     setOpen(true);
     setStep("choose");
     setError(null);
@@ -142,10 +149,18 @@ export default function PrayerPraiseComposer({
           <button
             type="button"
             onClick={openFab}
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-sky-blue text-3xl font-light leading-none text-white shadow-lg ring-2 ring-white/90 transition hover:bg-sky-blue/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
-            aria-label="New prayer or praise post"
+            className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-sky-blue text-3xl font-light leading-none text-white shadow-lg ring-2 ring-white/90 transition hover:bg-sky-blue/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+            aria-label={isGuest ? "Sign up to post prayer or praise" : "New prayer or praise post"}
             aria-describedby="community-fab-hint"
           >
+            {isGuest ? (
+              <span
+                className="absolute -right-0.5 -top-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 shadow ring-2 ring-white"
+                aria-hidden
+              >
+                <LockIcon size="sm" className="text-white" />
+              </span>
+            ) : null}
             <span aria-hidden>+</span>
           </button>
 
@@ -159,11 +174,23 @@ export default function PrayerPraiseComposer({
               aria-hidden
             />
             <p className="relative z-[1] text-left text-xs font-medium leading-snug text-foreground [font-family:var(--font-body),sans-serif] sm:text-[13px]">
-              <span className="block">Submit a prayer request</span>
-              <span className="mt-0.5 block text-gray">
-                or report praise — tap{" "}
-                <span className="font-semibold text-sky-blue">+</span>
-              </span>
+              {isGuest ? (
+                <>
+                  <span className="block">Preview the wall</span>
+                  <span className="mt-0.5 block text-gray">
+                    Sign up to share prayer or praise — tap{" "}
+                    <span className="font-semibold text-sky-blue">+</span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="block">Submit a prayer request</span>
+                  <span className="mt-0.5 block text-gray">
+                    or report praise — tap{" "}
+                    <span className="font-semibold text-sky-blue">+</span>
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>

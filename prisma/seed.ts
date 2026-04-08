@@ -199,15 +199,15 @@ async function main() {
 
   const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
   const initialWorkouts = [
-    { title: "Morning Strength", instructor: "Coach Sarah", duration: 20, category: "Strength", videoUrl, scripture: "Philippians 4:13" },
-    { title: "Cardio Blast", instructor: "Coach Mike", duration: 15, category: "Cardio", videoUrl },
-    { title: "Restorative Yoga", instructor: "Coach Sarah", duration: 25, category: "Yoga", videoUrl, scripture: "Psalm 46:10" },
-    { title: "Pilates Core", instructor: "Coach Sarah", duration: 22, category: "Pilates", videoUrl, scripture: "Isaiah 40:31" },
-    { title: "HIIT Burn", instructor: "Coach Mike", duration: 18, category: "HIIT", videoUrl },
-    { title: "Evening Stretch", instructor: "Coach Sarah", duration: 15, category: "Stretch", videoUrl, scripture: "Psalm 23:1-3" },
-    { title: "Full Body Flow", instructor: "Coach Mike", duration: 30, category: "Full Body", videoUrl },
-    { title: "Quick Cardio", instructor: "Coach Sarah", duration: 10, category: "Cardio", videoUrl },
-    { title: "Gentle Yoga", instructor: "Coach Sarah", duration: 20, category: "Yoga", videoUrl, scripture: "Matthew 11:28" },
+    { title: "Morning Strength", duration: 20, category: "Strength", videoUrl, scripture: "Philippians 4:13" },
+    { title: "Cardio Blast", duration: 15, category: "Cardio", videoUrl },
+    { title: "Restorative Yoga", duration: 25, category: "Yoga", videoUrl, scripture: "Psalm 46:10" },
+    { title: "Pilates Core", duration: 22, category: "Pilates", videoUrl, scripture: "Isaiah 40:31" },
+    { title: "HIIT Burn", duration: 18, category: "HIIT", videoUrl },
+    { title: "Evening Stretch", duration: 15, category: "Stretch", videoUrl, scripture: "Psalm 23:1-3" },
+    { title: "Full Body Flow", duration: 30, category: "Full Body", videoUrl },
+    { title: "Quick Cardio", duration: 10, category: "Cardio", videoUrl },
+    { title: "Gentle Yoga", duration: 20, category: "Yoga", videoUrl, scripture: "Matthew 11:28" },
   ];
 
   const workoutCount = await prisma.workout.count();

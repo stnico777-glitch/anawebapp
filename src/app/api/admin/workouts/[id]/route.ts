@@ -7,13 +7,13 @@ export const PATCH = withAdmin<
 >(async (_, request, { params }) => {
   const { id } = await params;
   const body = await request.json();
-  const { title, instructor, duration, category, scripture, videoUrl, thumbnailUrl } = body;
+  const { title, duration, category, scripture, videoUrl, thumbnailUrl } = body;
 
   const workout = await prisma.workout.update({
     where: { id },
     data: {
       ...(title != null && { title }),
-      ...(instructor != null && { instructor }),
+      instructor: null,
       ...(duration != null && { duration: parseInt(String(duration), 10) }),
       ...(category != null && { category }),
       ...(scripture != null && { scripture }),

@@ -48,7 +48,10 @@ export default async function PrayerPraiseCommunityRoute() {
         </div>
       </div>
 
-      <PrayerPraiseComposer defaultDisplayName={defaultDisplayName || undefined} />
+      <PrayerPraiseComposer
+        defaultDisplayName={defaultDisplayName || undefined}
+        isGuest={!userId}
+      />
     </div>
   );
 }

@@ -24,7 +24,7 @@ export default function AdminCmsNav() {
   const pathname = usePathname() ?? "";
 
   return (
-    <div className="border-b border-sand bg-white/90 backdrop-blur-sm">
+    <div className="border-b border-sand bg-white">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         <div className="flex flex-wrap items-center justify-between gap-2 py-2.5">
           <nav

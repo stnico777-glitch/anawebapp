@@ -11,7 +11,7 @@ export const GET = withAdmin(async () => {
 
 export const POST = withAdmin(async (_, request) => {
   const body = await request.json();
-  const { title, instructor, duration, category, scripture, videoUrl, thumbnailUrl } = body;
+  const { title, duration, category, scripture, videoUrl, thumbnailUrl } = body;
   if (!title || !videoUrl || duration == null) {
     return NextResponse.json(
       { error: "title, videoUrl, and duration required" },
@@ -22,7 +22,7 @@ export const POST = withAdmin(async (_, request) => {
   const workout = await prisma.workout.create({
     data: {
       title,
-      instructor: instructor || null,
+      instructor: null,
       duration: parseInt(String(duration), 10),
       category: category || null,
       scripture: scripture || null,

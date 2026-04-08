@@ -14,13 +14,13 @@
     "vercel:sync-env": "node scripts/sync-vercel-env.mjs",
     "hero:reverse": "ffmpeg -y -i public/hero-video.mp4 -vf reverse -an -c:v libx264 -preset fast -crf 20 -pix_fmt yuv420p -movflags +faststart public/hero-video-reverse.mp4",
     "hero:poster": "ffmpeg -y -ss 0.25 -i public/hero-video.mp4 -vf \"scale='min(1920,iw)':-2\" -frames:v 1 -q:v 82 public/hero-video-poster.jpg",
-    "hero:30fps": "bash scripts/hero-30fps.sh"
+    "hero:30fps": "bash scripts/hero-30fps.sh",
+    "hero:app-tabs": "bash scripts/hero-app-tabs.sh"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@lottiefiles/dotlottie-react": "^0.18.1",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.4.0",
     "@supabase/ssr": "^0.10.0",

@@ -7,6 +7,8 @@ import {
   WELCOME_BUBBLE_NUDGE_KEY,
   WELCOME_BUBBLE_SUCCESS_KEY,
   WELCOME_BUBBLE_PILL_DISMISSED_KEY,
+  WELCOME_BUBBLE_STORAGE_EVENT,
+  notifyWelcomeBubbleStorageChanged,
 } from "@/lib/welcome-email-modal";
 
 const NUDGE_TEXT =
@@ -39,13 +41,14 @@ export default function FloatingMessageBubble() {
     const onReopen = () => {
       setVisible(false);
     };
+    const onSameTabStorage = () => check();
     window.addEventListener("storage", onStorage);
     window.addEventListener(WELCOME_REOPEN_EVENT, onReopen);
-    const id = setInterval(check, 500);
+    window.addEventListener(WELCOME_BUBBLE_STORAGE_EVENT, onSameTabStorage);
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(WELCOME_REOPEN_EVENT, onReopen);
-      clearInterval(id);
+      window.removeEventListener(WELCOME_BUBBLE_STORAGE_EVENT, onSameTabStorage);
     };
   }, [mounted]);
 
@@ -54,6 +57,7 @@ export default function FloatingMessageBubble() {
     sessionStorage.removeItem(WELCOME_BUBBLE_NUDGE_KEY);
     sessionStorage.removeItem(WELCOME_BUBBLE_SUCCESS_KEY);
     sessionStorage.removeItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY);
+    notifyWelcomeBubbleStorageChanged();
     setShowNudge(false);
     setShowSuccess(false);
     setPillDismissed(false);
@@ -64,6 +68,7 @@ export default function FloatingMessageBubble() {
   const handleDismissPill = (e: React.MouseEvent) => {
     e.stopPropagation();
     sessionStorage.setItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY, "1");
+    notifyWelcomeBubbleStorageChanged();
     setPillDismissed(true);
   };
 

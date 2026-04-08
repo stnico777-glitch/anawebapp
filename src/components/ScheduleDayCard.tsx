@@ -26,8 +26,14 @@ interface ScheduleDayCardProps {
     } | null;
   };
   isToday?: boolean;
-  /** When true, show lock icon (content gated for non-subscribers). */
+  /** When true, show lock icon and block checklist, deep links, and Start (guest or non-subscriber). */
   isLocked?: boolean;
+  /** Unlocks CTA when `isLocked` (e.g. `/register` for guests, `/subscribe` for members). */
+  lockCtaHref?: string;
+  /** Primary button label when locked; defaults from `lockCtaHref`. */
+  lockPrimaryLabel?: string;
+  /** Tooltip / aria for lock badge. */
+  lockHint?: string;
   /**
    * CMS: same visuals as the member card, but checklist is read-only and the primary
    * action opens the editor instead of “Start”.
@@ -67,9 +73,18 @@ export default function ScheduleDayCard({
   day,
   isToday = false,
   isLocked = false,
+  lockCtaHref = "/subscribe",
+  lockPrimaryLabel,
+  lockHint,
   cmsMode = false,
   onEditCard,
 }: ScheduleDayCardProps) {
+  const resolvedLockLabel =
+    lockPrimaryLabel ??
+    (lockCtaHref === "/register" ? "Sign up to unlock" : "Subscribe to unlock");
+  const resolvedLockHint =
+    lockHint ??
+    (lockCtaHref === "/register" ? "Sign up to unlock this week" : "Subscribe to unlock");
   const [prayerDone, setPrayerDone] = useState(day.completion?.prayerDone ?? false);
   const [workoutDone, setWorkoutDone] = useState(day.completion?.workoutDone ?? false);
   const [affirmationDone, setAffirmationDone] = useState(
@@ -87,7 +102,7 @@ export default function ScheduleDayCard({
   const progress = Math.round((done / total) * 100);
 
   async function toggle(type: "prayer" | "workout" | "affirmation") {
-    if (cmsMode) return;
+    if (cmsMode || isLocked) return;
     if (loading) return;
     setLoading(true);
     const updates = {
@@ -132,7 +147,7 @@ export default function ScheduleDayCard({
 
   return (
     <article
-      className={`relative overflow-hidden rounded-lg bg-app-surface shadow-[0_1px_2px_rgba(120,130,135,0.06)] transition-all duration-300 ease-out will-change-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+      className={`relative overflow-hidden rounded-lg bg-app-surface shadow-[0_1px_2px_rgba(120,130,135,0.06)] transition-transform duration-300 ease-out motion-safe:hover:will-change-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
         isToday ? "border-2 border-sky-blue" : "border border-sand"
       }`}
     >
@@ -142,7 +157,11 @@ export default function ScheduleDayCard({
         </span>
       )}
       {isLocked && (
-        <span className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 shadow backdrop-blur-[2px]" title="Subscribe to unlock">
+        <span
+          className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/48 shadow"
+          title={resolvedLockHint}
+          aria-label={resolvedLockHint}
+        >
           <LockIcon size="sm" className="text-white" />
         </span>
       )}
@@ -193,7 +212,7 @@ export default function ScheduleDayCard({
           </span>
           <div className="h-1 w-[70px] shrink-0 overflow-hidden rounded-sm bg-sand">
             <div
-              className="h-full bg-accent-amber transition-all duration-300"
+              className="h-full bg-accent-amber transition-[width] duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -203,52 +222,60 @@ export default function ScheduleDayCard({
           <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("prayer")}
-              disabled={loading || cmsMode}
+              disabled={loading || cmsMode || isLocked}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
                 prayerDoneShow ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
-              } ${cmsMode ? "cursor-default opacity-60" : ""}`}
+              } ${cmsMode || isLocked ? "cursor-default opacity-60" : ""}`}
               aria-pressed={prayerDoneShow}
               type="button"
             >
               {prayerDoneShow ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
-            <Link
-              href={prayerHref}
-              className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
-            >
-              {day.prayerTitle ?? "Prayer"}
-            </Link>
+            {isLocked ? (
+              <span className="min-w-0 flex-1 cursor-default text-sm text-gray">{day.prayerTitle ?? "Prayer"}</span>
+            ) : (
+              <Link
+                href={prayerHref}
+                className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
+              >
+                {day.prayerTitle ?? "Prayer"}
+              </Link>
+            )}
             <IconPrayer />
           </div>
 
           <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("workout")}
-              disabled={loading || cmsMode}
+              disabled={loading || cmsMode || isLocked}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
                 workoutDoneShow ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
-              } ${cmsMode ? "cursor-default opacity-60" : ""}`}
+              } ${cmsMode || isLocked ? "cursor-default opacity-60" : ""}`}
               aria-pressed={workoutDoneShow}
               type="button"
             >
               {workoutDoneShow ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
-            <Link
-              href={workoutHref}
-              className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
-            >
-              {day.workoutTitle ?? "Movement"}
-            </Link>
+            {isLocked ? (
+              <span className="min-w-0 flex-1 cursor-default text-sm text-gray">{day.workoutTitle ?? "Movement"}</span>
+            ) : (
+              <Link
+                href={workoutHref}
+                className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
+              >
+                {day.workoutTitle ?? "Movement"}
+              </Link>
+            )}
             <IconWorkout />
           </div>
 
           <div className="flex items-center gap-1">
             <button
               onClick={() => toggle("affirmation")}
-              disabled={loading || cmsMode}
+              disabled={loading || cmsMode || isLocked}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
                 affirmationDoneShow ? "border-sky-blue bg-sky-blue" : "border-sand bg-background hover:bg-background/90"
-              } ${cmsMode ? "cursor-default opacity-60" : ""}`}
+              } ${cmsMode || isLocked ? "cursor-default opacity-60" : ""}`}
               aria-pressed={affirmationDoneShow}
               type="button"
             >
@@ -270,6 +297,13 @@ export default function ScheduleDayCard({
             >
               Edit card
             </button>
+          ) : isLocked ? (
+            <Link
+              href={lockCtaHref}
+              className="inline-flex min-w-[132px] items-center justify-center rounded-md bg-sky-blue px-6 py-2 text-center text-base font-semibold text-white transition-opacity [font-family:var(--font-body),sans-serif] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+            >
+              {resolvedLockLabel}
+            </Link>
           ) : allDone ? (
             <span
               className="inline-flex min-w-[132px] cursor-default items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white opacity-90 [font-family:var(--font-body),sans-serif]"

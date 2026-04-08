@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import LockIcon from "@/components/LockIcon";
 import {
   DAY_CARD_SHELL_HOVER,
   SABBATH_CARD_SUBTITLE_CLASS,
@@ -29,7 +31,6 @@ import {
   statusDisplayLabel,
   shareJournalEntry,
 } from "./journalingUtils";
-
 type StatusFilter = JournalStatusFilterKey | "ALL";
 
 /** Answer celebration modal — peaceful nature art (on-theme with routine / rest). */
@@ -40,7 +41,7 @@ function parseStatusFromUrl(s: string | null): StatusFilter {
   return "ALL";
 }
 
-function PrayerJournalInner() {
+function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -110,6 +111,7 @@ function PrayerJournalInner() {
   }, []);
 
   useEffect(() => {
+    if (isGuest) return;
     let cancelled = false;
     queueMicrotask(() => {
       if (!cancelled) void loadTagSuggestions();
@@ -117,11 +119,16 @@ function PrayerJournalInner() {
     return () => {
       cancelled = true;
     };
-  }, [loadTagSuggestions]);
+  }, [loadTagSuggestions, isGuest]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (isGuest) {
+        setEntries([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         await loadEntries();
@@ -132,7 +139,7 @@ function PrayerJournalInner() {
     return () => {
       cancelled = true;
     };
-  }, [loadEntries]);
+  }, [loadEntries, isGuest]);
 
   useEffect(() => {
     if (!celebrateEntry) return;
@@ -175,12 +182,13 @@ function PrayerJournalInner() {
   }, [journalOptionsOpenId]);
 
   useEffect(() => {
+    if (isGuest) return;
     const verseRef = searchParams.get("verseRef");
     const verseText = searchParams.get("verseText");
     if (!verseRef || !verseText) return;
     const id = window.setTimeout(() => setComposerOpen(true), 0);
     return () => window.clearTimeout(id);
-  }, [searchParams]);
+  }, [searchParams, isGuest]);
 
   const openNewWithVerse = searchParams.get("verseRef") && searchParams.get("verseText");
 
@@ -223,6 +231,7 @@ function PrayerJournalInner() {
         tagFilter={tagFilter}
         categorySlugs={sidebarCategorySlugs}
         labelForSlug={resolveCategoryLabel}
+        guestNavigate={isGuest ? () => router.push("/register") : undefined}
         onAddPinnedCategory={(slug) => {
           setHiddenCategories((hPrev) => {
             if (!hPrev.includes(slug)) return hPrev;
@@ -317,28 +326,79 @@ function PrayerJournalInner() {
             >
               Menu
             </button>
-            <p className="text-sm font-medium text-stone-600 dark:text-stone-400">{filterSummary}</p>
+            <p className="text-sm font-medium text-gray [font-family:var(--font-body),sans-serif]">
+              {filterSummary}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => {
+                if (isGuest) {
+                  router.push("/register");
+                  return;
+                }
                 setEditing(null);
                 setComposerOpen(true);
               }}
-              className="rounded-lg bg-sky-blue px-4 py-2 font-medium text-white hover:bg-sky-blue/90"
+              className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-medium text-white hover:bg-sky-blue/90 ${
+                isGuest ? "bg-sky-blue/85" : "bg-sky-blue"
+              }`}
+              aria-label={isGuest ? "New prayer — sign up to access" : undefined}
             >
+              {isGuest ? (
+                <LockIcon size="sm" className="text-white" ariaHidden />
+              ) : null}
               New prayer
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="text-center text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+          <p className="text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-500 dark:border-stone-600 dark:text-stone-400">
-            No entries in this view. Tap <strong>New prayer</strong> or adjust filters in the sidebar.
-          </p>
+          isGuest ? (
+            <div
+              className={`relative overflow-hidden rounded-xl border border-sand bg-white shadow-[0_8px_32px_-10px_rgba(120,130,135,0.18)] ${WEEKDAY_CARD_SHADOW_RING}`}
+            >
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-br from-pastel-blue-light/70 via-app-surface/90 to-sunset-peach/50"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/80"
+                aria-hidden
+              />
+              <div className="relative px-6 py-10 text-center sm:px-10 sm:py-12">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground [font-family:var(--font-headline),sans-serif] sm:text-xl">
+                  Your prayer journal
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray [font-family:var(--font-body),sans-serif]">
+                  Sign up or log in for a private space to write prayers, celebrate when God answers, and keep
+                  everything organized in one place.
+                </p>
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                  <Link
+                    href="/register"
+                    className="rounded-lg bg-sky-blue px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(110,173,228,0.35)] transition hover:bg-sky-blue/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white [font-family:var(--font-body),sans-serif]"
+                  >
+                    Create free account
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="rounded-lg border border-sand bg-white px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-background hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white [font-family:var(--font-body),sans-serif]"
+                  >
+                    Member login
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-xl border border-dashed border-sand bg-white/60 py-12 text-center text-sm text-gray [font-family:var(--font-body),sans-serif] ring-1 ring-sky-blue/20">
+              No entries in this view. Tap <strong className="font-semibold text-foreground">New prayer</strong> or
+              adjust filters in the sidebar.
+            </p>
+          )
         ) : (
           <ul className="space-y-3">
             {entries.map((e) => {
@@ -349,6 +409,7 @@ function PrayerJournalInner() {
               const fullHeadline = e.title?.trim() || "Prayer";
               const isBodyExpanded = expandedJournalIds.has(e.id);
               const hasPrayerBody = e.content.trim().length > 0;
+              const showBody = isBodyExpanded;
               const thumb = photos[0];
 
               const optionsOpen = journalOptionsOpenId === e.id;
@@ -356,7 +417,7 @@ function PrayerJournalInner() {
               return (
                 <li
                   key={e.id}
-                  className="rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900"
+                  className="relative rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900"
                 >
                   <div className="flex gap-3">
                     <div
@@ -427,7 +488,10 @@ function PrayerJournalInner() {
                               ) : null}
                             </div>
                           </div>
-                          <div className="relative shrink-0" onClick={(ev) => ev.stopPropagation()}>
+                          <div
+                            className="relative shrink-0"
+                            onClick={(ev) => ev.stopPropagation()}
+                          >
                             <button
                               type="button"
                               className="rounded-lg px-2 py-1 text-lg leading-none text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
@@ -541,20 +605,20 @@ function PrayerJournalInner() {
                             ) : null}
                           </div>
                         </div>
-                        {hasPrayerBody && !isBodyExpanded ? (
+                        {hasPrayerBody && !showBody ? (
                           <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">Tap to read</p>
                         ) : null}
-                        {isBodyExpanded && hasPrayerBody ? (
+                        {showBody && hasPrayerBody ? (
                           <p className="mt-2 whitespace-pre-wrap text-sm text-stone-700 dark:text-stone-300">
                             {e.content}
                           </p>
                         ) : null}
-                        {isBodyExpanded && tags.length > 0 && !catSlug ? (
+                        {showBody && tags.length > 0 && !catSlug ? (
                           <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                             {tags.map((t) => `#${t}`).join(" ")}
                           </p>
                         ) : null}
-                        {isBodyExpanded && photos.length > 1 ? (
+                        {showBody && photos.length > 1 ? (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {photos.slice(1).map((src) => (
                               // eslint-disable-next-line @next/next/no-img-element
@@ -567,7 +631,7 @@ function PrayerJournalInner() {
                             ))}
                           </div>
                         ) : null}
-                        {isBodyExpanded && e.status === "ANSWERED" && e.answerNote ? (
+                        {showBody && e.status === "ANSWERED" && e.answerNote ? (
                           <p className="mt-2 text-sm italic text-emerald-800 dark:text-emerald-200">
                             Answered: {e.answerNote}
                           </p>
@@ -661,7 +725,7 @@ function PrayerJournalInner() {
 
         {celebrateEntry ? (
           <div
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/55 p-4 backdrop-blur-sm dark:bg-stone-950/65"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/72 p-4 dark:bg-stone-950/82"
             role="dialog"
             aria-modal="true"
             aria-labelledby="prayer-celebrate-title"
@@ -753,7 +817,7 @@ function PrayerJournalInner() {
           </div>
         ) : null}
 
-        {composerOpen ? (
+        {composerOpen && !isGuest ? (
           <PrayerJournalEditor
             key={`${editing?.id ?? "new"}-${openNewWithVerse ? "v" : "x"}`}
             entry={editing}
@@ -785,14 +849,14 @@ function PrayerJournalInner() {
   );
 }
 
-export default function PrayerJournalClient() {
+export default function PrayerJournalClient({ isGuest = false }: { isGuest?: boolean }) {
   return (
     <Suspense
       fallback={
         <p className="text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">Loading journal…</p>
       }
     >
-      <PrayerJournalInner />
+      <PrayerJournalInner isGuest={isGuest} />
     </Suspense>
   );
 }

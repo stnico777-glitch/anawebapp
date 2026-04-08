@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import ScheduleSection from "@/components/ScheduleSection";
 import Footer from "@/components/Footer";
-import LazyWhenVisible from "@/components/LazyWhenVisible";
 import DeferredMarketingBubbles from "@/components/DeferredMarketingBubbles";
 
 const TrialBanner = dynamic(() => import("@/components/TrialBanner"), {
@@ -46,25 +45,10 @@ export default function HomeBelowFoldIsland({
         <TrialBanner />
         <DeferredMarketingBubbles />
         <ScheduleSection schedule={schedule} showLockIcon={showLockIcon} />
-        <LazyWhenVisible
-          fallback={<div className="min-h-[360px] w-full bg-transparent" aria-hidden />}
-          rootMargin="40px 0px"
-        >
-          <FeaturesSection showLockIcon={showLockIcon} />
-        </LazyWhenVisible>
-        <LazyWhenVisible
-          fallback={<div className="min-h-[280px] w-full bg-transparent" aria-hidden />}
-          rootMargin="40px 0px"
-        >
-          <AboutBrandSection />
-        </LazyWhenVisible>
-        <section className="home-cv-instagram mb-16 overflow-visible md:mb-20">
-          <LazyWhenVisible
-            fallback={<div className="min-h-[min(520px,70vh)] w-full bg-transparent" aria-hidden />}
-            rootMargin="48px 0px"
-          >
-            <InstagramCarousel {...instagram} />
-          </LazyWhenVisible>
+        <FeaturesSection showLockIcon={showLockIcon} />
+        <AboutBrandSection />
+        <section className="mb-16 overflow-visible md:mb-20">
+          <InstagramCarousel {...instagram} />
         </section>
         <Footer bleedBackground />
       </div>

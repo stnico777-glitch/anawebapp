@@ -98,7 +98,7 @@ export default function AudioCollectionForm({
         {triggerLabel ?? (card ? "Edit" : "Add collection")}
       </button>
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
           <form
             onSubmit={handleSubmit}
             className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]"

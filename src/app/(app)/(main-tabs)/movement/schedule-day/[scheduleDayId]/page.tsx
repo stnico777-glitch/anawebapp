@@ -70,9 +70,6 @@ export default async function ScheduleDayMovementPage({
       <h1 className="text-2xl font-medium text-foreground [font-family:var(--font-headline),sans-serif]">
         {title}
       </h1>
-      {workout?.instructor ? (
-        <p className="mt-1 text-sm text-gray">{workout.instructor}</p>
-      ) : null}
       <div className="mt-6">
         <ScheduleDayVideoPlayer
           scheduleDayId={day.id}

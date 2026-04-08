@@ -1,9 +1,6 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
-import AboutWaveFramedPhoto from "@/components/AboutWaveFramedPhoto";
 import {
   ABOUT_WAVE_BOTTOM_PATH_D,
-  ABOUT_WAVE_SECTION_ACCENT,
   ABOUT_WAVE_SECTION_BG,
   ABOUT_WAVE_TOP_PATH_D,
   ABOUT_WAVE_VIEW_H,
@@ -11,6 +8,14 @@ import {
 } from "@/lib/aboutWaveGeometry";
 
 const WAVE_SVG_CLASS = "block h-[clamp(88px,18vw,200px)] w-full";
+
+/** Matches {@link HeroTitle} wordmark structure; theme sky-blue on pale wave band. */
+const wordmarkBase =
+  "text-sky-blue [font-family:var(--font-poppins),sans-serif] lowercase [font-synthesis:none]";
+
+const wordmarkMainClass = `${wordmarkBase} font-normal`;
+
+const wordmarkSubClass = `${wordmarkBase} font-medium`;
 
 function AboutWaveBand({ variant }: { variant: "top" | "bottom" }) {
   const wrapperClass =
@@ -35,56 +40,43 @@ function AboutWaveBand({ variant }: { variant: "top" | "bottom" }) {
 }
 
 /**
- * Homepage “about” band — pale blue (#E9EFF5) + sky-blue copy; wave SVG uses the same opaque fill as the body (no stacked alpha).
+ * Homepage about band — pale blue field + wave SVGs; centered wordmark (same lines as marketing hero).
  */
 export default function AboutBrandSection() {
   return (
     <section
       id="about-brand"
       className="home-cv-about relative -mt-2 overflow-x-hidden md:-mt-3"
-      aria-labelledby="about-brand-heading"
+      aria-labelledby="about-brand-wordmark"
     >
       <AboutWaveBand variant="top" />
 
       <div
-        className="relative z-[2] -mb-6 -mt-8 md:-mb-8 md:-mt-10"
-        style={{ color: ABOUT_WAVE_SECTION_ACCENT, backgroundColor: ABOUT_WAVE_SECTION_BG }}
+        className="relative z-[2] -mb-6 -mt-8 flex min-h-[min(52dvh,420px)] items-center justify-center md:-mb-8 md:-mt-10 md:min-h-[min(48dvh,460px)]"
+        style={{ backgroundColor: ABOUT_WAVE_SECTION_BG }}
       >
-        <div className="mx-auto grid max-w-[1800px] md:grid-cols-2 md:items-start md:gap-2 lg:gap-4">
-          <div className="flex justify-center px-4 pb-0 pt-0 md:px-6 md:pb-0 md:pt-0 lg:px-8">
-            <AboutWaveFramedPhoto />
-          </div>
-
-          <div className="flex flex-col items-center justify-center px-5 pb-0 pt-4 text-center md:px-8 md:pb-0 md:pt-12 lg:px-10 lg:pb-0 lg:pt-16">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] [font-family:var(--font-headline),sans-serif] md:text-xs">
-              About awake + align
-            </p>
-            <h2
-              id="about-brand-heading"
-              className="mt-1 max-w-xl text-3xl font-normal capitalize leading-[1.35] tracking-[0.135em] [font-synthesis:none] md:mt-1.5 md:text-4xl [font-family:var(--font-headline),sans-serif]"
+        <div className="translate-y-2 md:translate-y-3 flex max-w-[min(100%,42rem)] flex-col items-center gap-6 px-4 md:gap-7">
+          <h2
+            id="about-brand-wordmark"
+            className="flex w-full flex-col items-center gap-1 md:gap-1.5"
+          >
+            <span
+              className={`${wordmarkMainClass} block text-center leading-none tracking-[0.2em] text-[clamp(2.35rem,9.75dvh,5.85rem)] md:tracking-[0.24em]`}
             >
-              A movement for faith, fitness, and community
-            </h2>
-            <p className="mt-2 max-w-md text-[15px] leading-snug [font-family:var(--font-body),sans-serif] md:mt-3 md:text-base md:leading-[1.55]">
-              Faith, movement, and community in one rhythm—so you’re never building the habit alone.
-              Schedule, library, prayer, and people who care, together.
-            </p>
-            <div className="mt-10 flex w-full justify-center md:mt-12">
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-full border-2 px-8 py-3 text-sm font-medium text-inherit transition [font-family:var(--font-headline),sans-serif] hover:bg-[color-mix(in_srgb,var(--about-accent)_12%,transparent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--about-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--about-bg)]"
-                style={
-                  {
-                    borderColor: ABOUT_WAVE_SECTION_ACCENT,
-                    ["--about-accent" as string]: ABOUT_WAVE_SECTION_ACCENT,
-                    ["--about-bg" as string]: ABOUT_WAVE_SECTION_BG,
-                  } as CSSProperties
-                }
-              >
-                Join the Movement
-              </Link>
-            </div>
-          </div>
+              awake+align
+            </span>
+            <span
+              className={`${wordmarkSubClass} mt-0.5 block text-center leading-tight tracking-[0.32em] text-[clamp(0.64rem,2.4dvh,1.38rem)] md:text-[clamp(0.74rem,2.55dvh,1.45rem)] md:tracking-[0.42em]`}
+            >
+              power love sound mind
+            </span>
+          </h2>
+          <Link
+            href="/register"
+            className="inline-flex items-center justify-center rounded-full border-2 border-current bg-gradient-to-b from-white/35 to-sky-blue/[0.08] px-7 py-2.5 text-sm font-medium text-sky-blue shadow-none backdrop-blur-xl ring-1 ring-inset ring-white/25 transition duration-200 ease-out [font-family:var(--font-headline),sans-serif] motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.03] hover:from-white/45 hover:to-sky-blue/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-[#E9EFF5] motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 md:px-8 md:py-3 md:text-base"
+          >
+            Find Your Rhythm
+          </Link>
         </div>
       </div>
 

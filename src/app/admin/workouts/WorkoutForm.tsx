@@ -8,7 +8,6 @@ import { confirmAdminSave } from "@/lib/admin-confirm-save";
 interface Workout {
   id: string;
   title: string;
-  instructor: string | null;
   duration: number;
   category: string | null;
   scripture: string | null;
@@ -34,7 +33,6 @@ export default function WorkoutForm({
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     title: workout?.title ?? "",
-    instructor: workout?.instructor ?? "",
     duration: workout?.duration ?? 20,
     category: workout?.category ?? "",
     scripture: workout?.scripture ?? "",
@@ -47,7 +45,6 @@ export default function WorkoutForm({
     if (!workout) return;
     setForm({
       title: workout.title,
-      instructor: workout.instructor ?? "",
       duration: workout.duration,
       category: workout.category ?? "",
       scripture: workout.scripture ?? "",
@@ -57,7 +54,6 @@ export default function WorkoutForm({
   }, [
     workout?.id,
     workout?.title,
-    workout?.instructor,
     workout?.duration,
     workout?.category,
     workout?.scripture,
@@ -84,7 +80,6 @@ export default function WorkoutForm({
         method,
         body: JSON.stringify({
           ...form,
-          instructor: form.instructor || undefined,
           category: form.category || undefined,
           scripture: form.scripture || undefined,
           thumbnailUrl: form.thumbnailUrl || undefined,
@@ -132,7 +127,7 @@ export default function WorkoutForm({
         {triggerLabel ?? (workout ? "Edit" : "Add movement")}
       </button>
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
           <form
             onSubmit={handleSubmit}
             className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]"
@@ -147,14 +142,6 @@ export default function WorkoutForm({
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   required
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Instructor</label>
-                <input
-                  value={form.instructor}
-                  onChange={(e) => setForm({ ...form, instructor: e.target.value })}
                   className={inputClass}
                 />
               </div>

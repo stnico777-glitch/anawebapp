@@ -4,7 +4,6 @@ import { WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 export type WorkoutRailCardWorkout = {
   id: string;
   title: string;
-  instructor: string | null;
   duration: number;
   category: string | null;
   scripture: string | null;
@@ -20,13 +19,12 @@ export function workoutRailThumb(w: WorkoutRailCardWorkout): string {
 }
 
 export function workoutRailMetaLine(w: WorkoutRailCardWorkout): string {
-  return [w.instructor ?? "Movement", w.category ?? "Session", `${w.duration} min`].join(" · ");
+  return [w.category ?? "Session", `${w.duration} min`].filter(Boolean).join(" · ");
 }
 
 /** Member-facing hover copy (no CMS-only hints). */
 export function memberWorkoutRailHoverSummary(w: WorkoutRailCardWorkout): string {
   const parts = [
-    w.instructor ? `With ${w.instructor}` : null,
     w.category ? `${w.category} · ${w.duration} min` : `${w.duration} min`,
     w.scripture ? w.scripture : null,
   ].filter(Boolean);
@@ -36,7 +34,6 @@ export function memberWorkoutRailHoverSummary(w: WorkoutRailCardWorkout): string
 /** CMS rail preview: same base copy plus how to preview the player. */
 export function adminWorkoutRailHoverSummary(w: WorkoutRailCardWorkout): string {
   const parts = [
-    w.instructor ? `With ${w.instructor}` : null,
     w.category ? `${w.category} · ${w.duration} min` : `${w.duration} min`,
     w.scripture ? w.scripture : null,
     "Tap the image to preview the member player.",

@@ -12,7 +12,7 @@ type ScheduleSabbathTileProps = {
 export default function ScheduleSabbathTile({ isToday = false }: ScheduleSabbathTileProps) {
   return (
     <article
-      className={`relative w-full overflow-hidden rounded-lg border-2 bg-app-surface shadow-[0_1px_2px_rgba(120,130,135,0.06)] transition-all duration-300 ease-out will-change-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+      className={`relative w-full overflow-hidden rounded-lg border-2 bg-app-surface shadow-[0_1px_2px_rgba(120,130,135,0.06)] transition-transform duration-300 ease-out motion-safe:hover:will-change-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
         isToday ? "border-sky-blue" : "border-sand"
       }`}
       aria-label="Sunday — Sabbath rest"

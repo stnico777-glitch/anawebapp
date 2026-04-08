@@ -7,8 +7,10 @@ import { tryCreateSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   APP_PRIMARY_NAV,
   PRIMARY_NAV,
+  PRIMARY_NAV_LINK_ACTIVE_CLASS,
   PRIMARY_NAV_LINK_CLASS,
   PRIMARY_NAV_LINK_CLASS_MOBILE,
+  PRIMARY_NAV_LINK_MOBILE_ACTIVE_CLASS,
 } from "@/constants/nav";
 
 export type SiteHeaderProps = {
@@ -27,6 +29,8 @@ type NavItem = { readonly href: string; readonly label: string };
 export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
+  /** `undefined` = auth not checked yet (avoid flashing wrong header actions). */
+  const [sessionUserId, setSessionUserId] = useState<string | null | undefined>(undefined);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -35,7 +39,12 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   useEffect(() => {
     if (variant !== "app") return;
     const client = tryCreateSupabaseBrowserClient();
-    if (!client) return;
+    if (!client) {
+      setSessionUserId(null);
+      setSessionEmail(null);
+      setIsAdmin(false);
+      return;
+    }
     let cancelled = false;
 
     async function syncSession(sb: NonNullable<ReturnType<typeof tryCreateSupabaseBrowserClient>>) {
@@ -44,6 +53,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
       } = await sb.auth.getUser();
       if (cancelled) return;
       if (!user) {
+        setSessionUserId(null);
         setSessionEmail(null);
         setIsAdmin(false);
         return;
@@ -54,6 +64,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
         .eq("id", user.id)
         .maybeSingle();
       if (!cancelled) {
+        setSessionUserId(user.id);
         setSessionEmail(user.email ?? null);
         setIsAdmin(profile?.is_admin ?? false);
       }
@@ -88,8 +99,6 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
       : variant === "app"
         ? baseAppNav
         : PRIMARY_NAV;
-  const logoHref = variant === "app" ? "/schedule" : "/";
-
   const [marketingScrolled, setMarketingScrolled] = useState(false);
   useEffect(() => {
     if (variant !== "marketing") return;
@@ -110,21 +119,34 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   const marketingNavDesktop =
     "text-xs font-medium uppercase tracking-wider text-background hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-background/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:rounded-sm";
 
+  /** On homepage hero, active item uses theme blue (still readable on video). */
+  const marketingNavDesktopActive =
+    "text-xs font-semibold uppercase tracking-wider text-sky-blue hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent focus-visible:rounded-sm";
+
   const desktopLinkClass = (href: string) => {
+    const active = pathMatchesNav(pathname, href);
     if (variant !== "app") {
-      return creamOnHero ? marketingNavDesktop : PRIMARY_NAV_LINK_CLASS;
+      if (creamOnHero) {
+        return active ? marketingNavDesktopActive : marketingNavDesktop;
+      }
+      return active
+        ? `${PRIMARY_NAV_LINK_CLASS} ${PRIMARY_NAV_LINK_ACTIVE_CLASS}`
+        : PRIMARY_NAV_LINK_CLASS;
     }
-    return pathMatchesNav(pathname, href)
-      ? `${PRIMARY_NAV_LINK_CLASS} font-semibold`
+    return active
+      ? `${PRIMARY_NAV_LINK_CLASS} ${PRIMARY_NAV_LINK_ACTIVE_CLASS}`
       : PRIMARY_NAV_LINK_CLASS;
   };
 
   const mobileLinkClass = (href: string) => {
+    const active = pathMatchesNav(pathname, href);
     if (variant !== "app") {
-      return PRIMARY_NAV_LINK_CLASS_MOBILE;
+      return active
+        ? `${PRIMARY_NAV_LINK_CLASS_MOBILE} ${PRIMARY_NAV_LINK_MOBILE_ACTIVE_CLASS}`
+        : PRIMARY_NAV_LINK_CLASS_MOBILE;
     }
-    return pathMatchesNav(pathname, href)
-      ? `${PRIMARY_NAV_LINK_CLASS_MOBILE} font-semibold`
+    return active
+      ? `${PRIMARY_NAV_LINK_CLASS_MOBILE} ${PRIMARY_NAV_LINK_MOBILE_ACTIVE_CLASS}`
       : PRIMARY_NAV_LINK_CLASS_MOBILE;
   };
 
@@ -132,20 +154,22 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
     <header
       className={`[font-family:var(--font-headline),sans-serif] ${
         marketingClear
-          ? "relative sticky top-0 z-50 border-b-0 bg-transparent backdrop-blur-none transition-[background-color,backdrop-filter,border-width] duration-300"
+          ? "relative sticky top-0 z-50 border-b-0 bg-transparent transition-[background-color,border-width] duration-300"
           : variant === "marketing"
-            ? "relative sticky top-0 z-50 border-b border-sand bg-white transition-[background-color,border-color] duration-300"
-            : "relative sticky top-0 z-50 border-b border-sand bg-white/95 backdrop-blur-sm transition-[background-color,backdrop-filter,border-color] duration-300"
+            ? "relative sticky top-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
+            : "relative sticky top-0 z-50 border-b border-sand bg-app-surface transition-[background-color,border-color] duration-300"
       }`}
       role="banner"
     >
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 pl-0 pr-4 md:pr-8">
         <Link
-          href={logoHref}
+          href="/"
           className={`flex shrink-0 items-center focus:outline-none focus-visible:ring-2 focus-visible:rounded-sm ${
             creamOnHero
               ? "focus-visible:ring-background/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-              : "focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+              : variant === "app"
+                ? "focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+                : "focus-visible:ring-sky-blue focus-visible:ring-offset-2"
           }`}
         >
           <span
@@ -184,7 +208,11 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
           >
             Menu
           </summary>
-          <div className="absolute left-0 right-0 top-full z-50 mt-0 border-b border-sand bg-white px-4 py-3 shadow-lg">
+          <div
+            className={`absolute left-0 right-0 top-full z-50 mt-0 border-b border-sand px-4 py-3 shadow-lg ${
+              variant === "app" ? "bg-app-surface" : "bg-white"
+            }`}
+          >
             <div className="flex flex-col gap-1">
               {navItems.map(({ href, label }) => (
                 <Link
@@ -196,8 +224,8 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                   {label}
                 </Link>
               ))}
-              {variant === "app" ? (
-                <>
+              {variant === "app" && sessionUserId !== undefined ? (
+                sessionUserId ? (
                   <button
                     type="button"
                     className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
@@ -211,7 +239,22 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                   >
                     Sign out
                   </button>
-                </>
+                ) : (
+                  <>
+                    <Link
+                      href="/register"
+                      className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
+                    >
+                      Join the movement
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
+                    >
+                      Member login
+                    </Link>
+                  </>
+                )
               ) : null}
             </div>
           </div>
@@ -241,7 +284,12 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                 Member login
               </Link>
             </>
-          ) : (
+          ) : sessionUserId === undefined ? (
+            <div
+              className="h-9 w-28 shrink-0 animate-pulse rounded-sm bg-sand/60 md:w-36"
+              aria-hidden
+            />
+          ) : sessionUserId ? (
             <>
               {sessionEmail ? (
                 <span className="hidden max-w-[10rem] truncate text-xs text-gray [font-family:var(--font-body),sans-serif] md:inline lg:max-w-[14rem]">
@@ -257,10 +305,25 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                   router.push("/");
                   router.refresh();
                 }}
-                className="rounded-sm border border-sand px-3 py-2 text-xs font-medium uppercase tracking-wider text-gray transition hover:bg-background hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+                className="rounded-sm border border-sand px-3 py-2 text-xs font-medium uppercase tracking-wider text-gray transition hover:bg-background hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
               >
                 Sign out
               </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/register"
+                className="hidden rounded-sm border border-sand bg-white px-3 py-2 text-xs font-medium uppercase tracking-wider text-gray transition hover:border-sky-blue hover:bg-background hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface sm:inline-block"
+              >
+                Join the movement
+              </Link>
+              <Link
+                href="/login"
+                className="rounded-sm border border-sand px-3 py-2 text-xs font-medium uppercase tracking-wider text-gray transition hover:bg-background hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+              >
+                Member login
+              </Link>
             </>
           )}
         </div>

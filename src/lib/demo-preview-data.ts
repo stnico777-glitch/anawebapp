@@ -16,7 +16,6 @@ const DEMO_AUDIO = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp
 export type DemoWorkoutListRow = {
   id: string;
   title: string;
-  instructor: string | null;
   duration: number;
   category: string | null;
   thumbnailUrl: string | null;
@@ -28,7 +27,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-morning-strength",
     title: "Morning Strength",
-    instructor: "Coach Sarah",
     duration: 20,
     category: "Strength",
     thumbnailUrl: null,
@@ -37,7 +35,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-cardio-blast",
     title: "Cardio Blast",
-    instructor: "Coach Mike",
     duration: 15,
     category: "Cardio",
     thumbnailUrl: null,
@@ -46,7 +43,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-restorative-yoga",
     title: "Restorative Yoga",
-    instructor: "Coach Sarah",
     duration: 25,
     category: "Yoga",
     thumbnailUrl: null,
@@ -55,7 +51,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-pilates-core",
     title: "Pilates Core",
-    instructor: "Coach Sarah",
     duration: 22,
     category: "Pilates",
     thumbnailUrl: null,
@@ -64,7 +59,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-hiit-burn",
     title: "HIIT Burn",
-    instructor: "Coach Mike",
     duration: 18,
     category: "HIIT",
     thumbnailUrl: null,
@@ -73,7 +67,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-evening-stretch",
     title: "Evening Stretch",
-    instructor: "Coach Sarah",
     duration: 15,
     category: "Stretch",
     thumbnailUrl: null,
@@ -82,7 +75,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-full-body-flow",
     title: "Full Body Flow",
-    instructor: "Coach Mike",
     duration: 30,
     category: "Full Body",
     thumbnailUrl: null,
@@ -91,7 +83,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-quick-cardio",
     title: "Quick Cardio",
-    instructor: "Coach Sarah",
     duration: 10,
     category: "Cardio",
     thumbnailUrl: null,
@@ -100,7 +91,6 @@ export const DEMO_WORKOUT_ROWS: DemoWorkoutListRow[] = [
   {
     id: "demo-workout-gentle-yoga",
     title: "Gentle Yoga",
-    instructor: "Coach Sarah",
     duration: 20,
     category: "Yoga",
     thumbnailUrl: null,

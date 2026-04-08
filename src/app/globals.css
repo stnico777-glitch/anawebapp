@@ -5,8 +5,8 @@
 
 :root {
   --background: #FFFCE9;
-  /** Lighter wash for logged-in app (schedule, movement, prayer, journal, community). */
-  --app-surface: #fffcf7;
+  /** Logged-in app shell and surfaces: same cream as marketing theme (`--background`). */
+  --app-surface: var(--background);
   --cream: #FCF3B3;
   --light-yellow: #FCF3B3;
   --sky-blue: #6EADE4;
@@ -126,7 +126,7 @@ body {
 
 /**
  * Training / Audio essentials CTA — mirrors HeroTitle “Join the Movement”:
- * border-white/80, no solid fill; blur frosts the image behind; hover:bg-white/10 only.
+ * border-white/80; light fill (no backdrop-filter); hover:bg-white/10 only.
  */
 .essentials-explore-glass {
   display: inline-flex;
@@ -141,8 +141,7 @@ body {
   font-weight: 500;
   color: rgb(255 255 255);
   font-family: var(--font-body), system-ui, sans-serif;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background-color: rgb(255 255 255 / 0.12);
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
@@ -167,8 +166,7 @@ body {
   font-weight: 500;
   color: var(--background);
   font-family: var(--font-body), system-ui, sans-serif;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background-color: rgb(255 252 233 / 0.14);
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
@@ -180,12 +178,34 @@ body {
 }
 
 /**
- * Homepage below-hero shell: flat app background (no stacked ::before gradients — cheaper scroll paint).
+ * Homepage below-hero shell: one static linear gradient (cheap paint; no stacked ::before layers).
+ * Mid band matches WelcomeMessageBubble glow (butter gold ~#ffe6b9); lower stops stay peach-strong but warmer chroma (no dusty gray).
+ *
+ * Use hex stops here (not `var(...) 0%`): production CSS minifiers can emit `var(--x)0%` without a space, which breaks
+ * linear-gradient() in some engines so the whole image is dropped — reads as flat white/cream on Vercel.
+ * Colors track :root --background (#FFFCE9); peach band is a bit stronger near the top than legacy --sunset-peach-only.
+ *
+ * Fixed `background-size` height: percentage stops are relative to this tile, not the element’s content height, so the
+ * gradient does not rescale when below-the-fold sections mount (lazy/dynamic). Below the tile, `background-color` matches
+ * the last stop so extra-tall pages stay seamless.
  */
 .homepage-imessage-surface {
   position: relative;
   isolation: isolate;
-  background-color: var(--background);
+  background-color: #ffc9b8;
+  background-image: linear-gradient(
+    to bottom,
+    #fffce9 0%,
+    #fffce9 12%,
+    #ffc8b4 28%,
+    #ffd2b6 44%,
+    #ffe6b9 52%,
+    #ffd4c4 78%,
+    #ffc9b8 100%
+  );
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: 100% 9600px;
 }
 
 .scrollbar-hide {
@@ -302,6 +322,12 @@ body {
   animation-play-state: paused;
 }
 
+/** Paused via IntersectionObserver when the marquee row is off-screen (saves compositor work). */
+.marquee-pause-when-hidden {
+  animation-play-state: paused !important;
+  will-change: auto;
+}
+
 /**
  * Homepage marketing sections — skip layout/paint for off-screen content (Chromium).
  * Intrinsic sizes approximate typical rendered height to limit scrollbar jump.
@@ -319,11 +345,6 @@ body {
 .home-cv-about {
   content-visibility: auto;
   contain-intrinsic-size: auto 520px;
-}
-
-.home-cv-instagram {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 480px;
 }
 
 @keyframes feature-fade-in {
@@ -640,10 +661,45 @@ body {
   will-change: transform;
 }
 
+/* Tab in background: pause infinite marquees + drop compositor hints (see DocumentVisibilityEffects). */
+.doc-hidden-pause-animations .community-bulletin-marquee-track,
+.doc-hidden-pause-animations .community-bulletin-marquee-track-reverse,
+.doc-hidden-pause-animations .music-spotlight-marquee-track,
+.doc-hidden-pause-animations .animate-marquee,
+.doc-hidden-pause-animations .prayer-answer-ring-wave,
+.doc-hidden-pause-animations .animate-welcome-glow {
+  animation-play-state: paused !important;
+  will-change: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .music-spotlight-marquee-track {
     animation: none;
     will-change: auto;
+  }
+}
+
+/** Community “Bloom Scroll” — smooth enter (avoids dynamic chunk placeholder flash). */
+@keyframes community-bloom-scroll-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.community-bloom-scroll-enter {
+  animation: community-bloom-scroll-in 0.55s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-bloom-scroll-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

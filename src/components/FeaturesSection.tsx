@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ScrollReveal from "@/components/ScrollReveal";
 import LockIcon from "@/components/LockIcon";
+import { THEMED_LOCK_BADGE_CLASS } from "@/constants/dayCardVisual";
 import { MARKETING_SECTION_HEADER_REVEAL } from "@/constants/marketingScrollReveal";
 
 const FEATURES_CARD_REVEAL = {
@@ -51,7 +52,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
         >
           <div className="flex flex-col items-center">
             <div
-              className="aspect-[4/3.92] w-[min(120px,40vw)] sm:w-[min(140px,36vw)]"
+              className="aspect-[4/3.92] w-[min(120px,40vw)] transition duration-200 ease-out motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.03] motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 sm:w-[min(140px,36vw)]"
               aria-hidden
               style={{
                 backgroundColor: "var(--gray)",
@@ -97,7 +98,10 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
                   <span className="sr-only">Weekly schedule — curated prayer, movement and affirmations Mon–Sat</span>
                 </Link>
                 {showLockIcon && (
-                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                  <span
+                    className={`absolute right-2 top-2 z-30 pointer-events-none ${THEMED_LOCK_BADGE_CLASS}`}
+                    aria-hidden
+                  >
                     <LockIcon size="sm" className="text-white" />
                   </span>
                 )}
@@ -127,7 +131,10 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
                   <span className="sr-only">Movement — Pilates, yoga, and strength on demand</span>
                 </Link>
                 {showLockIcon && (
-                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                  <span
+                    className={`absolute right-2 top-2 z-30 pointer-events-none ${THEMED_LOCK_BADGE_CLASS}`}
+                    aria-hidden
+                  >
                     <LockIcon size="sm" className="text-white" />
                   </span>
                 )}
@@ -157,7 +164,10 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
                   <span className="sr-only">Prayer and audio — scripture-led sessions</span>
                 </Link>
                 {showLockIcon && (
-                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                  <span
+                    className={`absolute right-2 top-2 z-30 pointer-events-none ${THEMED_LOCK_BADGE_CLASS}`}
+                    aria-hidden
+                  >
                     <LockIcon size="sm" className="text-white" />
                   </span>
                 )}
@@ -187,7 +197,10 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
                   <span className="sr-only">Community — Bloom Scroll and praise wall</span>
                 </Link>
                 {showLockIcon && (
-                  <span className="absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/30 backdrop-blur-[2px] pointer-events-none" aria-hidden>
+                  <span
+                    className={`absolute right-2 top-2 z-30 pointer-events-none ${THEMED_LOCK_BADGE_CLASS}`}
+                    aria-hidden
+                  >
                     <LockIcon size="sm" className="text-white" />
                   </span>
                 )}
@@ -212,7 +225,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
         </div>
 
         <ScrollReveal
-          className="mt-8 flex justify-center md:mt-10 mb-2 md:mb-3"
+          className="mt-12 flex justify-center md:mt-16"
           delayMs={120}
           threshold={0.08}
           rootMargin="0px 0px -8% 0px"
@@ -226,9 +239,12 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
         >
           <Link
             href="/more"
-            className="inline-flex items-center justify-center rounded-full border-2 border-[#788287] px-8 py-3 text-sm font-medium text-[#788287] [font-family:var(--font-headline),sans-serif] transition hover:bg-[#788287]/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#788287] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#788287] px-8 py-3 text-sm font-medium text-[#788287] [font-family:var(--font-headline),sans-serif] transition duration-200 ease-out motion-safe:hover:-translate-y-1 motion-safe:hover:scale-[1.03] hover:bg-[#788287]/8 motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#788287] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Learn more
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
           </Link>
         </ScrollReveal>
       </div>

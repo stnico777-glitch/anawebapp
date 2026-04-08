@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import LockIcon from "@/components/LockIcon";
 import {
   DAY_CARD_IMAGE_HOVER,
   DAY_CARD_SHELL_HOVER,
+  THEMED_LOCK_BADGE_CLASS,
   WEEKDAY_CARD_SHADOW_RING,
 } from "@/constants/dayCardVisual";
 
@@ -80,7 +82,7 @@ export const RAIL_CARD_WIDTH =
 
 /** Browse rails: lift only — no drop shadow on hover. */
 export const RAIL_CARD_INTERACTION =
-  "transition-all duration-300 ease-out will-change-transform hover:z-[45] hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  "transition-transform duration-300 ease-out motion-safe:hover:will-change-transform hover:z-[45] hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 /** Wide program / workout strip — sizing only */
 export const LIBRARY_BANNER_CARD_CLASS =
@@ -104,6 +106,9 @@ export function FormStyleRailCard({
   hoverSummary,
   unoptimized = false,
   showLock = false,
+  previewLocked = false,
+  previewLockHref,
+  lockHint = "Subscribe to unlock",
 }: {
   href: string;
   src: string;
@@ -115,13 +120,17 @@ export function FormStyleRailCard({
   hoverSummary: string;
   unoptimized?: boolean;
   showLock?: boolean;
+  /** Guest / non-subscriber preview: same tile, opens sign-up or subscribe instead of deep link. */
+  previewLocked?: boolean;
+  previewLockHref?: string;
+  lockHint?: string;
 }) {
-  return (
-    <Link
-      href={href}
-      className={`group flex ${RAIL_CARD_WIDTH} shrink-0 snap-start flex-col rounded-none outline-none ${RAIL_CARD_INTERACTION}`}
-      style={{ scrollSnapAlign: "start" }}
-    >
+  const router = useRouter();
+  const locked = previewLocked && previewLockHref;
+  const showLockBadge = showLock || !!locked;
+
+  const inner = (
+    <>
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-none bg-neutral-900">
         <Image
           src={src}
@@ -142,11 +151,11 @@ export function FormStyleRailCard({
             {hoverSummary}
           </p>
         </div>
-        {showLock && (
+        {showLockBadge && (
           <span
-            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 backdrop-blur-sm"
-            aria-label="Subscribe to unlock"
-            title="Subscribe to unlock"
+            className={`absolute right-2 top-2 z-20 ${THEMED_LOCK_BADGE_CLASS}`}
+            aria-label={lockHint}
+            title={lockHint}
           >
             <LockIcon size="sm" className="text-white" />
           </span>
@@ -160,6 +169,28 @@ export function FormStyleRailCard({
           {metaLine}
         </p>
       </div>
+    </>
+  );
+
+  const shellClass = `group flex ${RAIL_CARD_WIDTH} shrink-0 snap-start flex-col rounded-none outline-none ${RAIL_CARD_INTERACTION}`;
+
+  if (locked) {
+    return (
+      <button
+        type="button"
+        onClick={() => router.push(previewLockHref)}
+        className={`${shellClass} cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+        style={{ scrollSnapAlign: "start" }}
+        aria-label={`${title} — ${lockHint}`}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href} className={shellClass} style={{ scrollSnapAlign: "start" }}>
+      {inner}
     </Link>
   );
 }
@@ -176,6 +207,7 @@ export function FormStyleRailButton({
   hoverSummary,
   unoptimized = false,
   showLock = false,
+  lockHint = "Subscribe to unlock",
   showDone = false,
   active = false,
   disabled = false,
@@ -188,6 +220,8 @@ export function FormStyleRailButton({
   hoverSummary: string;
   unoptimized?: boolean;
   showLock?: boolean;
+  /** Shown as title/aria on lock badge (e.g. guest vs subscriber). */
+  lockHint?: string;
   showDone?: boolean;
   active?: boolean;
   disabled?: boolean;
@@ -197,7 +231,7 @@ export function FormStyleRailButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={`Play ${title}`}
+      aria-label={showLock ? `${title} — ${lockHint}` : `Play ${title}`}
       aria-pressed={active}
       className={`group flex ${RAIL_CARD_WIDTH} shrink-0 snap-start flex-col rounded-none text-left outline-none ${RAIL_CARD_INTERACTION} focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background active:opacity-90 motion-reduce:active:opacity-100 disabled:pointer-events-none disabled:opacity-50`}
       style={{ scrollSnapAlign: "start" }}
@@ -231,9 +265,9 @@ export function FormStyleRailButton({
         )}
         {showLock && (
           <span
-            className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 backdrop-blur-sm"
-            aria-label="Subscribe to unlock"
-            title="Subscribe to unlock"
+            className={`absolute right-2 top-2 z-20 ${THEMED_LOCK_BADGE_CLASS}`}
+            aria-label={lockHint}
+            title={lockHint}
           >
             <LockIcon size="sm" className="text-white" />
           </span>
@@ -276,7 +310,7 @@ export function LibraryBannerCard({
     >
       {showLock && (
         <span
-          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm"
+          className={`absolute right-2 top-2 z-10 ${THEMED_LOCK_BADGE_CLASS}`}
           aria-label="Subscribe to unlock"
           title="Subscribe to unlock"
         >

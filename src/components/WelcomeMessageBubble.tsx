@@ -9,6 +9,7 @@ import {
   WELCOME_BUBBLE_NUDGE_KEY,
   WELCOME_BUBBLE_SUCCESS_KEY,
   WELCOME_BUBBLE_PILL_DISMISSED_KEY,
+  notifyWelcomeBubbleStorageChanged,
 } from "@/lib/welcome-email-modal";
 
 const KAT_BUBBLES = [
@@ -54,6 +55,7 @@ export default function WelcomeMessageBubble() {
   useEffect(() => {
     if (!visible) return;
     sessionStorage.removeItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY);
+    notifyWelcomeBubbleStorageChanged();
   }, [visible]);
 
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function WelcomeMessageBubble() {
           if (entry.isIntersecting) {
             setVisible(true);
             sessionStorage.setItem(WELCOME_MODAL_SEEN_KEY, "1");
+            notifyWelcomeBubbleStorageChanged();
             observer.disconnect();
           }
         });
@@ -128,6 +131,7 @@ export default function WelcomeMessageBubble() {
     sessionStorage.removeItem(WELCOME_BUBBLE_NUDGE_KEY);
     sessionStorage.setItem(WELCOME_BUBBLE_SUCCESS_KEY, "1");
     sessionStorage.removeItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY);
+    notifyWelcomeBubbleStorageChanged();
   };
 
   const handleSuccessExitAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
@@ -189,6 +193,7 @@ export default function WelcomeMessageBubble() {
       sessionStorage.setItem(WELCOME_BUBBLE_NUDGE_KEY, "1");
       sessionStorage.removeItem(WELCOME_BUBBLE_SUCCESS_KEY);
     }
+    notifyWelcomeBubbleStorageChanged();
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -204,7 +209,7 @@ export default function WelcomeMessageBubble() {
 
   return createPortal(
     <div
-      className={`welcome-bubble-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm ${
+      className={`welcome-bubble-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-6 ${
         exitAfterSuccess ? "animate-modal-backdrop-out pointer-events-none" : "animate-modal-backdrop-in"
       }`}
       aria-hidden

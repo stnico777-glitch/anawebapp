@@ -42,8 +42,8 @@ export default function HomePage() {
       <a href="#main-content" className="skip-link sr-only">
         Skip to main content
       </a>
+      <SiteHeader />
       <div className="relative">
-        <SiteHeader />
         <HeroSection />
       </div>
       <Suspense fallback={<HomeBelowFoldFallback />}>

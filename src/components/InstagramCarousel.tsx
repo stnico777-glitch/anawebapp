@@ -78,19 +78,30 @@ function InstagramSunBelowIcon() {
   );
 }
 
+const EMBEDSOCIAL_SCRIPT_ID = "EmbedSocialHashtagScript";
+
 /** Renders EmbedSocial widget via their script + div (data-ref). */
 function EmbedSocialWidget({ dataRef }: { dataRef: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!dataRef || !containerRef.current) return;
-    const id = "EmbedSocialHashtagScript";
-    if (document.getElementById(id)) return;
+    /**
+     * ht.js only scans on load. Reusing a script tag from a previous mount (React Strict Mode, client
+     * navigation, or lazy section mounting after the script ran) leaves a new `.embedsocial-hashtag` inert.
+     * Single widget on the site: remove and reinject so the feed always initializes.
+     */
+    document.getElementById(EMBEDSOCIAL_SCRIPT_ID)?.remove();
+
     const script = document.createElement("script");
-    script.id = id;
+    script.id = EMBEDSOCIAL_SCRIPT_ID;
     script.src = "https://embedsocial.com/cdn/ht.js";
     script.async = true;
     document.head.appendChild(script);
+
+    return () => {
+      document.getElementById(EMBEDSOCIAL_SCRIPT_ID)?.remove();
+    };
   }, [dataRef]);
 
   return (
@@ -103,6 +114,14 @@ function EmbedSocialWidget({ dataRef }: { dataRef: string }) {
 const IG_EMBED_SKELETON_CLASS =
   "instagram-embed-inner min-h-[480px] w-full md:min-h-[520px] rounded-md bg-sand/25";
 
+const IG_LAZY_ROOT_MARGIN_PX = 280;
+
+function isNearViewport(el: Element, marginPx: number): boolean {
+  const r = el.getBoundingClientRect();
+  const vh = typeof window !== "undefined" ? window.innerHeight : 0;
+  return r.top < vh + marginPx && r.bottom > -marginPx;
+}
+
 /**
  * Defers iframe + EmbedSocial script/DOM until the feed is near the viewport (saves network + main thread on homepage scroll).
  */
@@ -113,28 +132,54 @@ function LazyInstagramFeedEmbed({
   embedIframeUrl: string | null;
   embedRef: string | null;
 }) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [sentinelEl, setSentinelEl] = useState<HTMLDivElement | null>(null);
   const [load, setLoad] = useState(false);
 
   useEffect(() => {
-    if (!embedIframeUrl && !embedRef) return;
-    const el = sentinelRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setLoad(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "200px 0px", threshold: 0 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [embedIframeUrl, embedRef]);
+    if (load || (!embedIframeUrl && !embedRef) || !sentinelEl) return;
+
+    let cancelled = false;
+    let io: IntersectionObserver | null = null;
+
+    const activate = () => {
+      if (cancelled) return;
+      setLoad(true);
+    };
+
+    const trySyncNear = () => {
+      if (isNearViewport(sentinelEl, IG_LAZY_ROOT_MARGIN_PX)) {
+        activate();
+        return true;
+      }
+      return false;
+    };
+
+    if (trySyncNear()) return;
+
+    const raf = requestAnimationFrame(() => {
+      if (cancelled || trySyncNear()) return;
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (entry?.isIntersecting) {
+            io?.disconnect();
+            io = null;
+            activate();
+          }
+        },
+        { rootMargin: `${IG_LAZY_ROOT_MARGIN_PX}px 0px`, threshold: 0 },
+      );
+      io.observe(sentinelEl);
+    });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      io?.disconnect();
+    };
+  }, [embedIframeUrl, embedRef, load, sentinelEl]);
 
   return (
-    <div ref={sentinelRef} className="w-full">
+    <div ref={setSentinelEl} className="w-full">
       {load && embedIframeUrl ? (
         <iframe
           src={embedIframeUrl}

@@ -16,6 +16,9 @@ import { CatalogCoverImage } from "@/lib/prayer-audio-display";
 
 const FAVORITES_STORAGE_KEY = "prayer-audio-favorites";
 
+/** Stable ref for hooks when optional prayer audio context is absent (no `<audio>`). */
+const NOOP_AUDIO_REF: RefObject<HTMLAudioElement | null> = { current: null };
+
 export type PrayerLibraryTrack = {
   prayerId: string;
   src: string;
@@ -87,8 +90,9 @@ export function usePrayerLibraryAudio(): PrayerLibraryAudioContextValue {
 }
 
 /**
- * Local time/duration for mini player + scrubbers only (~10Hz while playing).
- * Context no longer carries `currentTime`, so the prayer library tree does not re-render on every tick.
+ * Local time/duration for mini player + scrubbers while playing.
+ * Uses `timeupdate` on the shared audio element (no extra timer) and pauses updates when the tab is hidden.
+ * Snapshots live in state so we never read refs during render (eslint react-hooks/refs).
  */
 export function usePrayerPlaybackTimes(
   playing: boolean,
@@ -96,19 +100,55 @@ export function usePrayerPlaybackTimes(
   durationFallback: number,
   seekNonce: number,
 ) {
-  const [tick, setTick] = useState(0);
+  const [snapshot, setSnapshot] = useState<{ currentTime: number; duration: number }>(() => ({
+    currentTime: 0,
+    duration: durationFallback,
+  }));
+  const [docVisible, setDocVisible] = useState(true);
+
+  const syncFromAudio = useCallback(() => {
+    const a = audioRef.current;
+    const currentTime = a?.currentTime ?? 0;
+    const duration =
+      a && Number.isFinite(a.duration) && a.duration > 0 ? a.duration : durationFallback;
+    setSnapshot((prev) =>
+      prev.currentTime === currentTime && prev.duration === duration ? prev : { currentTime, duration },
+    );
+  }, [audioRef, durationFallback]);
+
   useEffect(() => {
-    if (!playing) return;
-    const id = window.setInterval(() => setTick((n) => n + 1), 100);
-    return () => window.clearInterval(id);
-  }, [playing]);
-  void tick;
-  void seekNonce;
-  const a = audioRef.current;
-  const currentTime = a?.currentTime ?? 0;
-  const duration =
-    a && Number.isFinite(a.duration) && a.duration > 0 ? a.duration : durationFallback;
-  return { currentTime, duration };
+    const onVis = () => setDocVisible(document.visibilityState === "visible");
+    onVis();
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      syncFromAudio();
+    });
+  }, [seekNonce, syncFromAudio]);
+
+  useEffect(() => {
+    if (!playing) {
+      queueMicrotask(() => {
+        syncFromAudio();
+      });
+      return;
+    }
+    if (!docVisible) return;
+    const a = audioRef.current;
+    if (!a) return;
+    queueMicrotask(() => {
+      syncFromAudio();
+    });
+    a.addEventListener("timeupdate", syncFromAudio);
+    return () => {
+      a.removeEventListener("timeupdate", syncFromAudio);
+    };
+  }, [playing, docVisible, audioRef, syncFromAudio]);
+
+  return { currentTime: snapshot.currentTime, duration: snapshot.duration };
 }
 
 export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }) {
@@ -168,36 +208,11 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
     }
   }, [track?.prayerId, track?.src, track?.locked]);
 
-  /** Completion + duration sync only (no `setState` for current time — mini player polls `audioRef`). */
-  useEffect(() => {
-    if (!playing) return;
-    let rafId = 0;
-    const tick = () => {
-      const audio = audioRef.current;
-      if (audio) {
-        const t = audio.currentTime;
-        currentTimeRef.current = t;
-        const now = performance.now();
-        lastUiSyncMsRef.current = now;
-        const dur = audio.duration || 1;
-        if (dur > 0 && t / dur >= 0.95 && !completionFiredRef.current) {
-          completionFiredRef.current = true;
-          onCompleteRef.current?.();
-        }
-        if (Number.isFinite(audio.duration)) {
-          const d = audio.duration;
-          setDurationState((prev) => (prev === d ? prev : d));
-        }
-      }
-      rafId = requestAnimationFrame(tick);
-    };
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [playing]);
-
   const handleTimeUpdate = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
+    currentTimeRef.current = audio.currentTime;
+    lastUiSyncMsRef.current = performance.now();
     setDurationState(Number.isFinite(audio.duration) ? audio.duration : 0);
     const dur = audio.duration || 1;
     if (audio.currentTime / dur >= 0.95 && !completionFiredRef.current) {
@@ -317,14 +332,18 @@ export function PrayerLibraryLayoutPadding({ children }: { children: ReactNode }
 
 export function PrayerLibraryInlineScrubber() {
   const ctx = usePrayerLibraryAudioOptional();
-  if (!ctx) return null;
-  const { playing, durationState, audioRef, seekNonce, seekPercent, togglePlay } = ctx;
+  const playing = ctx?.playing ?? false;
+  const durationState = ctx?.durationState ?? 0;
+  const audioRef = ctx?.audioRef ?? NOOP_AUDIO_REF;
+  const seekNonce = ctx?.seekNonce ?? 0;
   const { currentTime, duration } = usePrayerPlaybackTimes(
     playing,
     audioRef,
     durationState,
     seekNonce,
   );
+  if (!ctx) return null;
+  const { seekPercent, togglePlay } = ctx;
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
@@ -368,13 +387,20 @@ export function PrayerLibraryInlineScrubber() {
 
 export function PrayerMiniPlayerBar() {
   const ctx = usePrayerLibraryAudioOptional();
+  const playing = ctx?.playing ?? false;
+  const durationState = ctx?.durationState ?? 0;
+  const audioRef = ctx?.audioRef ?? NOOP_AUDIO_REF;
+  const seekNonce = ctx?.seekNonce ?? 0;
+  const { currentTime, duration: durFromAudio } = usePrayerPlaybackTimes(
+    playing,
+    audioRef,
+    durationState,
+    seekNonce,
+  );
+
   if (!ctx) return null;
   const {
     track,
-    playing,
-    durationState,
-    audioRef,
-    seekNonce,
     seekPercent,
     togglePlay,
     toggleFavorite,
@@ -382,13 +408,6 @@ export function PrayerMiniPlayerBar() {
   } = ctx;
 
   if (!track || track.locked) return null;
-
-  const { currentTime, duration: durFromAudio } = usePrayerPlaybackTimes(
-    playing,
-    audioRef,
-    durationState,
-    seekNonce,
-  );
   const dur = durFromAudio > 0 ? durFromAudio : track.duration;
   const progress = dur > 0 ? (currentTime / dur) * 100 : 0;
   const fav = isFavorite(track.prayerId);

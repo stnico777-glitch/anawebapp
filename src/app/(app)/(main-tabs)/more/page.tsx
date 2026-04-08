@@ -132,7 +132,7 @@ export default async function MorePage() {
                 />
               </div>
             </div>
-            <div className="relative z-10 border-t border-accent-amber/25 bg-white/35 px-3 py-2.5 backdrop-blur-[2px] md:px-3.5">
+            <div className="relative z-10 border-t border-accent-amber/25 bg-white/92 px-3 py-2.5 md:px-3.5">
               <p className="text-sm font-light tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
                 Same rhythm, same rest
               </p>

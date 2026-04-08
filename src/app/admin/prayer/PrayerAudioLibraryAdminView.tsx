@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import PrayerAudioLibraryShell from "@/components/PrayerAudioLibraryShell";
 import {
   PrayerLibraryAudioProvider,
@@ -151,6 +159,22 @@ function PrayerAudioLibraryAdminViewInner({
       layout.essentials.map((t) => <AdminEssentialTileCard key={t.id} tile={t} />)
     );
 
+  const musicSpotlightMarqueeRef = useRef<HTMLDivElement | null>(null);
+  const [musicSpotlightMarqueeInView, setMusicSpotlightMarqueeInView] = useState(true);
+
+  useEffect(() => {
+    const el = musicSpotlightMarqueeRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setMusicSpotlightMarqueeInView(entry.isIntersecting);
+      },
+      { root: null, rootMargin: "48px 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [layout.spotlight.length]);
+
   const spotlightMarquee =
     layout.spotlight.length === 0 ? (
       <p className="px-4 pb-8 text-center text-sm text-gray md:px-6 [font-family:var(--font-body),sans-serif]">
@@ -158,6 +182,7 @@ function PrayerAudioLibraryAdminViewInner({
       </p>
     ) : (
       <div
+        ref={musicSpotlightMarqueeRef}
         className="relative w-full overflow-hidden pb-8 motion-reduce:overflow-x-auto md:pb-10"
         role="region"
         aria-roledescription="carousel"
@@ -172,7 +197,11 @@ function PrayerAudioLibraryAdminViewInner({
           className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-app-surface to-transparent md:w-12"
           aria-hidden
         />
-        <div className="music-spotlight-marquee-track items-start py-1 motion-reduce:px-4 md:motion-reduce:px-6">
+        <div
+          className={`music-spotlight-marquee-track items-start py-1 motion-reduce:px-4 md:motion-reduce:px-6${
+            musicSpotlightMarqueeInView ? "" : " marquee-pause-when-hidden"
+          }`}
+        >
           <div className="flex shrink-0 items-start gap-2 pr-2 md:gap-2">
             {layout.spotlight.map((a) => (
               <AdminMusicSpotlightAlbumTile key={a.id} album={a} />

@@ -18,7 +18,6 @@ export async function GET(
     workout: {
       id: w.id,
       title: w.title,
-      instructor: w.instructor,
       duration: w.duration,
       category: w.category,
       scripture: w.scripture,

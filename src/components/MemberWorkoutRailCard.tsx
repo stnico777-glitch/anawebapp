@@ -13,11 +13,13 @@ export default function MemberWorkoutRailCard({
   onSelect,
   selected,
   showDone,
+  showLock = false,
 }: {
   workout: WorkoutRailCardWorkout;
   onSelect?: (workout: WorkoutRailCardWorkout) => void;
   selected?: boolean;
   showDone?: boolean;
+  showLock?: boolean;
 }) {
   const src = workoutRailThumb(workout);
   const unoptimized = src.startsWith("http://") || src.startsWith("https://");
@@ -33,6 +35,8 @@ export default function MemberWorkoutRailCard({
         hoverSummary={memberWorkoutRailHoverSummary(workout)}
         unoptimized={unoptimized}
         showDone={showDone}
+        showLock={showLock}
+        lockHint={showLock ? "Sign up to unlock" : undefined}
         active={selected}
       />
     );
