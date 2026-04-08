@@ -23,7 +23,8 @@ function creamWordmarkForPath(pathname: string): boolean {
     pathname.startsWith("/movement") ||
     pathname.startsWith("/schedule") ||
     pathname.startsWith("/prayer") ||
-    pathname.startsWith("/journaling")
+    pathname.startsWith("/journaling") ||
+    pathname.startsWith("/more")
   );
 }
 
