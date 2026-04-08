@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { HERO_TAGLINE_AUTH_CLASS } from "@/constants/brandTypography";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -55,7 +56,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-medium tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
           awake + align
         </h1>
-        <p className="mt-2 text-sm text-gray">Power love sound mind</p>
+        <p className={HERO_TAGLINE_AUTH_CLASS}>power love sound mind</p>
         <p className="mt-6 text-base font-medium tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
           Create account
         </p>

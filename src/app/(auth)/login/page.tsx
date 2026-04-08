@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { HERO_TAGLINE_AUTH_CLASS } from "@/constants/brandTypography";
 import { loginAction } from "./actions";
 
 export default function LoginPage() {
@@ -29,9 +30,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-medium tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
           awake + align
         </h1>
-        <p className="mt-2 text-sm text-gray">
-          Power love sound mind
-        </p>
+        <p className={HERO_TAGLINE_AUTH_CLASS}>power love sound mind</p>
       </div>
 
       <form action={handleSubmit} className="space-y-4">
