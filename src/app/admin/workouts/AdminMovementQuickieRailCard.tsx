@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   GEAR_UP_IMAGE_SIZES,
@@ -18,7 +17,13 @@ const editBtnClass =
 const delBtnClass =
   "rounded bg-red-600/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-red-600 [font-family:var(--font-body),sans-serif]";
 
-export default function AdminMovementQuickieRailCard({ card }: { card: MovementQuickieCardDTO }) {
+export default function AdminMovementQuickieRailCard({
+  card,
+  onPreviewPlay,
+}: {
+  card: MovementQuickieCardDTO;
+  onPreviewPlay?: (card: MovementQuickieCardDTO) => void;
+}) {
   const router = useRouter();
   const unoptimized =
     card.imageUrl.startsWith("http://") || card.imageUrl.startsWith("https://");
@@ -39,10 +44,11 @@ export default function AdminMovementQuickieRailCard({ card }: { card: MovementQ
       style={{ scrollSnapAlign: "start" }}
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-none bg-neutral-900">
-        <Link
-          href={card.linkHref}
-          className="absolute inset-0 z-0 block outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
-          aria-label={`Open ${card.title}`}
+        <button
+          type="button"
+          onClick={() => onPreviewPlay?.(card)}
+          className="absolute inset-0 z-0 block w-full outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
+          aria-label={`Preview video: ${card.title}`}
         >
           <Image
             src={card.imageUrl}
@@ -52,7 +58,7 @@ export default function AdminMovementQuickieRailCard({ card }: { card: MovementQ
             className={DAY_CARD_IMAGE_HOVER}
             unoptimized={unoptimized}
           />
-        </Link>
+        </button>
         <div
           className="pointer-events-none absolute left-2 bottom-2 z-[15] inline-flex max-h-[min(40vh,12rem)] max-w-[min(13.5rem,calc(100%-1rem))] min-h-0 flex-col gap-0 overflow-y-auto rounded-none border border-black/[0.08] bg-white/95 p-2.5 text-left opacity-0 shadow-sm transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-within:opacity-100 motion-reduce:transition-none md:left-3 md:bottom-3 md:max-w-[min(13.5rem,calc(100%-1.5rem))]"
           aria-hidden

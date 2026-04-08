@@ -5,13 +5,15 @@ import type {
   MovementQuickieCardDTO,
 } from "@/lib/movement-layout-types";
 
+/** Sample stream used for default Movement tiles when the DB has no rows (same family as demo workout preview). */
+export const MOVEMENT_SAMPLE_VIDEO_URL =
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
 export const DEFAULT_MOVEMENT_LANDING_COPY: MovementLandingCopyDTO = {
   justStartedTagline: "Just getting started - Beginner to Pilates",
   quickieIntro:
     "Quick little workouts you can squeeze in anytime—short, focused, and easy to stack when you want a little more.",
 };
-
-const HREF = "/movement";
 
 export const DEFAULT_MOVEMENT_HERO_TILES: MovementHeroTileDTO[] = [
   {
@@ -19,7 +21,7 @@ export const DEFAULT_MOVEMENT_HERO_TILES: MovementHeroTileDTO[] = [
     title: "Power training",
     subtitle: "strength · focus · endurance",
     imageUrl: WEEKLY_DAY_CARD_IMAGES[0],
-    linkHref: HREF,
+    videoUrl: MOVEMENT_SAMPLE_VIDEO_URL,
     sortOrder: 0,
   },
   {
@@ -27,7 +29,7 @@ export const DEFAULT_MOVEMENT_HERO_TILES: MovementHeroTileDTO[] = [
     title: "Flow & mobility",
     subtitle: "breath · length · ease",
     imageUrl: WEEKLY_DAY_CARD_IMAGES[1],
-    linkHref: HREF,
+    videoUrl: MOVEMENT_SAMPLE_VIDEO_URL,
     sortOrder: 1,
   },
 ];
@@ -77,7 +79,7 @@ const QUICKIE_SEED = (
   metaLine: p.metaLine,
   imageUrl: WEEKLY_DAY_CARD_IMAGES[i % WEEKLY_DAY_CARD_IMAGES.length],
   summary: p.summary,
-  linkHref: HREF,
+  videoUrl: MOVEMENT_SAMPLE_VIDEO_URL,
   sortOrder: i,
 }));
 

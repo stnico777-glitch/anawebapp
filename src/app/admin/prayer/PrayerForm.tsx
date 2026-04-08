@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 
 interface Prayer {
   id: string;
@@ -61,6 +62,12 @@ export default function PrayerForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        prayer ? "Save changes to this prayer?" : "Create this prayer?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = prayer ? `/api/admin/prayer/${prayer.id}` : "/api/admin/prayer";

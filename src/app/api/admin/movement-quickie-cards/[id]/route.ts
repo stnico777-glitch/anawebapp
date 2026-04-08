@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export const PATCH = withAdmin<{ params: Promise<{ id: string }> }>(async (_, request, { params }) => {
   const { id } = await params;
   const body = await request.json();
-  const { title, metaLine, imageUrl, summary, linkHref, sortOrder } = body;
+  const { title, metaLine, imageUrl, summary, videoUrl, sortOrder } = body;
   const row = await prisma.movementQuickieCard.update({
     where: { id },
     data: {
@@ -13,8 +13,8 @@ export const PATCH = withAdmin<{ params: Promise<{ id: string }> }>(async (_, re
       ...(metaLine != null && { metaLine }),
       ...(imageUrl != null && { imageUrl }),
       ...(summary != null && { summary }),
-      ...(linkHref != null && {
-        linkHref: String(linkHref).trim() || "/movement",
+      ...(videoUrl != null && {
+        videoUrl: String(videoUrl).trim(),
       }),
       ...(sortOrder != null && { sortOrder: parseInt(String(sortOrder), 10) }),
     },

@@ -3,12 +3,21 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { parseJsonStringArray } from "@/lib/prayer-journal";
 import { PRESET_CATEGORY_SLUGS, slugToLabel } from "@/constants/prayerJournalNav";
-import { getDemoPrayerJournalTagSlugs } from "@/lib/demo-prayer-journal-api";
+
+function presetSlugsSorted(): string[] {
+  const presetSet = new Set<string>(PRESET_CATEGORY_SLUGS);
+  return [...presetSet].sort((a, b) => {
+    const aPreset = presetSet.has(a);
+    const bPreset = presetSet.has(b);
+    if (aPreset !== bPreset) return aPreset ? -1 : 1;
+    return slugToLabel(a).localeCompare(slugToLabel(b));
+  });
+}
 
 export async function GET() {
   const user = await requireAuth();
   if (!user) {
-    return NextResponse.json({ slugs: getDemoPrayerJournalTagSlugs() });
+    return NextResponse.json({ slugs: presetSlugsSorted() });
   }
 
   try {
@@ -46,6 +55,6 @@ export async function GET() {
 
     return NextResponse.json({ slugs });
   } catch {
-    return NextResponse.json({ slugs: getDemoPrayerJournalTagSlugs() });
+    return NextResponse.json({ slugs: presetSlugsSorted() });
   }
 }

@@ -8,7 +8,6 @@ import { dedupeWeekSchedulesByWeekStart } from "../src/lib/schedule";
 import { getDefaultScheduleDaysForSeed } from "../src/lib/schedule-default-week";
 import { AUDIO_LIBRARY_SEED_COVER_BY_TITLE } from "../src/constants/audioLibraryCovers";
 import { toEntryDate } from "../src/lib/journal";
-import { ensureWelcomePrayerJournalEntries } from "../src/lib/welcome-prayer-journal";
 import {
   DEFAULT_AUDIO_COLLECTION_CARDS,
   DEFAULT_AUDIO_ESSENTIAL_TILES,
@@ -504,23 +503,6 @@ async function main() {
         },
       });
     }
-  }
-
-  /** Standard welcome prayers (`team-welcome` tag); idempotent. Optional `SEED_PRAYER_JOURNAL_EMAIL` targets another user. */
-  if (demoUserId) {
-    let journalUserId = demoUserId;
-    const journalEmailOverride = process.env.SEED_PRAYER_JOURNAL_EMAIL?.trim();
-    if (journalEmailOverride) {
-      const jid = await profileIdForEmail(journalEmailOverride);
-      if (jid) journalUserId = jid;
-      else
-        console.warn(
-          `[seed] SEED_PRAYER_JOURNAL_EMAIL=${journalEmailOverride} not found — welcome journal on demo user`,
-        );
-    }
-    await ensureWelcomePrayerJournalEntries(journalUserId, prisma);
-  } else {
-    console.warn("[seed] Skipped welcome journal entries (no demo user id).");
   }
 
   await seedAudioTabLayout();

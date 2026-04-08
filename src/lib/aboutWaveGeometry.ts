@@ -14,7 +14,7 @@ export const ABOUT_WAVE_MID = ABOUT_WAVE_VIEW_H / 2;
 
 /** Opaque pale blue — waves, body, and frame background (no stacked semi-transparent overlap). */
 export const ABOUT_WAVE_SECTION_BG = "#E9EFF5";
-/** Headline, eyebrow, body, CTA border, and frame stroke. */
+/** Headline, eyebrow, body, CTA border, and frame stroke — sky-blue (#6EADE4). */
 export const ABOUT_WAVE_SECTION_ACCENT = "#6EADE4";
 
 export function waveTheta(x: number): number {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 import type { AudioEssentialTileDTO } from "@/lib/audio-layout-types";
 
 const inputClass =
@@ -42,6 +43,12 @@ export default function AudioEssentialForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        tile ? "Save changes to this essentials tile?" : "Create this essentials tile?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = tile ? `/api/admin/audio-essentials/${tile.id}` : "/api/admin/audio-essentials";

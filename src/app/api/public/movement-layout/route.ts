@@ -36,7 +36,7 @@ export async function GET() {
         title: h.title,
         subtitle: h.subtitle,
         imageUrl: h.imageUrl,
-        linkHref: h.linkHref,
+        videoUrl: h.videoUrl,
         sortOrder: h.sortOrder,
       })),
       quickieCards: quickies.map((q) => ({
@@ -45,7 +45,7 @@ export async function GET() {
         metaLine: q.metaLine,
         imageUrl: q.imageUrl,
         summary: q.summary,
-        linkHref: q.linkHref,
+        videoUrl: q.videoUrl,
         sortOrder: q.sortOrder,
       })),
     });

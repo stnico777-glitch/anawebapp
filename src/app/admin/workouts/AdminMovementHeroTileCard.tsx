@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import type { MovementHeroTileDTO } from "@/lib/movement-layout-types";
@@ -12,7 +11,13 @@ const editBtnClass =
 const delBtnClass =
   "rounded bg-red-600/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-red-600 [font-family:var(--font-body),sans-serif]";
 
-export default function AdminMovementHeroTileCard({ tile }: { tile: MovementHeroTileDTO }) {
+export default function AdminMovementHeroTileCard({
+  tile,
+  onPreviewPlay,
+}: {
+  tile: MovementHeroTileDTO;
+  onPreviewPlay?: (tile: MovementHeroTileDTO) => void;
+}) {
   const router = useRouter();
   const unoptimized =
     tile.imageUrl.startsWith("http://") || tile.imageUrl.startsWith("https://");
@@ -29,9 +34,10 @@ export default function AdminMovementHeroTileCard({ tile }: { tile: MovementHero
 
   return (
     <div className="relative aspect-[16/9] overflow-hidden bg-neutral-900 sm:aspect-[3/2]">
-      <Link
-        href={tile.linkHref}
-        className="group absolute inset-0 z-0 block outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+      <button
+        type="button"
+        onClick={() => onPreviewPlay?.(tile)}
+        className="group absolute inset-0 z-0 block w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
       >
         <Image
           src={tile.imageUrl}
@@ -54,7 +60,7 @@ export default function AdminMovementHeroTileCard({ tile }: { tile: MovementHero
           </p>
           <span className="essentials-explore-glass-cream mt-4">Explore</span>
         </div>
-      </Link>
+      </button>
       <div className="pointer-events-none absolute right-2 top-2 z-30 flex gap-1">
         <div className="pointer-events-auto">
           <MovementHeroTileForm tile={tile} triggerClassName={editBtnClass} triggerLabel="Edit" />

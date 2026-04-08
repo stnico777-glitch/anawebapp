@@ -475,6 +475,40 @@ body {
   animation: welcome-bubble-in 1s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+@keyframes modal-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Exits down-left toward the floating reopen bubble (bottom-left) */
+@keyframes welcome-bubble-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(
+        calc(-1 * min(42vw, 168px)),
+        min(28vh, 200px),
+        0
+      )
+      scale(0.88);
+  }
+}
+
+.animate-modal-backdrop-out {
+  animation: modal-backdrop-out 0.45s ease-in forwards;
+}
+
+.animate-welcome-bubble-out {
+  animation: welcome-bubble-out 0.45s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 /* Chat sequence: typing indicator (iMessage-style) */
 .chat-sequence-typing {
   will-change: transform, opacity;
@@ -517,7 +551,32 @@ body {
   animation: welcome-email-arrow-in 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Movement library: full-screen workout player — video + Finish */
+@keyframes movement-overlay-player-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.movement-overlay-player-fade {
+  opacity: 0;
+  animation: movement-overlay-player-fade-in 0.55s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+.movement-overlay-player-fade-delay {
+  animation-delay: 0.14s;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .movement-overlay-player-fade,
+  .movement-overlay-player-fade-delay {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
   .animate-marquee {
     animation: none;
   }
@@ -536,6 +595,12 @@ body {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+  .animate-modal-backdrop-out {
+    animation: modal-backdrop-out 0.2s ease-out forwards;
+  }
+  .animate-welcome-bubble-out {
+    animation: welcome-bubble-out 0.2s ease-out forwards;
   }
   .chat-sequence-typing-fade-out {
     transition: none;

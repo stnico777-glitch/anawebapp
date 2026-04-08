@@ -3,9 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useChatSequence } from "@/hooks/useChatSequence";
-
-const STORAGE_KEY = "awake-align-welcome-modal-seen";
-const REOPEN_EVENT = "awake-align-reopen-welcome";
+import {
+  WELCOME_MODAL_SEEN_KEY,
+  WELCOME_REOPEN_EVENT,
+  WELCOME_BUBBLE_NUDGE_KEY,
+  WELCOME_BUBBLE_SUCCESS_KEY,
+  WELCOME_BUBBLE_PILL_DISMISSED_KEY,
+} from "@/lib/welcome-email-modal";
 
 const KAT_BUBBLES = [
   "Hey girl!! Kat here, so proud of you for taking this step to grow in your fitness and faith journey. 💛",
@@ -20,9 +24,12 @@ const SENT_TYPING_AFTER_GIF_MS = 1800;
 const SENT_TYPING_DURATION_MS = 2600;
 /** After “drop your email…” bubble lands, brief pause (next “beat”) before the arrow — like a follow-up attachment */
 const EMAIL_ARROW_AFTER_LAST_BUBBLE_MS = 720;
+/** After Kat’s final reply (“Got it!…”), wait this long, then play exit animation */
+const AUTO_MINIMIZE_AFTER_REPLY_MS = 4500;
 
 export default function WelcomeMessageBubble() {
   const [visible, setVisible] = useState(false);
+  const [exitAfterSuccess, setExitAfterSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [reply, setReply] = useState("");
   const [sent, setSent] = useState(false);
@@ -45,15 +52,23 @@ export default function WelcomeMessageBubble() {
   }, []);
 
   useEffect(() => {
-    const onReopen = () => setVisible(true);
-    window.addEventListener(REOPEN_EVENT, onReopen);
-    return () => window.removeEventListener(REOPEN_EVENT, onReopen);
+    if (!visible) return;
+    sessionStorage.removeItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY);
+  }, [visible]);
+
+  useEffect(() => {
+    const onReopen = () => {
+      setExitAfterSuccess(false);
+      setVisible(true);
+    };
+    window.addEventListener(WELCOME_REOPEN_EVENT, onReopen);
+    return () => window.removeEventListener(WELCOME_REOPEN_EVENT, onReopen);
   }, []);
 
   // Show the popup once the Instagram widget section comes into view.
   useEffect(() => {
     if (!mounted) return;
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    if (sessionStorage.getItem(WELCOME_MODAL_SEEN_KEY)) return;
 
     const heading = document.getElementById("instagram-carousel-heading");
     const target = heading?.closest("section") ?? heading;
@@ -64,7 +79,7 @@ export default function WelcomeMessageBubble() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setVisible(true);
-            sessionStorage.setItem(STORAGE_KEY, "1");
+            sessionStorage.setItem(WELCOME_MODAL_SEEN_KEY, "1");
             observer.disconnect();
           }
         });
@@ -99,6 +114,28 @@ export default function WelcomeMessageBubble() {
     const ids = [80, 400, 900].map((ms) => window.setTimeout(scrollToBottom, ms));
     return () => ids.forEach((id) => clearTimeout(id));
   }, [sent, sentGifShown, sentTypingShown, sentReplyShown]);
+
+  useEffect(() => {
+    if (!sentReplyShown) return;
+    const t = window.setTimeout(() => setExitAfterSuccess(true), AUTO_MINIMIZE_AFTER_REPLY_MS);
+    return () => clearTimeout(t);
+  }, [sentReplyShown]);
+
+  const finishSuccessExit = () => {
+    setExitAfterSuccess(false);
+    setVisible(false);
+    sessionStorage.setItem(WELCOME_MODAL_SEEN_KEY, "1");
+    sessionStorage.removeItem(WELCOME_BUBBLE_NUDGE_KEY);
+    sessionStorage.setItem(WELCOME_BUBBLE_SUCCESS_KEY, "1");
+    sessionStorage.removeItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY);
+  };
+
+  const handleSuccessExitAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
+    if (!exitAfterSuccess) return;
+    if (e.target !== e.currentTarget) return;
+    if (e.animationName !== "welcome-bubble-out") return;
+    finishSuccessExit();
+  };
 
   const lastKatBubbleIndex = KAT_BUBBLES.length - 1;
   const lastKatBubbleVisible = visibleMessages.includes(lastKatBubbleIndex);
@@ -143,7 +180,15 @@ export default function WelcomeMessageBubble() {
 
   const dismiss = () => {
     setVisible(false);
-    sessionStorage.setItem(STORAGE_KEY, "1");
+    sessionStorage.setItem(WELCOME_MODAL_SEEN_KEY, "1");
+    sessionStorage.removeItem(WELCOME_BUBBLE_PILL_DISMISSED_KEY);
+    if (sent) {
+      sessionStorage.removeItem(WELCOME_BUBBLE_NUDGE_KEY);
+      sessionStorage.setItem(WELCOME_BUBBLE_SUCCESS_KEY, "1");
+    } else {
+      sessionStorage.setItem(WELCOME_BUBBLE_NUDGE_KEY, "1");
+      sessionStorage.removeItem(WELCOME_BUBBLE_SUCCESS_KEY);
+    }
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -159,16 +204,21 @@ export default function WelcomeMessageBubble() {
 
   return createPortal(
     <div
-      className="welcome-bubble-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm animate-modal-backdrop-in"
+      className={`welcome-bubble-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm ${
+        exitAfterSuccess ? "animate-modal-backdrop-out pointer-events-none" : "animate-modal-backdrop-in"
+      }`}
       aria-hidden
-      onClick={dismiss}
+      onClick={exitAfterSuccess ? undefined : dismiss}
     >
       <div
-        className="welcome-bubble relative flex h-[700px] max-h-[calc(100vh-3rem)] w-[min(375px,100%)] flex-col overflow-hidden rounded-[2rem] bg-transparent font-[family-name:var(--font-body),sans-serif] shadow-2xl ring-1 ring-black/10 animate-welcome-bubble-in"
+        className={`welcome-bubble relative flex h-[700px] max-h-[calc(100vh-3rem)] w-[min(375px,100%)] flex-col overflow-hidden rounded-[2rem] bg-transparent font-[family-name:var(--font-body),sans-serif] shadow-2xl ring-1 ring-black/10 ${
+          exitAfterSuccess ? "animate-welcome-bubble-out" : "animate-welcome-bubble-in"
+        }`}
         role="dialog"
         aria-modal="true"
         aria-label="Message from Kat"
         onClick={(e) => e.stopPropagation()}
+        onAnimationEnd={handleSuccessExitAnimationEnd}
       >
         {/* Glow layer — first child, fills entire modal including very bottom edge */}
         <div

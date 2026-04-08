@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 import type { MovementHeroTileDTO } from "@/lib/movement-layout-types";
+import { MOVEMENT_SAMPLE_VIDEO_URL } from "@/lib/movement-layout-defaults";
 
 const inputClass =
   "mt-1 block w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-foreground focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue [font-family:var(--font-body),sans-serif]";
@@ -25,7 +27,7 @@ export default function MovementHeroTileForm({
     title: tile?.title ?? "",
     subtitle: tile?.subtitle ?? "",
     imageUrl: tile?.imageUrl ?? "",
-    linkHref: tile?.linkHref ?? "/movement",
+    videoUrl: tile?.videoUrl ?? "",
     sortOrder: tile?.sortOrder ?? 0,
   });
 
@@ -35,13 +37,19 @@ export default function MovementHeroTileForm({
       title: tile.title,
       subtitle: tile.subtitle,
       imageUrl: tile.imageUrl,
-      linkHref: tile.linkHref,
+      videoUrl: tile.videoUrl,
       sortOrder: tile.sortOrder,
     });
-  }, [tile?.id, tile?.title, tile?.subtitle, tile?.imageUrl, tile?.linkHref, tile?.sortOrder]);
+  }, [tile?.id, tile?.title, tile?.subtitle, tile?.imageUrl, tile?.videoUrl, tile?.sortOrder]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        tile ? "Save changes to this hero tile?" : "Create this hero tile?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = tile ? `/api/admin/movement-hero-tiles/${tile.id}` : "/api/admin/movement-hero-tiles";
@@ -130,11 +138,15 @@ export default function MovementHeroTileForm({
                 />
               </div>
               <div>
-                <label className={labelClass}>Link (href)</label>
+                <label className={labelClass}>Video URL</label>
                 <input
                   className={inputClass}
-                  value={form.linkHref}
-                  onChange={(e) => setForm((f) => ({ ...f, linkHref: e.target.value }))}
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  placeholder={MOVEMENT_SAMPLE_VIDEO_URL}
+                  value={form.videoUrl}
+                  onChange={(e) => setForm((f) => ({ ...f, videoUrl: e.target.value }))}
                 />
               </div>
               <div>

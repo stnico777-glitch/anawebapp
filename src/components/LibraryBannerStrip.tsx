@@ -178,6 +178,7 @@ export function FormStyleRailButton({
   showLock = false,
   showDone = false,
   active = false,
+  disabled = false,
 }: {
   onClick: () => void;
   src: string;
@@ -189,14 +190,16 @@ export function FormStyleRailButton({
   showLock?: boolean;
   showDone?: boolean;
   active?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={`Play ${title}`}
       aria-pressed={active}
-      className={`group flex ${RAIL_CARD_WIDTH} shrink-0 snap-start flex-col rounded-none text-left outline-none ${RAIL_CARD_INTERACTION} focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background active:opacity-90 motion-reduce:active:opacity-100`}
+      className={`group flex ${RAIL_CARD_WIDTH} shrink-0 snap-start flex-col rounded-none text-left outline-none ${RAIL_CARD_INTERACTION} focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background active:opacity-90 motion-reduce:active:opacity-100 disabled:pointer-events-none disabled:opacity-50`}
       style={{ scrollSnapAlign: "start" }}
     >
       <div

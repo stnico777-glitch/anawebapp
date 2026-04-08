@@ -4,14 +4,10 @@ import Image from "next/image";
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ABOUT_WAVE_AMP,
-  ABOUT_WAVE_SECTION_ACCENT,
   ABOUT_WAVE_SECTION_BG,
   ABOUT_WAVE_VIEW_W,
   type AboutWaveSeg,
   buildWaveFramePathBBox,
-  buildWaveFramePathPixel,
-  makeWaveYPixelMapper,
-  verticalEdgeLineYs,
 } from "@/lib/aboutWaveGeometry";
 
 const ABOUT_PHOTO_SRC = "/Firefly%20(5).png";
@@ -23,17 +19,10 @@ const SEG_EPS = 1e-3;
 const FRAME_WAVE_AMP = ABOUT_WAVE_AMP * 0.4;
 
 /**
- * Moves the wave clip + stroke up within the frame (fraction of frame height). The image layer is
- * shifted down by the same amount so the picture stays visually in place.
+ * Moves the wave clip up within the frame (fraction of frame height). The image layer is shifted
+ * down by the same amount so the picture stays visually in place.
  */
 const WAVE_FRAME_OFFSET_Y = 0.1;
-
-/** Single source for `viewBox` and layout; square aspect (`aspect-square`). */
-const FRAME_SIZE = 400;
-
-/** Main path stroke; vertical sides get a touch more width so they match the wavy edges visually. */
-const FRAME_STROKE_W = 3;
-const FRAME_SIDE_STROKE_W = 4.25;
 
 /** Left ~⅕ of the hero wave until layout is measured (avoids full 1.5 cycles on a narrow card). */
 const DEFAULT_SEG: AboutWaveSeg = {
@@ -42,7 +31,7 @@ const DEFAULT_SEG: AboutWaveSeg = {
 };
 
 /**
- * Photo clipped + stroked with the same sine phase as the About wave SVGs, sampled only over the
+ * Photo clipped to the same sine phase as the About wave SVGs (no stroke), sampled only over the
  * viewport slice this card occupies (so peaks line up with the big wave). Softer amplitude on the frame.
  */
 export default function AboutWaveFramedPhoto() {
@@ -87,25 +76,10 @@ export default function AboutWaveFramedPhoto() {
     };
   }, []);
 
-  const frame = useMemo(() => {
-    const pathBBox = buildWaveFramePathBBox(seg, FRAME_WAVE_AMP, WAVE_FRAME_OFFSET_Y);
-    const pathPixel = buildWaveFramePathPixel(
-      FRAME_SIZE,
-      FRAME_SIZE,
-      seg,
-      FRAME_WAVE_AMP,
-      WAVE_FRAME_OFFSET_Y,
-    );
-    const yPix = makeWaveYPixelMapper(FRAME_SIZE, WAVE_FRAME_OFFSET_Y);
-    return {
-      pathBBox,
-      pathPixel,
-      sideLines: {
-        left: verticalEdgeLineYs(yPix, seg.startX, FRAME_WAVE_AMP),
-        right: verticalEdgeLineYs(yPix, seg.endX, FRAME_WAVE_AMP),
-      },
-    };
-  }, [seg]);
+  const pathBBox = useMemo(
+    () => buildWaveFramePathBBox(seg, FRAME_WAVE_AMP, WAVE_FRAME_OFFSET_Y),
+    [seg],
+  );
 
   const imageCompensateY = `${WAVE_FRAME_OFFSET_Y * 100}%`;
 
@@ -117,7 +91,7 @@ export default function AboutWaveFramedPhoto() {
       <svg className="pointer-events-none absolute h-0 w-0 overflow-hidden" aria-hidden>
         <defs>
           <clipPath id={clipId} clipPathUnits="objectBoundingBox">
-            <path d={frame.pathBBox} />
+            <path d={pathBBox} />
           </clipPath>
         </defs>
       </svg>
@@ -140,40 +114,6 @@ export default function AboutWaveFramedPhoto() {
           />
         </div>
       </div>
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        viewBox={`0 0 ${FRAME_SIZE} ${FRAME_SIZE}`}
-        preserveAspectRatio="xMidYMid meet"
-        aria-hidden
-      >
-        <path
-          d={frame.pathPixel}
-          fill="none"
-          stroke={ABOUT_WAVE_SECTION_ACCENT}
-          strokeWidth={FRAME_STROKE_W}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-        {/* Extra weight on verticals — straight segments often read thinner than the wavy top/bottom */}
-        <line
-          x1={0}
-          x2={0}
-          y1={frame.sideLines.left.y1}
-          y2={frame.sideLines.left.y2}
-          stroke={ABOUT_WAVE_SECTION_ACCENT}
-          strokeWidth={FRAME_SIDE_STROKE_W}
-          strokeLinecap="round"
-        />
-        <line
-          x1={FRAME_SIZE}
-          x2={FRAME_SIZE}
-          y1={frame.sideLines.right.y1}
-          y2={frame.sideLines.right.y2}
-          stroke={ABOUT_WAVE_SECTION_ACCENT}
-          strokeWidth={FRAME_SIDE_STROKE_W}
-          strokeLinecap="round"
-        />
-      </svg>
     </div>
   );
 }

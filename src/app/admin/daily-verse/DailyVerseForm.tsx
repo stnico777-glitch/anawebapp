@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 
 interface DailyVerseRow {
   id: string;
@@ -32,6 +33,12 @@ export default function DailyVerseForm({ verse }: { verse?: DailyVerseRow }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        verse ? "Save changes to this daily verse?" : "Create this daily verse?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = verse ? `/api/admin/daily-verse/${verse.id}` : "/api/admin/daily-verse";

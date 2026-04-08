@@ -1,8 +1,16 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import WorkoutLibraryShell from "@/components/WorkoutLibraryShell";
+import MovementLayoutVideoOverlay, {
+  type MovementLayoutVideoPayload,
+} from "@/components/MovementLayoutVideoOverlay";
 import { RAIL_CARD_WIDTH } from "@/components/LibraryBannerStrip";
-import type { MovementLayoutDTO } from "@/lib/movement-layout-types";
+import type {
+  MovementHeroTileDTO,
+  MovementLayoutDTO,
+  MovementQuickieCardDTO,
+} from "@/lib/movement-layout-types";
 import AdminWorkoutRailCard, {
   type AdminWorkoutRailCardWorkout,
 } from "./AdminWorkoutRailCard";
@@ -23,13 +31,39 @@ export default function WorkoutLibraryAdminView({
   workouts: AdminWorkoutRailCardWorkout[];
   movementLayout: MovementLayoutDTO;
 }) {
+  const [layoutPreview, setLayoutPreview] = useState<MovementLayoutVideoPayload | null>(null);
+
+  const previewHero = useCallback((tile: MovementHeroTileDTO) => {
+    const url = tile.videoUrl?.trim();
+    if (!url) return;
+    setLayoutPreview({
+      title: tile.title,
+      subtitle: tile.subtitle,
+      videoUrl: url,
+      poster: tile.imageUrl,
+    });
+  }, []);
+
+  const previewQuickie = useCallback((card: MovementQuickieCardDTO) => {
+    const url = card.videoUrl?.trim();
+    if (!url) return;
+    setLayoutPreview({
+      title: card.title,
+      subtitle: card.metaLine,
+      videoUrl: url,
+      poster: card.imageUrl,
+    });
+  }, []);
+
   const heroSectionBody =
     movementLayout.heroTiles.length === 0 ? (
       <p className="col-span-full px-4 py-8 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
         No hero tiles yet. Use <strong className="font-semibold text-foreground">Add hero tile</strong>.
       </p>
     ) : (
-      movementLayout.heroTiles.map((t) => <AdminMovementHeroTileCard key={t.id} tile={t} />)
+      movementLayout.heroTiles.map((t) => (
+        <AdminMovementHeroTileCard key={t.id} tile={t} onPreviewPlay={previewHero} />
+      ))
     );
 
   const quickieRail =
@@ -38,7 +72,9 @@ export default function WorkoutLibraryAdminView({
         No Quickie cards yet. Use <strong className="font-semibold text-foreground">Add Quickie card</strong>.
       </p>
     ) : (
-      movementLayout.quickieCards.map((c) => <AdminMovementQuickieRailCard key={c.id} card={c} />)
+      movementLayout.quickieCards.map((c) => (
+        <AdminMovementQuickieRailCard key={c.id} card={c} onPreviewPlay={previewQuickie} />
+      ))
     );
 
   return (
@@ -78,6 +114,10 @@ export default function WorkoutLibraryAdminView({
         }
         quickieRail={quickieRail}
       />
+
+      {layoutPreview ? (
+        <MovementLayoutVideoOverlay payload={layoutPreview} onClose={() => setLayoutPreview(null)} />
+      ) : null}
     </div>
   );
 }

@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import Link from "next/link";
 import AudioPlayer from "@/components/AudioPlayer";
 import LockIcon from "@/components/LockIcon";
+import {
+  PrayerLibraryInlineScrubber,
+  usePrayerLibraryAudioOptional,
+} from "./PrayerLibraryAudioContext";
 
 interface PrayerPlayerProps {
   prayerId: string;
@@ -31,10 +35,26 @@ export default function PrayerPlayer({
   showMeta = true,
   hidePlayerTitle = false,
 }: PrayerPlayerProps) {
+  const libraryAudio = usePrayerLibraryAudioOptional();
+
   const handleComplete = useCallback(async () => {
     if (isCompleted || isLocked) return;
     await fetch(`/api/prayer/${prayerId}/complete`, { method: "POST" });
   }, [prayerId, isCompleted, isLocked]);
+
+  useEffect(() => {
+    if (!libraryAudio || isLocked) {
+      libraryAudio?.registerOnComplete(null);
+      return;
+    }
+    const run = () => {
+      void handleComplete();
+    };
+    libraryAudio.registerOnComplete(run);
+    return () => libraryAudio.registerOnComplete(null);
+  }, [libraryAudio, isLocked, handleComplete]);
+
+  const useSharedLibraryPlayer = Boolean(libraryAudio && !isLocked);
 
   return (
     <div className={`relative rounded-sm border border-sand bg-white p-4 ${showMeta ? "" : "pt-4"}`}>
@@ -69,6 +89,8 @@ export default function PrayerPlayer({
             View plans →
           </Link>
         </div>
+      ) : useSharedLibraryPlayer ? (
+        <PrayerLibraryInlineScrubber />
       ) : (
         <AudioPlayer
           src={src}

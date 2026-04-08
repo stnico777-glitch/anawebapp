@@ -7,6 +7,7 @@ const ITEMS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/workouts", label: "Movement" },
   { href: "/admin/prayer", label: "Audio" },
+  { href: "/admin/prayer-journal", label: "Journal" },
   { href: "/admin/schedules", label: "Schedules" },
   { href: "/admin/daily-verse", label: "Daily verses" },
 ] as const;

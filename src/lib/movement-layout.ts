@@ -26,7 +26,7 @@ function mapHero(row: {
   title: string;
   subtitle: string;
   imageUrl: string;
-  linkHref: string;
+  videoUrl: string;
   sortOrder: number;
 }): MovementHeroTileDTO {
   return {
@@ -34,7 +34,7 @@ function mapHero(row: {
     title: row.title,
     subtitle: row.subtitle,
     imageUrl: row.imageUrl,
-    linkHref: row.linkHref,
+    videoUrl: row.videoUrl ?? "",
     sortOrder: row.sortOrder,
   };
 }
@@ -45,7 +45,7 @@ function mapQuickie(row: {
   metaLine: string;
   imageUrl: string;
   summary: string;
-  linkHref: string;
+  videoUrl: string;
   sortOrder: number;
 }): MovementQuickieCardDTO {
   return {
@@ -54,7 +54,7 @@ function mapQuickie(row: {
     metaLine: row.metaLine,
     imageUrl: row.imageUrl,
     summary: row.summary,
-    linkHref: row.linkHref,
+    videoUrl: row.videoUrl ?? "",
     sortOrder: row.sortOrder,
   };
 }
@@ -94,7 +94,7 @@ export async function seedMovementHeroAndQuickieIfEmpty(): Promise<void> {
           title: row.title,
           subtitle: row.subtitle,
           imageUrl: row.imageUrl,
-          linkHref: row.linkHref,
+          videoUrl: row.videoUrl,
           sortOrder: i,
         })),
       });
@@ -108,7 +108,7 @@ export async function seedMovementHeroAndQuickieIfEmpty(): Promise<void> {
           metaLine: row.metaLine,
           imageUrl: row.imageUrl,
           summary: row.summary,
-          linkHref: row.linkHref,
+          videoUrl: row.videoUrl,
           sortOrder: i,
         })),
       });
@@ -161,13 +161,5 @@ export async function getMovementLayoutForDisplay(): Promise<MovementLayoutDTO> 
 
 /** CMS: reflects DB exactly (empty rails stay empty). Member display still uses defaults when DB has no rows. */
 export async function getMovementLayoutForAdmin(): Promise<MovementLayoutDTO> {
-  try {
-    return await loadMovementLayout({ forAdmin: true });
-  } catch {
-    return {
-      copy: DEFAULT_MOVEMENT_LANDING_COPY,
-      heroTiles: [],
-      quickieCards: [],
-    };
-  }
+  return await loadMovementLayout({ forAdmin: true });
 }

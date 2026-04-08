@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { ensureWelcomePrayerJournalEntries } from "@/lib/welcome-prayer-journal";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -45,10 +44,6 @@ export async function POST(request: Request) {
         );
       }
       return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    if (data.user?.id) {
-      await ensureWelcomePrayerJournalEntries(data.user.id);
     }
 
     return NextResponse.json({ success: true });

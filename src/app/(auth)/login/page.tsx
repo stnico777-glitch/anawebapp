@@ -30,7 +30,7 @@ export default function LoginPage() {
           awake + align
         </h1>
         <p className="mt-2 text-sm text-gray">
-          Faith + Fitness
+          Power love sound mind
         </p>
       </div>
 

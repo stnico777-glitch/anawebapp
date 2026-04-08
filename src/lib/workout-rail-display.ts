@@ -9,6 +9,7 @@ export type WorkoutRailCardWorkout = {
   category: string | null;
   scripture: string | null;
   thumbnailUrl: string | null;
+  videoUrl: string;
 };
 
 export function workoutRailThumb(w: WorkoutRailCardWorkout): string {

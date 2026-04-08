@@ -18,7 +18,7 @@ import {
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import WorkoutForm from "./WorkoutForm";
 
-export type AdminWorkoutRailCardWorkout = WorkoutRailCardWorkout & { videoUrl: string };
+export type AdminWorkoutRailCardWorkout = WorkoutRailCardWorkout;
 
 const editBtnClass =
   "rounded bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm transition hover:bg-black/80 [font-family:var(--font-body),sans-serif]";

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 import type { AudioCollectionCardDTO } from "@/lib/audio-layout-types";
 
 const inputClass =
@@ -44,6 +45,12 @@ export default function AudioCollectionForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        card ? "Save changes to this collection card?" : "Create this collection card?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = card ? `/api/admin/audio-collections/${card.id}` : "/api/admin/audio-collections";

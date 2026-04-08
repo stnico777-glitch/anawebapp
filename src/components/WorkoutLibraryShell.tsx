@@ -2,10 +2,9 @@
 
 import { useRef, type ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   GEAR_UP_CAROUSEL_ROW_CLASS,
-  FormStyleRailCard,
+  FormStyleRailButton,
   LibraryCarouselArrows,
 } from "@/components/LibraryBannerStrip";
 import type { MovementLayoutDTO } from "@/lib/movement-layout-types";
@@ -24,6 +23,8 @@ export default function WorkoutLibraryShell({
   quickieToolbar,
   heroSectionBody,
   quickieRail,
+  onPlayHeroTile,
+  onPlayQuickie,
 }: {
   libraryRail: ReactNode;
   libraryToolbar?: ReactNode;
@@ -34,6 +35,8 @@ export default function WorkoutLibraryShell({
   quickieToolbar?: ReactNode;
   heroSectionBody?: ReactNode;
   quickieRail?: ReactNode;
+  onPlayHeroTile?: (tile: MovementLayoutDTO["heroTiles"][number]) => void;
+  onPlayQuickie?: (card: MovementLayoutDTO["quickieCards"][number]) => void;
 }) {
   const programsRef = useRef<HTMLDivElement>(null);
   const newToPilatesRef = useRef<HTMLDivElement>(null);
@@ -98,10 +101,11 @@ export default function WorkoutLibraryShell({
               const unoptimized =
                 tile.imageUrl.startsWith("http://") || tile.imageUrl.startsWith("https://");
               return (
-                <Link
+                <button
                   key={tile.id}
-                  href={tile.linkHref}
-                  className="group relative aspect-[16/9] overflow-hidden bg-neutral-900 sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+                  type="button"
+                  onClick={() => onPlayHeroTile?.(tile)}
+                  className="group relative aspect-[16/9] w-full overflow-hidden bg-neutral-900 text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
                 >
                   <Image
                     src={tile.imageUrl}
@@ -125,7 +129,7 @@ export default function WorkoutLibraryShell({
                     </p>
                     <span className="essentials-explore-glass-cream mt-4">Explore</span>
                   </div>
-                </Link>
+                </button>
               );
             })}
         </div>
@@ -159,9 +163,9 @@ export default function WorkoutLibraryShell({
           >
             {quickieRail ??
               movementLayout.quickieCards.map((p) => (
-                <FormStyleRailCard
+                <FormStyleRailButton
                   key={p.id}
-                  href={p.linkHref}
+                  onClick={() => onPlayQuickie?.(p)}
                   src={p.imageUrl}
                   alt={p.title}
                   title={p.title}

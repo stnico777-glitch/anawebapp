@@ -357,7 +357,7 @@ model MovementHeroTile {
   title     String
   subtitle  String
   imageUrl  String   @map("image_url")
-  linkHref  String   @default("/movement") @map("link_href")
+  videoUrl  String   @default("") @map("video_url")
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -371,7 +371,7 @@ model MovementQuickieCard {
   metaLine  String   @map("meta_line")
   imageUrl  String   @map("image_url")
   summary   String
-  linkHref  String   @default("/movement") @map("link_href")
+  videoUrl  String   @default("") @map("video_url")
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -5,15 +5,15 @@ import { prisma } from "@/lib/prisma";
 export const PATCH = withAdmin<{ params: Promise<{ id: string }> }>(async (_, request, { params }) => {
   const { id } = await params;
   const body = await request.json();
-  const { title, subtitle, imageUrl, linkHref, sortOrder } = body;
+  const { title, subtitle, imageUrl, videoUrl, sortOrder } = body;
   const row = await prisma.movementHeroTile.update({
     where: { id },
     data: {
       ...(title != null && { title }),
       ...(subtitle != null && { subtitle }),
       ...(imageUrl != null && { imageUrl }),
-      ...(linkHref != null && {
-        linkHref: String(linkHref).trim() || "/movement",
+      ...(videoUrl != null && {
+        videoUrl: String(videoUrl).trim(),
       }),
       ...(sortOrder != null && { sortOrder: parseInt(String(sortOrder), 10) }),
     },

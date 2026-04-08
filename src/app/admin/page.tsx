@@ -7,12 +7,14 @@ export default async function AdminDashboard() {
   let prayerCount: number;
   let scheduleCount: number;
   let verseCount: number;
+  let memberCount: number;
   try {
-    [workoutCount, prayerCount, scheduleCount, verseCount] = await Promise.all([
+    [workoutCount, prayerCount, scheduleCount, verseCount, memberCount] = await Promise.all([
       prisma.workout.count(),
       prisma.prayerAudio.count(),
       prisma.weekSchedule.count(),
       prisma.dailyVerse.count(),
+      prisma.profile.count(),
     ]);
   } catch (e) {
     console.error("[admin] Prisma counts failed (check Vercel logs + DATABASE_URL / SSL):", e);
@@ -25,11 +27,17 @@ export default async function AdminDashboard() {
   }
 
   const cards = [
-    { href: "/admin/workouts", label: "Movement", count: workoutCount },
-    { href: "/admin/prayer", label: "Audio", count: prayerCount },
-    { href: "/admin/schedules", label: "Schedules", count: scheduleCount },
-    { href: "/admin/daily-verse", label: "Daily verses", count: verseCount },
-  ];
+    { href: "/admin/workouts", label: "Movement", count: workoutCount, subtitle: "items · tap to edit" },
+    { href: "/admin/prayer", label: "Audio", count: prayerCount, subtitle: "items · tap to edit" },
+    {
+      href: "/admin/prayer-journal",
+      label: "Prayer journal",
+      count: memberCount,
+      subtitle: "members · tap to broadcast",
+    },
+    { href: "/admin/schedules", label: "Schedules", count: scheduleCount, subtitle: "items · tap to edit" },
+    { href: "/admin/daily-verse", label: "Daily verses", count: verseCount, subtitle: "items · tap to edit" },
+  ] as const;
 
   return (
     <div>
@@ -40,12 +48,12 @@ export default async function AdminDashboard() {
           Edit content
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray md:text-base">
-          Same layout as the member app — use the sections below to manage movement, audio, weekly
-          schedules, and verse of the day.
+          Same layout as the member app — use the sections below to manage movement, audio, prayer
+          journal broadcasts, weekly schedules, and verse of the day.
         </p>
       </header>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map(({ href, label, count }) => (
+        {cards.map(({ href, label, count, subtitle }) => (
           <Link
             key={href}
             href={href}
@@ -57,7 +65,7 @@ export default async function AdminDashboard() {
             <p className="mt-3 text-3xl font-semibold text-sky-blue tabular-nums [font-family:var(--font-headline),sans-serif]">
               {count}
             </p>
-            <p className="mt-1 text-sm text-gray">items · tap to edit</p>
+            <p className="mt-1 text-sm text-gray">{subtitle}</p>
           </Link>
         ))}
       </div>

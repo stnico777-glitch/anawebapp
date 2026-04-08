@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 import type { MovementLandingCopyDTO } from "@/lib/movement-layout-types";
 
 const inputClass =
@@ -35,6 +36,7 @@ export default function MovementLandingCopyForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!confirmAdminSave("Save movement section copy?")) return;
     setSaving(true);
     try {
       const res = await adminJson("/api/admin/movement-landing-copy", {

@@ -1,14 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, type RefObject } from "react";
 import PrayerAudioLibraryShell from "@/components/PrayerAudioLibraryShell";
+import {
+  PrayerLibraryAudioProvider,
+  PrayerLibraryLayoutPadding,
+  PrayerMiniPlayerBar,
+  usePrayerLibraryAudio,
+} from "@/app/(app)/(main-tabs)/prayer/PrayerLibraryAudioContext";
 import { GEAR_UP_CAROUSEL_ROW_CLASS, RAIL_CARD_WIDTH } from "@/components/LibraryBannerStrip";
-import PrayerPlayer from "@/app/(app)/(main-tabs)/prayer/PrayerPlayer";
 import {
   type PrayerLibraryItem,
   coverForPrayer,
   railCoversDeduped,
-  CatalogCoverImage,
 } from "@/lib/prayer-audio-display";
 import type {
   AudioCollectionCardDTO,
@@ -27,7 +31,7 @@ import AdminMusicSpotlightAlbumTile from "./AdminMusicSpotlightAlbumTile";
 const addTriggerClass =
   "shrink-0 rounded-md bg-sky-blue px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 [font-family:var(--font-body),sans-serif]";
 
-export default function PrayerAudioLibraryAdminView({
+function PrayerAudioLibraryAdminViewInner({
   prayers,
   layout,
 }: {
@@ -39,6 +43,7 @@ export default function PrayerAudioLibraryAdminView({
   };
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { setTrack, clearTrack } = usePrayerLibraryAudio();
 
   useEffect(() => {
     setSelectedId((id) => (id && !prayers.some((p) => p.id === id) ? null : id));
@@ -49,12 +54,34 @@ export default function PrayerAudioLibraryAdminView({
     [prayers, selectedId],
   );
 
+  useLayoutEffect(() => {
+    if (!selected) {
+      clearTrack();
+      return;
+    }
+    const idx = prayers.findIndex((x) => x.id === selected.id);
+    const cover = coverForPrayer(selected, idx);
+    const subtitle =
+      [selected.scripture?.trim(), selected.description?.trim()].filter(Boolean).join(" · ") ||
+      "Guided audio";
+    setTrack({
+      prayerId: selected.id,
+      src: selected.audioUrl,
+      title: selected.title,
+      subtitle,
+      duration: selected.duration,
+      coverSrc: cover.src,
+      coverUnoptimized: cover.unoptimized,
+      locked: false,
+    });
+  }, [selected, prayers, setTrack, clearTrack]);
+
   const prayerRailCovers = useMemo(() => railCoversDeduped(prayers), [prayers]);
 
   const selectPrayer = useCallback((id: string) => {
     setSelectedId(id);
     requestAnimationFrame(() => {
-      document.getElementById("prayer-now-playing")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("prayer-library-rail-admin")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }, []);
 
@@ -73,61 +100,10 @@ export default function PrayerAudioLibraryAdminView({
           </div>
         ) : (
           <>
-            <div id="prayer-now-playing" className="scroll-mt-8">
-              {selected ? (
-                <div className="mb-6 overflow-hidden rounded-none border border-black/[0.08] bg-white shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-stretch">
-                    <div className="relative aspect-video w-full shrink-0 bg-neutral-100 md:aspect-auto md:h-auto md:w-[min(42%,380px)] md:min-h-[200px]">
-                      {(() => {
-                        const { src, unoptimized } = coverForPrayer(
-                          selected,
-                          prayers.findIndex((x) => x.id === selected.id),
-                        );
-                        return (
-                          <CatalogCoverImage
-                            src={src}
-                            unoptimized={unoptimized}
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, 380px"
-                            priority
-                          />
-                        );
-                      })()}
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col justify-center bg-white p-5 md:p-8">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray">Preview (member app)</p>
-                      <p className="mt-1 text-xl font-semibold uppercase leading-snug tracking-tight text-foreground [font-family:var(--font-headline),sans-serif] md:text-2xl">
-                        {selected.title}
-                      </p>
-                      {(selected.scripture || selected.description) && (
-                        <p className="mt-2 text-sm text-gray">
-                          {selected.scripture && (
-                            <span className="italic text-foreground/90">{selected.scripture}</span>
-                          )}
-                          {selected.scripture && selected.description ? " · " : null}
-                          {selected.description}
-                        </p>
-                      )}
-                      <div className="mt-4 md:mt-6">
-                        <PrayerPlayer
-                          prayerId={selected.id}
-                          src={selected.audioUrl}
-                          title={selected.title}
-                          duration={selected.duration}
-                          description={selected.description ?? undefined}
-                          scripture={selected.scripture ?? undefined}
-                          isCompleted={false}
-                          isLocked={false}
-                          showMeta={false}
-                          hidePlayerTitle
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="mb-5 text-center text-sm text-gray">
-                  Choose a session below to preview the player (same as members see).
+            <div id="prayer-library-rail-admin" className="scroll-mt-8">
+              {!selected && (
+                <p className="mb-4 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
+                  Choose a session below — the same bottom player as the member app appears when you select audio.
                 </p>
               )}
             </div>
@@ -212,29 +188,47 @@ export default function PrayerAudioLibraryAdminView({
     );
 
   return (
-    <div className="-mx-4 md:-mx-6">
-      <PrayerAudioLibraryShell
-        compactTop
-        libraryHeadingId="cms-audio-library-heading"
-        libraryToolbar={<PrayerForm triggerLabel="Add audio" triggerClassName={addTriggerClass} />}
-        showLibraryArrows={prayers.length > 0}
-        renderLibrary={renderLibrary}
-        collectionsToolbar={
-          <AudioCollectionForm triggerLabel="Add collection" triggerClassName={addTriggerClass} />
-        }
-        collectionCards={layout.collections}
-        collectionsRail={collectionsRail}
-        essentialsToolbar={
-          <AudioEssentialForm triggerLabel="Add essentials tile" triggerClassName={addTriggerClass} />
-        }
-        essentialTiles={layout.essentials}
-        essentialsBody={essentialsBody}
-        spotlightToolbar={
-          <MusicSpotlightAlbumForm triggerLabel="Add spotlight album" triggerClassName={addTriggerClass} />
-        }
-        spotlightAlbums={layout.spotlight}
-        spotlightMarquee={spotlightMarquee}
-      />
-    </div>
+    <PrayerLibraryLayoutPadding>
+      <div className="-mx-4 md:-mx-6">
+        <PrayerAudioLibraryShell
+          compactTop
+          libraryHeadingId="cms-audio-library-heading"
+          libraryToolbar={<PrayerForm triggerLabel="Add audio" triggerClassName={addTriggerClass} />}
+          showLibraryArrows={prayers.length > 0}
+          renderLibrary={renderLibrary}
+          collectionsToolbar={
+            <AudioCollectionForm triggerLabel="Add collection" triggerClassName={addTriggerClass} />
+          }
+          collectionCards={layout.collections}
+          collectionsRail={collectionsRail}
+          essentialsToolbar={
+            <AudioEssentialForm triggerLabel="Add essentials tile" triggerClassName={addTriggerClass} />
+          }
+          essentialTiles={layout.essentials}
+          essentialsBody={essentialsBody}
+          spotlightToolbar={
+            <MusicSpotlightAlbumForm triggerLabel="Add spotlight album" triggerClassName={addTriggerClass} />
+          }
+          spotlightAlbums={layout.spotlight}
+          spotlightMarquee={spotlightMarquee}
+        />
+      </div>
+      <PrayerMiniPlayerBar />
+    </PrayerLibraryLayoutPadding>
+  );
+}
+
+export default function PrayerAudioLibraryAdminView(props: {
+  prayers: PrayerLibraryItem[];
+  layout: {
+    collections: AudioCollectionCardDTO[];
+    essentials: AudioEssentialTileDTO[];
+    spotlight: MusicSpotlightAlbumDTO[];
+  };
+}) {
+  return (
+    <PrayerLibraryAudioProvider>
+      <PrayerAudioLibraryAdminViewInner {...props} />
+    </PrayerLibraryAudioProvider>
   );
 }

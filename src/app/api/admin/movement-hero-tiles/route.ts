@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export const POST = withAdmin(async (_, request) => {
   const body = await request.json();
-  const { title, subtitle, imageUrl, linkHref, sortOrder } = body;
+  const { title, subtitle, imageUrl, videoUrl, sortOrder } = body;
+  const video = typeof videoUrl === "string" ? videoUrl.trim() : "";
   if (!title || subtitle == null || !imageUrl) {
     return NextResponse.json(
       { error: "title, subtitle, and imageUrl are required" },
@@ -16,7 +17,7 @@ export const POST = withAdmin(async (_, request) => {
       title,
       subtitle,
       imageUrl,
-      linkHref: typeof linkHref === "string" && linkHref.trim() ? linkHref.trim() : "/movement",
+      videoUrl: video,
       sortOrder: sortOrder != null ? parseInt(String(sortOrder), 10) : 0,
     },
   });

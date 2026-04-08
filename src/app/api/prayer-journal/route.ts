@@ -5,8 +5,6 @@ import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { parseStatus, parseTagFilter } from "@/lib/prayer-journal";
-import { ensureWelcomePrayerJournalEntries } from "@/lib/welcome-prayer-journal";
-import { getDemoPrayerJournalApiRows } from "@/lib/demo-prayer-journal-api";
 
 const statusSchema = z.enum(["ACTIVE", "ANSWERED", "PAUSED"]);
 
@@ -30,13 +28,10 @@ export async function GET(request: Request) {
   const take = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? "50") || 50));
 
   if (!user) {
-    const demo = getDemoPrayerJournalApiRows(status, tag).slice(0, take);
-    return NextResponse.json(demo);
+    return NextResponse.json([]);
   }
 
   try {
-    await ensureWelcomePrayerJournalEntries(user.id);
-
     const entries = await prisma.prayerJournalEntry.findMany({
       where: {
         userId: user.id,
@@ -49,8 +44,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(entries);
   } catch {
-    const demo = getDemoPrayerJournalApiRows(status, tag).slice(0, take);
-    return NextResponse.json(demo);
+    return NextResponse.json([]);
   }
 }
 

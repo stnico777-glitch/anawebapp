@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 import type { MovementQuickieCardDTO } from "@/lib/movement-layout-types";
+import { MOVEMENT_SAMPLE_VIDEO_URL } from "@/lib/movement-layout-defaults";
 
 const inputClass =
   "mt-1 block w-full rounded-md border border-sand bg-white px-3 py-2 text-sm text-foreground focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue [font-family:var(--font-body),sans-serif]";
@@ -26,7 +28,7 @@ export default function MovementQuickieCardForm({
     metaLine: card?.metaLine ?? "",
     imageUrl: card?.imageUrl ?? "",
     summary: card?.summary ?? "",
-    linkHref: card?.linkHref ?? "/movement",
+    videoUrl: card?.videoUrl ?? "",
     sortOrder: card?.sortOrder ?? 0,
   });
 
@@ -37,7 +39,7 @@ export default function MovementQuickieCardForm({
       metaLine: card.metaLine,
       imageUrl: card.imageUrl,
       summary: card.summary,
-      linkHref: card.linkHref,
+      videoUrl: card.videoUrl,
       sortOrder: card.sortOrder,
     });
   }, [
@@ -46,12 +48,18 @@ export default function MovementQuickieCardForm({
     card?.metaLine,
     card?.imageUrl,
     card?.summary,
-    card?.linkHref,
+    card?.videoUrl,
     card?.sortOrder,
   ]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        card ? "Save changes to this Quickie card?" : "Create this Quickie card?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = card
@@ -153,11 +161,15 @@ export default function MovementQuickieCardForm({
                 />
               </div>
               <div>
-                <label className={labelClass}>Link (href)</label>
+                <label className={labelClass}>Video URL</label>
                 <input
                   className={inputClass}
-                  value={form.linkHref}
-                  onChange={(e) => setForm((f) => ({ ...f, linkHref: e.target.value }))}
+                  type="text"
+                  inputMode="url"
+                  autoComplete="off"
+                  placeholder={MOVEMENT_SAMPLE_VIDEO_URL}
+                  value={form.videoUrl}
+                  onChange={(e) => setForm((f) => ({ ...f, videoUrl: e.target.value }))}
                 />
               </div>
               <div>

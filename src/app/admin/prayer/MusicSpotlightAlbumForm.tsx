@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { confirmAdminSave } from "@/lib/admin-confirm-save";
 import type { MusicSpotlightAlbumDTO } from "@/lib/audio-layout-types";
 
 const inputClass =
@@ -42,6 +43,12 @@ export default function MusicSpotlightAlbumForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      !confirmAdminSave(
+        album ? "Save changes to this spotlight album?" : "Create this spotlight album?",
+      )
+    )
+      return;
     setSaving(true);
     try {
       const url = album ? `/api/admin/music-spotlight/${album.id}` : "/api/admin/music-spotlight";

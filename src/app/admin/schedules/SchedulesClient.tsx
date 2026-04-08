@@ -13,9 +13,9 @@ import {
   weekScheduleAnchorKeyUTC,
 } from "@/lib/weekScheduleCalendar";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
-import ScheduleDayEditModal, {
+import ScheduleDayInlineEditor, {
   type ScheduleDayEditPayload,
-} from "./ScheduleDayEditModal";
+} from "./ScheduleDayInlineEditor";
 
 interface Schedule {
   id: string;
@@ -34,24 +34,10 @@ interface Schedule {
   }[];
 }
 
-interface Workout {
-  id: string;
-  title: string;
-}
-
-interface Prayer {
-  id: string;
-  title: string;
-}
-
 export default function SchedulesClient({
   schedules,
-  workouts,
-  prayers,
 }: {
   schedules: Schedule[];
-  workouts: Workout[];
-  prayers: Prayer[];
 }) {
   const router = useRouter();
   const sorted = useMemo(
@@ -64,6 +50,7 @@ export default function SchedulesClient({
 
   const [selectedId, setSelectedId] = useState<string>(() => sorted[0]?.id ?? "");
   const [creating, setCreating] = useState(false);
+  const [deletingWeekId, setDeletingWeekId] = useState<string | null>(null);
   const [editDay, setEditDay] = useState<ScheduleDayEditPayload | null>(null);
   const [selectWeekDate, setSelectWeekDate] = useState(() =>
     sorted[0] ? sorted[0].weekStart.slice(0, 10) : "",
@@ -134,6 +121,37 @@ export default function SchedulesClient({
     await createSchedule(selectWeekDate);
   }
 
+  async function deleteSchedule(scheduleId: string) {
+    const s = sorted.find((x) => x.id === scheduleId);
+    const label = s
+      ? formatWeekRange(new Date(s.weekStart), { includeYear: true })
+      : "this week";
+    if (
+      !confirm(
+        `Delete the schedule for ${label}? This removes all 7 days and any member completion records tied to those days. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setDeletingWeekId(scheduleId);
+    try {
+      const res = await adminJson(`/api/admin/schedules/${scheduleId}`, { method: "DELETE" });
+      if (!res.ok) {
+        alert(await readAdminError(res));
+        return;
+      }
+      setEditDay(null);
+      if (selectedId === scheduleId) {
+        const remaining = sorted.filter((x) => x.id !== scheduleId);
+        setSelectedId(remaining[0]?.id ?? "");
+        setSelectWeekDate(remaining[0] ? remaining[0].weekStart.slice(0, 10) : "");
+      }
+      router.refresh();
+    } finally {
+      setDeletingWeekId(null);
+    }
+  }
+
   const toolbarBtnClass =
     "rounded-md border border-sand bg-white px-3 py-2 text-sm font-medium text-foreground transition hover:bg-sunset-peach/40 [font-family:var(--font-body),sans-serif]";
 
@@ -145,26 +163,37 @@ export default function SchedulesClient({
             All weeks in database ({sorted.length})
           </p>
           <p className="mb-3 text-xs text-gray [font-family:var(--font-body),sans-serif]">
-            Tap a week to open it in the grid below. Newest first.
+            Tap a week to open it in the grid below. Newest first. Use delete to remove a week from the
+            database (including day rows and completion data).
           </p>
           <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto sm:max-h-none sm:flex-row sm:flex-wrap">
             {sorted.map((s) => {
               const active = s.id === selectedId;
+              const busy = deletingWeekId === s.id;
               return (
-                <li key={s.id}>
+                <li key={s.id} className="flex max-w-full items-stretch gap-1 sm:max-w-none">
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedId(s.id);
                       setSelectWeekDate(s.weekStart.slice(0, 10));
                     }}
-                    className={`w-full rounded-md border px-3 py-2 text-left text-sm transition sm:w-auto [font-family:var(--font-body),sans-serif] ${
+                    className={`min-w-0 flex-1 rounded-md border px-3 py-2 text-left text-sm transition sm:flex-initial [font-family:var(--font-body),sans-serif] ${
                       active
                         ? "border-sky-blue bg-sky-blue/10 font-semibold text-foreground"
                         : "border-sand bg-white text-gray hover:bg-sunset-peach/30 hover:text-foreground"
                     }`}
                   >
                     {formatWeekRange(new Date(s.weekStart), { includeYear: true })}
+                  </button>
+                  <button
+                    type="button"
+                    title="Delete this week from the database"
+                    disabled={busy || deletingWeekId !== null}
+                    onClick={() => void deleteSchedule(s.id)}
+                    className="shrink-0 rounded-md border border-sand bg-white px-2.5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 [font-family:var(--font-body),sans-serif]"
+                  >
+                    {busy ? "…" : "Delete"}
                   </button>
                 </li>
               );
@@ -221,42 +250,53 @@ export default function SchedulesClient({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-            {selected.days.map((day) => (
-              <ScheduleDayCard
-                key={day.id}
-                day={{
-                  id: day.id,
-                  dayIndex: day.dayIndex,
-                  prayerTitle: day.prayerTitle,
-                  workoutTitle: day.workoutTitle,
-                  affirmationText: day.affirmationText,
-                  prayerId: day.prayerId,
-                  workoutId: day.workoutId,
-                  dayImageUrl: day.dayImageUrl,
-                  dayVideoUrl: day.dayVideoUrl,
-                  daySubtext: day.daySubtext,
-                  completion: null,
-                }}
-                isToday={false}
-                isLocked={false}
-                cmsMode
-                onEditCard={() =>
-                  setEditDay({
-                    scheduleId: selected.id,
+            {selected.days.map((day) => {
+              const payload: ScheduleDayEditPayload = {
+                scheduleId: selected.id,
+                id: day.id,
+                dayIndex: day.dayIndex,
+                prayerTitle: day.prayerTitle,
+                prayerId: day.prayerId,
+                workoutTitle: day.workoutTitle,
+                workoutId: day.workoutId,
+                affirmationText: day.affirmationText,
+                dayImageUrl: day.dayImageUrl,
+                dayVideoUrl: day.dayVideoUrl,
+                daySubtext: day.daySubtext,
+              };
+              const isEditing = editDay?.id === day.id;
+              if (isEditing && editDay) {
+                return (
+                  <ScheduleDayInlineEditor
+                    key={day.id}
+                    day={editDay}
+                    onCancel={() => setEditDay(null)}
+                  />
+                );
+              }
+              return (
+                <ScheduleDayCard
+                  key={day.id}
+                  day={{
                     id: day.id,
                     dayIndex: day.dayIndex,
                     prayerTitle: day.prayerTitle,
-                    prayerId: day.prayerId,
                     workoutTitle: day.workoutTitle,
-                    workoutId: day.workoutId,
                     affirmationText: day.affirmationText,
+                    prayerId: day.prayerId,
+                    workoutId: day.workoutId,
                     dayImageUrl: day.dayImageUrl,
                     dayVideoUrl: day.dayVideoUrl,
                     daySubtext: day.daySubtext,
-                  })
-                }
-              />
-            ))}
+                    completion: null,
+                  }}
+                  isToday={false}
+                  isLocked={false}
+                  cmsMode
+                  onEditCard={() => setEditDay(payload)}
+                />
+              );
+            })}
             <div className="col-span-2 flex justify-center sm:col-span-2 lg:col-span-1 lg:col-start-2">
               <div className="w-full sm:max-w-[calc((100%-1rem)/2)] lg:max-w-none">
                 <ScheduleSabbathTile isToday={false} />
@@ -266,13 +306,6 @@ export default function SchedulesClient({
         </div>
       ) : null}
 
-      <ScheduleDayEditModal
-        open={editDay != null}
-        onClose={() => setEditDay(null)}
-        day={editDay}
-        workouts={workouts}
-        prayers={prayers}
-      />
     </div>
   );
 }

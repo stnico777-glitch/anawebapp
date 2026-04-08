@@ -8,7 +8,7 @@ export type MovementHeroTileDTO = {
   title: string;
   subtitle: string;
   imageUrl: string;
-  linkHref: string;
+  videoUrl: string;
   sortOrder: number;
 };
 
@@ -18,7 +18,7 @@ export type MovementQuickieCardDTO = {
   metaLine: string;
   imageUrl: string;
   summary: string;
-  linkHref: string;
+  videoUrl: string;
   sortOrder: number;
 };
 

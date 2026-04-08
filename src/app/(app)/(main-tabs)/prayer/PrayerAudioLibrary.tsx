@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useMemo, useState, type RefObject } from "react";
-import PrayerPlayer from "./PrayerPlayer";
+import { useCallback, useLayoutEffect, useMemo, useState, type RefObject } from "react";
 import PrayerAudioLibraryShell from "@/components/PrayerAudioLibraryShell";
+import {
+  PrayerLibraryAudioProvider,
+  PrayerLibraryLayoutPadding,
+  PrayerMiniPlayerBar,
+  usePrayerLibraryAudio,
+} from "./PrayerLibraryAudioContext";
+import PrayerLibraryCompletionBridge from "./PrayerLibraryCompletionBridge";
 import { FormStyleRailButton, GEAR_UP_CAROUSEL_ROW_CLASS } from "@/components/LibraryBannerStrip";
 import {
   type PrayerLibraryItem,
@@ -10,7 +16,6 @@ import {
   railCoversDeduped,
   prayerMetaLine,
   prayerHoverSummary,
-  CatalogCoverImage,
 } from "@/lib/prayer-audio-display";
 import type {
   AudioCollectionCardDTO,
@@ -31,25 +36,52 @@ type PrayerAudioLibraryProps = {
   };
 };
 
-export default function PrayerAudioLibrary({
+function PrayerAudioLibraryInner({
   prayers,
   completedIds,
   isSubscriber,
   layout,
 }: PrayerAudioLibraryProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { setTrack, clearTrack } = usePrayerLibraryAudio();
 
   const selected = useMemo(
     () => (selectedId ? prayers.find((p) => p.id === selectedId) ?? null : null),
     [prayers, selectedId],
   );
 
+  useLayoutEffect(() => {
+    if (!selected) {
+      clearTrack();
+      return;
+    }
+    if (!isSubscriber) {
+      clearTrack();
+      return;
+    }
+    const idx = prayers.findIndex((x) => x.id === selected.id);
+    const cover = coverForPrayer(selected, idx);
+    const subtitle =
+      [selected.scripture?.trim(), selected.description?.trim()].filter(Boolean).join(" · ") ||
+      "Guided audio";
+    setTrack({
+      prayerId: selected.id,
+      src: selected.audioUrl,
+      title: selected.title,
+      subtitle,
+      duration: selected.duration,
+      coverSrc: cover.src,
+      coverUnoptimized: cover.unoptimized,
+      locked: false,
+    });
+  }, [selected, isSubscriber, prayers, setTrack, clearTrack]);
+
   const prayerRailCovers = useMemo(() => railCoversDeduped(prayers), [prayers]);
 
   const selectPrayer = useCallback((id: string) => {
     setSelectedId(id);
     requestAnimationFrame(() => {
-      document.getElementById("prayer-now-playing")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("prayer-library-rail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }, []);
 
@@ -66,60 +98,11 @@ export default function PrayerAudioLibrary({
           </div>
         ) : (
           <>
-            <div id="prayer-now-playing" className="scroll-mt-8">
-              {selected ? (
-                <div className="mb-6 overflow-hidden rounded-none border border-black/[0.08] bg-white shadow-sm">
-                  <div className="flex flex-col md:flex-row md:items-stretch">
-                    <div className="relative aspect-video w-full shrink-0 bg-neutral-100 md:aspect-auto md:h-auto md:w-[min(42%,380px)] md:min-h-[200px]">
-                      {(() => {
-                        const { src, unoptimized } = coverForPrayer(
-                          selected,
-                          prayers.findIndex((x) => x.id === selected.id),
-                        );
-                        return (
-                          <CatalogCoverImage
-                            src={src}
-                            unoptimized={unoptimized}
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, 380px"
-                            priority
-                          />
-                        );
-                      })()}
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col justify-center bg-white p-5 md:p-8">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray">Now playing</p>
-                      <p className="mt-1 text-xl font-semibold uppercase leading-snug tracking-tight text-foreground [font-family:var(--font-headline),sans-serif] md:text-2xl">
-                        {selected.title}
-                      </p>
-                      {(selected.scripture || selected.description) && (
-                        <p className="mt-2 text-sm text-gray">
-                          {selected.scripture && (
-                            <span className="italic text-foreground/90">{selected.scripture}</span>
-                          )}
-                          {selected.scripture && selected.description ? " · " : null}
-                          {selected.description}
-                        </p>
-                      )}
-                      <div className="mt-4 md:mt-6">
-                        <PrayerPlayer
-                          prayerId={selected.id}
-                          src={selected.audioUrl}
-                          title={selected.title}
-                          duration={selected.duration}
-                          description={selected.description ?? undefined}
-                          scripture={selected.scripture ?? undefined}
-                          isCompleted={completedIds.includes(selected.id)}
-                          isLocked={!isSubscriber}
-                          showMeta={false}
-                          hidePlayerTitle
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="mb-5 text-center text-sm text-gray">Choose a session below to start listening.</p>
+            <div id="prayer-library-rail" className="scroll-mt-8">
+              {!selected && (
+                <p className="mb-4 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
+                  Choose a session below — playback controls are at the bottom of the screen.
+                </p>
               )}
             </div>
 
@@ -155,24 +138,34 @@ export default function PrayerAudioLibrary({
         )}
       </>
     ),
-    [
-      prayers,
-      prayerRailCovers,
-      selected,
-      selectedId,
-      completedIds,
-      isSubscriber,
-      selectPrayer,
-    ],
+    [prayers, prayerRailCovers, selected, selectedId, completedIds, isSubscriber, selectPrayer],
   );
 
   return (
-    <PrayerAudioLibraryShell
-      collectionCards={layout.collections}
-      essentialTiles={layout.essentials}
-      spotlightAlbums={layout.spotlight}
-      showLibraryArrows={prayers.length > 0}
-      renderLibrary={renderLibrary}
-    />
+    <PrayerLibraryLayoutPadding>
+      {selected && isSubscriber ? (
+        <PrayerLibraryCompletionBridge
+          prayerId={selected.id}
+          isCompleted={completedIds.includes(selected.id)}
+          isLocked={false}
+        />
+      ) : null}
+      <PrayerAudioLibraryShell
+        collectionCards={layout.collections}
+        essentialTiles={layout.essentials}
+        spotlightAlbums={layout.spotlight}
+        showLibraryArrows={prayers.length > 0}
+        renderLibrary={renderLibrary}
+      />
+      <PrayerMiniPlayerBar />
+    </PrayerLibraryLayoutPadding>
+  );
+}
+
+export default function PrayerAudioLibrary(props: PrayerAudioLibraryProps) {
+  return (
+    <PrayerLibraryAudioProvider>
+      <PrayerAudioLibraryInner {...props} />
+    </PrayerLibraryAudioProvider>
   );
 }

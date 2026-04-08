@@ -7,14 +7,6 @@ export default async function AdminSchedulesPage() {
     orderBy: { weekStart: "desc" },
   });
 
-  const workouts = await prisma.workout.findMany({
-    orderBy: { title: "asc" },
-  });
-
-  const prayers = await prisma.prayerAudio.findMany({
-    orderBy: { title: "asc" },
-  });
-
   return (
     <div>
       <header className="mb-8 sm:mb-10">
@@ -40,8 +32,6 @@ export default async function AdminSchedulesPage() {
           weekStart: s.weekStart.toISOString(),
           days: s.days,
         }))}
-        workouts={workouts}
-        prayers={prayers}
       />
     </div>
   );
