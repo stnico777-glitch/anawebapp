@@ -38,6 +38,7 @@ export default function MemberWorkoutRailCard({
         showLock={showLock}
         lockHint={showLock ? "Sign up to unlock" : undefined}
         active={selected}
+        imageLoading="eager"
       />
     );
   }
@@ -51,6 +52,7 @@ export default function MemberWorkoutRailCard({
       metaLine={workoutRailMetaLine(workout)}
       hoverSummary={memberWorkoutRailHoverSummary(workout)}
       unoptimized={unoptimized}
+      imageLoading="eager"
     />
   );
 }

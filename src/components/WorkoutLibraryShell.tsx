@@ -28,6 +28,8 @@ export default function WorkoutLibraryShell({
   onPlayHeroTile,
   onPlayQuickie,
   isGuest = false,
+  /** Eager-load rail thumbs so horizontal scroll does not discard decoded images on Movement tab. */
+  railImageLoading = "lazy",
 }: {
   libraryRail: ReactNode;
   libraryToolbar?: ReactNode;
@@ -42,6 +44,7 @@ export default function WorkoutLibraryShell({
   onPlayQuickie?: (card: MovementLayoutDTO["quickieCards"][number]) => void;
   /** Logged-out preview: lock affordances on hero + quickie tiles. */
   isGuest?: boolean;
+  railImageLoading?: "eager" | "lazy";
 }) {
   const programsRef = useRef<HTMLDivElement>(null);
   const newToPilatesRef = useRef<HTMLDivElement>(null);
@@ -190,6 +193,7 @@ export default function WorkoutLibraryShell({
                   }
                   showLock={isGuest}
                   lockHint={isGuest ? "Sign up to unlock" : undefined}
+                  imageLoading={railImageLoading}
                 />
               ))}
           </div>

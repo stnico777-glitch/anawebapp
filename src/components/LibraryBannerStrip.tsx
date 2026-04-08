@@ -109,6 +109,8 @@ export function FormStyleRailCard({
   previewLocked = false,
   previewLockHref,
   lockHint = "Subscribe to unlock",
+  /** Use `eager` on horizontal rails so thumbs stay decoded while scrolling the row (Movement tab). */
+  imageLoading = "lazy",
 }: {
   href: string;
   src: string;
@@ -124,6 +126,7 @@ export function FormStyleRailCard({
   previewLocked?: boolean;
   previewLockHref?: string;
   lockHint?: string;
+  imageLoading?: "eager" | "lazy";
 }) {
   const router = useRouter();
   const locked = previewLocked && previewLockHref;
@@ -139,6 +142,7 @@ export function FormStyleRailCard({
           sizes={GEAR_UP_IMAGE_SIZES}
           className={DAY_CARD_IMAGE_HOVER}
           unoptimized={unoptimized}
+          loading={imageLoading}
         />
         <div
           className="pointer-events-none absolute left-2 bottom-2 z-[15] inline-flex max-h-[min(40vh,12rem)] max-w-[min(13.5rem,calc(100%-1rem))] min-h-0 flex-col gap-0 overflow-y-auto rounded-none border border-black/[0.08] bg-white/95 p-2.5 text-left opacity-0 shadow-sm transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none md:left-3 md:bottom-3 md:max-w-[min(13.5rem,calc(100%-1.5rem))]"
@@ -211,6 +215,7 @@ export function FormStyleRailButton({
   showDone = false,
   active = false,
   disabled = false,
+  imageLoading = "lazy",
 }: {
   onClick: () => void;
   src: string;
@@ -225,6 +230,7 @@ export function FormStyleRailButton({
   showDone?: boolean;
   active?: boolean;
   disabled?: boolean;
+  imageLoading?: "eager" | "lazy";
 }) {
   return (
     <button
@@ -246,6 +252,7 @@ export function FormStyleRailButton({
           sizes={GEAR_UP_IMAGE_SIZES}
           className={DAY_CARD_IMAGE_HOVER}
           unoptimized={unoptimized}
+          loading={imageLoading}
         />
         <div
           className="pointer-events-none absolute left-2 bottom-2 z-[15] inline-flex max-h-[min(40vh,12rem)] max-w-[min(13.5rem,calc(100%-1rem))] min-h-0 flex-col gap-0 overflow-y-auto rounded-none border border-black/[0.08] bg-white/95 p-2.5 text-left opacity-0 shadow-sm transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none md:left-3 md:bottom-3 md:max-w-[min(13.5rem,calc(100%-1.5rem))]"

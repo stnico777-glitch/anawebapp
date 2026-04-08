@@ -96,6 +96,7 @@ export default function WorkoutLibrarySection({
           onPlayHeroTile={onPlayHeroTile}
           onPlayQuickie={onPlayQuickie}
           isGuest={isGuest}
+          railImageLoading="eager"
           libraryRail={
             workouts.length === 0 ? (
               <div

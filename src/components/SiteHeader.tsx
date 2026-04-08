@@ -37,7 +37,6 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (variant !== "app") return;
     const client = tryCreateSupabaseBrowserClient();
     if (!client) {
       setSessionUserId(null);
@@ -90,7 +89,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
       if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
       subscription.unsubscribe();
     };
-  }, [variant, router]);
+  }, [router]);
 
   const baseAppNav: readonly NavItem[] = APP_PRIMARY_NAV;
   const navItems: readonly NavItem[] =
@@ -224,21 +223,28 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                   {label}
                 </Link>
               ))}
-              {variant === "app" && sessionUserId !== undefined ? (
+              {(variant === "app" || variant === "marketing") && sessionUserId !== undefined ? (
                 sessionUserId ? (
-                  <button
-                    type="button"
-                    className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
-                    onClick={async () => {
-                      const supabase = tryCreateSupabaseBrowserClient();
-                      if (!supabase) return;
-                      await supabase.auth.signOut();
-                      router.push("/");
-                      router.refresh();
-                    }}
-                  >
-                    Sign out
-                  </button>
+                  <>
+                    {sessionEmail ? (
+                      <span className="truncate py-1 text-xs text-gray [font-family:var(--font-body),sans-serif]">
+                        {sessionEmail}
+                      </span>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
+                      onClick={async () => {
+                        const supabase = tryCreateSupabaseBrowserClient();
+                        if (!supabase) return;
+                        await supabase.auth.signOut();
+                        router.push("/");
+                        router.refresh();
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link
@@ -262,28 +268,64 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
 
         <div className="flex shrink-0 items-center gap-2 md:gap-3">
           {variant === "marketing" ? (
-            <>
-              <Link
-                href="/register"
-                className={`hidden rounded-sm px-4 py-2 text-xs font-medium uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:inline-block ${
-                  creamOnHero
-                    ? "border border-background/60 bg-white/10 text-background hover:border-background/80 hover:bg-white/15 focus-visible:ring-background/80 focus-visible:ring-offset-transparent"
-                    : "border border-sand bg-white text-gray hover:border-sky-blue hover:bg-background hover:opacity-90 focus-visible:ring-sky-blue"
-                }`}
-              >
-                Start for free
-              </Link>
-              <Link
-                href="/login"
-                className={`rounded-sm border px-4 py-2 text-xs font-medium uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                  creamOnHero
-                    ? "border-background/60 text-background hover:border-background/80 hover:bg-white/10 focus-visible:ring-background/80 focus-visible:ring-offset-transparent"
-                    : "border-sand text-gray hover:border-gray hover:bg-background hover:opacity-90 focus-visible:ring-sky-blue"
-                }`}
-              >
-                Member login
-              </Link>
-            </>
+            sessionUserId === undefined ? (
+              <div
+                className="h-9 w-28 shrink-0 animate-pulse rounded-sm bg-sand/60 md:w-36"
+                aria-hidden
+              />
+            ) : sessionUserId ? (
+              <>
+                {sessionEmail ? (
+                  <span
+                    className={`hidden max-w-[10rem] truncate text-xs [font-family:var(--font-body),sans-serif] md:inline lg:max-w-[14rem] ${
+                      creamOnHero ? "text-background" : "text-gray"
+                    }`}
+                  >
+                    {sessionEmail}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const supabase = tryCreateSupabaseBrowserClient();
+                    if (!supabase) return;
+                    await supabase.auth.signOut();
+                    router.push("/");
+                    router.refresh();
+                  }}
+                  className={`rounded-sm border px-3 py-2 text-xs font-medium uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                    creamOnHero
+                      ? "border-background/60 text-background hover:border-background/80 hover:bg-white/10 focus-visible:ring-background/80 focus-visible:ring-offset-transparent"
+                      : "border-sand text-gray hover:bg-background hover:opacity-90 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+                  }`}
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className={`hidden rounded-sm px-4 py-2 text-xs font-medium uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 sm:inline-block ${
+                    creamOnHero
+                      ? "border border-background/60 bg-white/10 text-background hover:border-background/80 hover:bg-white/15 focus-visible:ring-background/80 focus-visible:ring-offset-transparent"
+                      : "border border-sand bg-white text-gray hover:border-sky-blue hover:bg-background hover:opacity-90 focus-visible:ring-sky-blue"
+                  }`}
+                >
+                  Start for free
+                </Link>
+                <Link
+                  href="/login"
+                  className={`rounded-sm border px-4 py-2 text-xs font-medium uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                    creamOnHero
+                      ? "border-background/60 text-background hover:border-background/80 hover:bg-white/10 focus-visible:ring-background/80 focus-visible:ring-offset-transparent"
+                      : "border-sand text-gray hover:border-gray hover:bg-background hover:opacity-90 focus-visible:ring-sky-blue"
+                  }`}
+                >
+                  Member login
+                </Link>
+              </>
+            )
           ) : sessionUserId === undefined ? (
             <div
               className="h-9 w-28 shrink-0 animate-pulse rounded-sm bg-sand/60 md:w-36"
