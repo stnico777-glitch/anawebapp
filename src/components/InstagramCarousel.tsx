@@ -112,7 +112,7 @@ function EmbedSocialWidget({ dataRef }: { dataRef: string }) {
 }
 
 const IG_EMBED_SKELETON_CLASS =
-  "instagram-embed-inner min-h-[480px] w-full md:min-h-[520px] rounded-md bg-sand/25";
+  "instagram-embed-inner min-h-[480px] w-full md:min-h-[520px] rounded-md";
 
 const IG_LAZY_ROOT_MARGIN_PX = 280;
 
@@ -279,7 +279,7 @@ export default function InstagramCarousel({ embedRef, embedIframeUrl }: Instagra
         >
           Follow on Instagram →
         </a>
-        <div className="instagram-embed-mobile-scroll mt-6 overflow-hidden rounded-lg border border-sand bg-background/90 md:overflow-visible">
+        <div className="instagram-embed-mobile-scroll mt-6 overflow-hidden rounded-lg md:overflow-visible">
           <div className="instagram-embed-scroll-container flex max-h-[420px] overflow-x-auto overflow-y-hidden px-[calc((100vw-280px)/2)] -mx-4 md:mx-0 md:px-0 md:max-h-none md:overflow-visible md:block scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {embedIframeUrl || embedRef ? (
               <LazyInstagramFeedEmbed embedIframeUrl={embedIframeUrl ?? null} embedRef={embedRef ?? null} />
