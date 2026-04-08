@@ -47,6 +47,8 @@ function resolveMetadataBase(): URL {
 
 export const metadata: Metadata = {
   metadataBase: resolveMetadataBase(),
+  /** Matches `--background` so mobile browser UI / PWA chrome isn’t default white. */
+  themeColor: "#FFFCE9",
   title: "awake+align",
   description:
     "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
@@ -79,7 +81,7 @@ export default function RootLayout({
   const fontVars = `${poppins.variable} ${openSans.variable} ${geistMono.variable}`;
 
   return (
-    <html lang="en" className={fontVars}>
+    <html lang="en" className={`${fontVars} bg-background`}>
       <body className="bg-background antialiased">
         <Providers>{children}</Providers>
       </body>

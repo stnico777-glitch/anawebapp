@@ -157,7 +157,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
           ? "relative sticky top-0 z-50 border-b-0 bg-transparent transition-[background-color,border-width] duration-300"
           : variant === "marketing"
             ? "relative sticky top-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
-            : "relative sticky top-0 z-50 border-b border-sand bg-app-surface transition-[background-color,border-color] duration-300"
+            : "relative sticky top-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
       }`}
       role="banner"
     >
@@ -210,7 +210,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
           </summary>
           <div
             className={`absolute left-0 right-0 top-full z-50 mt-0 border-b border-sand px-4 py-3 shadow-lg ${
-              variant === "app" ? "bg-app-surface" : "bg-white"
+              variant === "app" ? "bg-background" : "bg-white"
             }`}
           >
             <div className="flex flex-col gap-1">
