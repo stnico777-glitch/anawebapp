@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  startTransition,
   useCallback,
   useContext,
   useEffect,
@@ -9,6 +10,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { CatalogCoverImage } from "@/lib/prayer-audio-display";
 
@@ -30,8 +32,12 @@ type PrayerLibraryAudioContextValue = {
   setTrack: (t: PrayerLibraryTrack | null) => void;
   clearTrack: () => void;
   playing: boolean;
-  currentTime: number;
+  /** Duration from metadata / audio element (stable; avoids coupling progress to context churn). */
   durationState: number;
+  /** Shared element — progress UI reads `currentTime` locally (interval/RAF), not via context. */
+  audioRef: RefObject<HTMLAudioElement | null>;
+  /** Bumps when user seeks so UI snaps without waiting for the next tick. */
+  seekNonce: number;
   togglePlay: () => void;
   seekPercent: (percent: number) => void;
   registerOnComplete: (fn: (() => void) | null) => void;
@@ -80,13 +86,40 @@ export function usePrayerLibraryAudio(): PrayerLibraryAudioContextValue {
   return ctx;
 }
 
+/**
+ * Local time/duration for mini player + scrubbers only (~10Hz while playing).
+ * Context no longer carries `currentTime`, so the prayer library tree does not re-render on every tick.
+ */
+export function usePrayerPlaybackTimes(
+  playing: boolean,
+  audioRef: RefObject<HTMLAudioElement | null>,
+  durationFallback: number,
+  seekNonce: number,
+) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!playing) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 100);
+    return () => window.clearInterval(id);
+  }, [playing]);
+  void tick;
+  void seekNonce;
+  const a = audioRef.current;
+  const currentTime = a?.currentTime ?? 0;
+  const duration =
+    a && Number.isFinite(a.duration) && a.duration > 0 ? a.duration : durationFallback;
+  return { currentTime, duration };
+}
+
 export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const onCompleteRef = useRef<(() => void) | null>(null);
   const completionFiredRef = useRef(false);
+  const currentTimeRef = useRef(0);
+  const lastUiSyncMsRef = useRef(0);
+  const [seekNonce, setSeekNonce] = useState(0);
   const [track, setTrackState] = useState<PrayerLibraryTrack | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [durationState, setDurationState] = useState(0);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(readFavoriteIds);
 
@@ -100,8 +133,8 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
         a.removeAttribute("src");
         a.load();
       }
+      currentTimeRef.current = 0;
       setPlaying(false);
-      setCurrentTime(0);
       setDurationState(0);
     }
   }, []);
@@ -119,8 +152,10 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
       a.pause();
       a.removeAttribute("src");
       a.load();
-      setPlaying(false);
-      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      startTransition(() => {
+        setPlaying(false);
+      });
       return;
     }
     a.src = track.src;
@@ -133,21 +168,25 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
     }
   }, [track?.prayerId, track?.src, track?.locked]);
 
-  /** Smooth progress: read currentTime every frame while playing (timeupdate is too sparse). */
+  /** Completion + duration sync only (no `setState` for current time — mini player polls `audioRef`). */
   useEffect(() => {
     if (!playing) return;
     let rafId = 0;
     const tick = () => {
       const audio = audioRef.current;
       if (audio) {
-        setCurrentTime(audio.currentTime);
+        const t = audio.currentTime;
+        currentTimeRef.current = t;
+        const now = performance.now();
+        lastUiSyncMsRef.current = now;
         const dur = audio.duration || 1;
-        if (dur > 0 && audio.currentTime / dur >= 0.95 && !completionFiredRef.current) {
+        if (dur > 0 && t / dur >= 0.95 && !completionFiredRef.current) {
           completionFiredRef.current = true;
           onCompleteRef.current?.();
         }
         if (Number.isFinite(audio.duration)) {
-          setDurationState(audio.duration);
+          const d = audio.duration;
+          setDurationState((prev) => (prev === d ? prev : d));
         }
       }
       rafId = requestAnimationFrame(tick);
@@ -160,9 +199,6 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
     const audio = audioRef.current;
     if (!audio) return;
     setDurationState(Number.isFinite(audio.duration) ? audio.duration : 0);
-    if (audio.paused) {
-      setCurrentTime(audio.currentTime);
-    }
     const dur = audio.duration || 1;
     if (audio.currentTime / dur >= 0.95 && !completionFiredRef.current) {
       completionFiredRef.current = true;
@@ -172,7 +208,6 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
 
   const handleEnded = useCallback(() => {
     setPlaying(false);
-    setCurrentTime(0);
     if (!completionFiredRef.current) {
       completionFiredRef.current = true;
       onCompleteRef.current?.();
@@ -193,7 +228,9 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
     const a = audioRef.current;
     if (!a || !Number.isFinite(a.duration) || a.duration <= 0 || track?.locked) return;
     a.currentTime = (percent / 100) * a.duration;
-    setCurrentTime(a.currentTime);
+    currentTimeRef.current = a.currentTime;
+    lastUiSyncMsRef.current = performance.now();
+    setSeekNonce((n) => n + 1);
   }, [track?.locked]);
 
   const isFavorite = useCallback((id: string) => favoriteIds.has(id), [favoriteIds]);
@@ -214,8 +251,9 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
       setTrack,
       clearTrack,
       playing,
-      currentTime,
       durationState,
+      audioRef,
+      seekNonce,
       togglePlay,
       seekPercent,
       registerOnComplete,
@@ -227,8 +265,8 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
       setTrack,
       clearTrack,
       playing,
-      currentTime,
       durationState,
+      seekNonce,
       togglePlay,
       seekPercent,
       registerOnComplete,
@@ -250,7 +288,10 @@ export function PrayerLibraryAudioProvider({ children }: { children: ReactNode }
         onPause={() => {
           setPlaying(false);
           const a = audioRef.current;
-          if (a) setCurrentTime(a.currentTime);
+          if (a) {
+            currentTimeRef.current = a.currentTime;
+            lastUiSyncMsRef.current = performance.now();
+          }
         }}
       />
       {children}
@@ -277,8 +318,14 @@ export function PrayerLibraryLayoutPadding({ children }: { children: ReactNode }
 export function PrayerLibraryInlineScrubber() {
   const ctx = usePrayerLibraryAudioOptional();
   if (!ctx) return null;
-  const { playing, currentTime, durationState, seekPercent, togglePlay } = ctx;
-  const progress = durationState > 0 ? (currentTime / durationState) * 100 : 0;
+  const { playing, durationState, audioRef, seekNonce, seekPercent, togglePlay } = ctx;
+  const { currentTime, duration } = usePrayerPlaybackTimes(
+    playing,
+    audioRef,
+    durationState,
+    seekNonce,
+  );
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div className="rounded-sm border border-sand bg-white p-4">
@@ -311,7 +358,7 @@ export function PrayerLibraryInlineScrubber() {
           />
           <div className="mt-1 flex justify-between text-xs text-gray">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(durationState)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
       </div>
@@ -325,8 +372,9 @@ export function PrayerMiniPlayerBar() {
   const {
     track,
     playing,
-    currentTime,
     durationState,
+    audioRef,
+    seekNonce,
     seekPercent,
     togglePlay,
     toggleFavorite,
@@ -335,7 +383,13 @@ export function PrayerMiniPlayerBar() {
 
   if (!track || track.locked) return null;
 
-  const dur = durationState > 0 ? durationState : track.duration;
+  const { currentTime, duration: durFromAudio } = usePrayerPlaybackTimes(
+    playing,
+    audioRef,
+    durationState,
+    seekNonce,
+  );
+  const dur = durFromAudio > 0 ? durFromAudio : track.duration;
   const progress = dur > 0 ? (currentTime / dur) * 100 : 0;
   const fav = isFavorite(track.prayerId);
 
@@ -353,7 +407,7 @@ export function PrayerMiniPlayerBar() {
             aria-hidden
           >
             <div
-              className="h-full rounded-l-full bg-sky-blue"
+              className="h-full rounded-l-full bg-sky-blue transition-[width] duration-75 ease-linear"
               style={{ width: `${Math.min(100, progress)}%` }}
             />
           </div>

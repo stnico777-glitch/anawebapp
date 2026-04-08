@@ -1,3 +1,5 @@
+/** Browser Stripe.js: when added, use dynamic `import("@stripe/stripe-js")` only here — see `src/lib/stripe-js-deferred.ts`. */
+
 export default function SubscribePage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">

@@ -28,13 +28,9 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
   return (
     <section
       id="schedule"
-      className="relative overflow-hidden border-t border-sand border-b border-sand bg-transparent px-3 pt-3 pb-[clamp(2rem,5vh,3.5rem)] md:pt-4 md:pb-[clamp(2.25rem,6vh,4rem)] lg:px-5 xl:px-8"
+      className="home-cv-schedule relative overflow-hidden border-t border-sand border-b border-sand bg-transparent px-3 pt-3 pb-[clamp(2rem,5vh,3.5rem)] md:pt-4 md:pb-[clamp(2.25rem,6vh,4rem)] lg:px-5 xl:px-8"
       aria-labelledby="schedule-heading"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_40%,rgba(255,255,255,0.25),transparent)] pointer-events-none" aria-hidden />
-      <div className="absolute left-[5%] top-[15%] h-48 w-72 rounded-full bg-white/60 blur-[45px] pointer-events-none" aria-hidden />
-      <div className="absolute right-[8%] top-[50%] h-40 w-56 rounded-full bg-white/50 blur-[40px] pointer-events-none" aria-hidden />
-      <div className="absolute left-[35%] top-[70%] h-36 w-52 rounded-full bg-white/45 blur-[42px] pointer-events-none" aria-hidden />
       <div className="relative z-10 mx-auto w-full max-w-[min(96rem,calc(100vw-1.25rem))]">
         <ScrollReveal
           className="w-full"

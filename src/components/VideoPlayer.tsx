@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
+import { claimVideoPlayback, releaseVideoPlayback } from "@/lib/video-playback-guard";
 
 interface VideoPlayerProps {
   src: string;
@@ -37,6 +38,12 @@ export default function VideoPlayer({
     onComplete?.();
   }, [onComplete]);
 
+  useEffect(() => {
+    return () => {
+      releaseVideoPlayback(videoRef.current);
+    };
+  }, []);
+
   const toggleFullscreen = useCallback(() => {
     const container = videoRef.current?.parentElement;
     if (!container) return;
@@ -57,9 +64,13 @@ export default function VideoPlayer({
         poster={poster}
         className="aspect-video w-full"
         playsInline
+        preload="metadata"
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
-        onPlay={() => setPlaying(true)}
+        onPlay={(e) => {
+          claimVideoPlayback(e.currentTarget);
+          setPlaying(true);
+        }}
         onPause={() => setPlaying(false)}
       />
       <div className="flex items-center gap-2 bg-foreground px-3 py-2">

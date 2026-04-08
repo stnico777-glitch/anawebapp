@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
-import { Poppins, Open_Sans, Geist, Geist_Mono, Lora, Caveat, Orbitron } from "next/font/google";
+import { Poppins, Open_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
-import SunRaysSection from "@/components/SunRaysSection";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -24,23 +18,6 @@ const openSans = Open_Sans({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
-
-const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
-});
-
-const caveat = Caveat({
-  variable: "--font-caveat",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const orbitron = Orbitron({
-  variable: "--font-orbitron",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
 /** Empty `NEXT_PUBLIC_APP_URL` is truthy for `??`, so `new URL("")` would throw at runtime/build. */
@@ -99,17 +76,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   /* next/font variables on <html> so :root can resolve --font-poppins when building --font-headline (avoids generic sans fallback). */
-  const fontVars = `${geistSans.variable} ${poppins.variable} ${openSans.variable} ${geistMono.variable} ${lora.variable} ${caveat.variable} ${orbitron.variable}`;
+  const fontVars = `${poppins.variable} ${openSans.variable} ${geistMono.variable}`;
 
   return (
     <html lang="en" className={fontVars}>
       <body className="bg-background antialiased">
-        <div className="relative">
-          <SunRaysSection />
-          <div className="relative z-10">
-            <Providers>{children}</Providers>
-          </div>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -5,16 +5,14 @@ import {
   COMMUNITY_VID_HEADER,
 } from "@/lib/community-participant";
 import { getCommunityFeed } from "@/lib/community-feed";
-import CommunityBulletinBanner from "./CommunityBulletinBanner";
+import CommunityBloomScrollIsland from "./CommunityBloomScrollIsland";
 import PrayerPraiseComposer from "./PrayerPraiseComposer";
 import PrayerPraiseFeed from "./PrayerPraiseFeed";
 
 /** Avoid default name `CommunityPage` — devtools `performance.measure` can throw on that label. */
 export default async function PrayerPraiseCommunityRoute() {
-  const session = await auth();
+  const [session, cookieStore, h] = await Promise.all([auth(), cookies(), headers()]);
   const userId = session?.user?.id ?? null;
-  const cookieStore = await cookies();
-  const h = await headers();
   const visitorId =
     h.get(COMMUNITY_VID_HEADER) ??
     cookieStore.get(COMMUNITY_VISITOR_COOKIE)?.value ??
@@ -36,7 +34,7 @@ export default async function PrayerPraiseCommunityRoute() {
         </header>
       </div>
 
-      <CommunityBulletinBanner
+      <CommunityBloomScrollIsland
         items={items}
         defaultCommentName={defaultDisplayName || undefined}
       />

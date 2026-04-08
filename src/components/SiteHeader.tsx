@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { tryCreateSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -30,6 +30,8 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (variant !== "app") return;
     const client = tryCreateSupabaseBrowserClient();
@@ -57,15 +59,24 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
       }
     }
 
+    const scheduleRouteRefresh = () => {
+      if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
+      refreshDebounceRef.current = setTimeout(() => {
+        refreshDebounceRef.current = null;
+        router.refresh();
+      }, 450);
+    };
+
     void syncSession(client);
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange(() => {
       void syncSession(client);
-      router.refresh();
+      scheduleRouteRefresh();
     });
     return () => {
       cancelled = true;
+      if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current);
       subscription.unsubscribe();
     };
   }, [variant, router]);
@@ -82,7 +93,10 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
   const [marketingScrolled, setMarketingScrolled] = useState(false);
   useEffect(() => {
     if (variant !== "marketing") return;
-    const onScroll = () => setMarketingScrolled(window.scrollY > 12);
+    const onScroll = () => {
+      const next = window.scrollY > 12;
+      setMarketingScrolled((prev) => (prev === next ? prev : next));
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -119,7 +133,9 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
       className={`[font-family:var(--font-headline),sans-serif] ${
         marketingClear
           ? "relative sticky top-0 z-50 border-b-0 bg-transparent backdrop-blur-none transition-[background-color,backdrop-filter,border-width] duration-300"
-          : "relative sticky top-0 z-50 border-b border-sand bg-white/95 backdrop-blur-sm transition-[background-color,backdrop-filter,border-color] duration-300"
+          : variant === "marketing"
+            ? "relative sticky top-0 z-50 border-b border-sand bg-white transition-[background-color,border-color] duration-300"
+            : "relative sticky top-0 z-50 border-b border-sand bg-white/95 backdrop-blur-sm transition-[background-color,backdrop-filter,border-color] duration-300"
       }`}
       role="banner"
     >
@@ -149,6 +165,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
             <Link
               key={href}
               href={href}
+              prefetch={href === "/community" ? false : undefined}
               className={`${desktopLinkClass(href)} ${variant === "marketing" ? "animate-nav-item-in" : ""}`}
               style={variant === "marketing" ? { animationDelay: `${idx * 85}ms` } : undefined}
             >
@@ -170,7 +187,12 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
           <div className="absolute left-0 right-0 top-full z-50 mt-0 border-b border-sand bg-white px-4 py-3 shadow-lg">
             <div className="flex flex-col gap-1">
               {navItems.map(({ href, label }) => (
-                <Link key={href} href={href} className={mobileLinkClass(href)}>
+                <Link
+                  key={href}
+                  href={href}
+                  prefetch={href === "/community" ? false : undefined}
+                  className={mobileLinkClass(href)}
+                >
                   {label}
                 </Link>
               ))}

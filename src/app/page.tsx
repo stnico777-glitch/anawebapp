@@ -4,17 +4,8 @@ import { getCurrentWeekSchedule } from "@/lib/schedule";
 import { getDemoWeekSchedule } from "@/lib/demo-preview-data";
 import SiteHeader from "@/components/SiteHeader";
 import HeroSection from "@/components/HeroSection";
-import TrialBanner from "@/components/TrialBanner";
-import WelcomeMessageBubble from "@/components/WelcomeMessageBubble";
-import FloatingMessageBubble from "@/components/FloatingMessageBubble";
-import ScheduleSection from "@/components/ScheduleSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import AboutBrandSection from "@/components/AboutBrandSection";
-import InstagramCarousel from "@/components/InstagramCarousel";
-import Footer from "@/components/Footer";
+import HomeBelowFoldIsland from "@/components/HomeBelowFoldIsland";
 import { getInstagramEmbedConfig } from "@/lib/instagram-embed";
-
-export const dynamic = "force-dynamic";
 
 /** Below-the-hero content (auth + Prisma). Kept out of the first paint so the hero video is not blocked by DB latency. */
 async function HomeBelowFold() {
@@ -23,20 +14,11 @@ async function HomeBelowFold() {
   const isSignedIn = !!session?.user;
 
   return (
-    <div className="homepage-imessage-surface">
-      <div className="relative z-[1]">
-        <TrialBanner />
-        <WelcomeMessageBubble />
-        <FloatingMessageBubble />
-        <ScheduleSection schedule={schedule} showLockIcon={!isSignedIn} />
-        <FeaturesSection showLockIcon={!isSignedIn} />
-        <AboutBrandSection />
-        <section className="mb-16 overflow-visible md:mb-20">
-          <InstagramCarousel {...getInstagramEmbedConfig()} />
-        </section>
-        <Footer bleedBackground />
-      </div>
-    </div>
+    <HomeBelowFoldIsland
+      schedule={schedule}
+      showLockIcon={!isSignedIn}
+      instagram={getInstagramEmbedConfig()}
+    />
   );
 }
 

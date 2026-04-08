@@ -55,8 +55,11 @@ export default function ScrollReveal({
   runwayPaddingBottom,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  /** After reveal, drop will-change so layers aren’t promoted for the whole scroll session. */
+  const [motionDone, setMotionDone] = useState(false);
 
   useEffect(() => {
     setReduceMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -85,6 +88,25 @@ export default function ScrollReveal({
     ob.observe(el);
     return () => ob.disconnect();
   }, [reduceMotion, threshold, rootMargin]);
+
+  useEffect(() => {
+    if (reduceMotion || !visible) return;
+    const totalMs = motionDurationMs + delayMs;
+    const id = window.setTimeout(() => setMotionDone(true), totalMs + 32);
+    return () => clearTimeout(id);
+  }, [reduceMotion, visible, motionDurationMs, delayMs]);
+
+  useEffect(() => {
+    if (reduceMotion || !visible || motionDone) return;
+    const node = innerRef.current;
+    if (!node) return;
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName !== "opacity" && e.propertyName !== "transform") return;
+      setMotionDone(true);
+    };
+    node.addEventListener("transitionend", onEnd);
+    return () => node.removeEventListener("transitionend", onEnd);
+  }, [reduceMotion, visible, motionDone]);
 
   const useInlineMotion = Boolean(hiddenSlideY);
 
@@ -119,13 +141,15 @@ export default function ScrollReveal({
       ? { transitionDelay: transitionDelayCss }
       : undefined;
 
+  const promoteWillChange = !reduceMotion && visible && !motionDone;
+
   const innerStyle: CSSProperties | undefined = useInlineMotion
     ? {
         opacity: reduceMotion || visible ? 1 : 0,
         transform: reduceMotion || visible ? "translateY(0)" : `translateY(${hiddenSlideY})`,
         transition: motionTransition,
         transitionDelay: transitionDelayCss,
-        willChange: reduceMotion ? undefined : "opacity, transform",
+        willChange: promoteWillChange ? "opacity, transform" : undefined,
       }
     : { transitionDelay: transitionDelayCss };
 
@@ -137,10 +161,13 @@ export default function ScrollReveal({
       style={outerStyle}
     >
       <div
+        ref={innerRef}
         className={
           useInlineMotion
             ? `${motionClasses} motion-reduce:[transform:none] motion-reduce:opacity-100`.trim()
-            : `${motionClasses} transition-[opacity,transform] ${durationClass} ${easeClass} will-change-[opacity,transform] motion-reduce:transition-none`.trim()
+            : `${motionClasses} transition-[opacity,transform] ${durationClass} ${easeClass} ${
+                promoteWillChange ? "will-change-[opacity,transform]" : ""
+              } motion-reduce:transition-none`.trim()
         }
         style={innerStyle}
       >

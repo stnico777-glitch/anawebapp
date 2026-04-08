@@ -36,7 +36,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
   return (
     <section
       id="features"
-      className="bg-transparent px-2 -mt-2 pt-2 pb-8 md:px-4 md:-mt-3 md:pt-3 md:pb-12"
+      className="home-cv-features bg-transparent px-2 -mt-2 pt-2 pb-8 md:px-4 md:-mt-3 md:pt-3 md:pb-12"
       aria-labelledby="features-heading"
     >
       <div className="mx-auto max-w-[1500px]">
@@ -183,7 +183,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
           <ScrollReveal className="min-w-0" delayMs={300} {...FEATURES_CARD_REVEAL}>
             <article className={FEATURE_CARD_SHELL}>
               <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
-                <Link href="/community" className="absolute inset-0 z-10">
+                <Link href="/community" prefetch={false} className="absolute inset-0 z-10">
                   <span className="sr-only">Community — Bloom Scroll and praise wall</span>
                 </Link>
                 {showLockIcon && (

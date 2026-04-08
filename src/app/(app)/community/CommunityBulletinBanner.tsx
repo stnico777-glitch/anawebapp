@@ -274,12 +274,10 @@ export default function CommunityBulletinBanner({
         style={{
           backgroundColor: "#C9B896",
           backgroundImage: [
-            /* Lighter wash at all four edges → fades to the tan base in the middle */
             "linear-gradient(to bottom, rgba(255, 253, 248, 0.82) 0%, transparent 28%)",
             "linear-gradient(to top, rgba(255, 253, 248, 0.82) 0%, transparent 28%)",
             "linear-gradient(to right, rgba(255, 253, 248, 0.62) 0%, transparent 22%)",
             "linear-gradient(to left, rgba(255, 253, 248, 0.62) 0%, transparent 22%)",
-            /* Soft center highlight + subtle depth (keeps the cork board from feeling flat) */
             "radial-gradient(ellipse 95% 70% at 50% 35%, rgba(255,255,255,0.14) 0%, transparent 52%)",
             "radial-gradient(ellipse 55% 45% at 85% 92%, rgba(0,0,0,0.045) 0%, transparent 48%)",
           ].join(", "),

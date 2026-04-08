@@ -41,7 +41,7 @@ export default function AboutBrandSection() {
   return (
     <section
       id="about-brand"
-      className="relative -mt-2 overflow-x-hidden md:-mt-3"
+      className="home-cv-about relative -mt-2 overflow-x-hidden md:-mt-3"
       aria-labelledby="about-brand-heading"
     >
       <AboutWaveBand variant="top" />

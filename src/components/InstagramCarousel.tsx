@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 const INSTAGRAM_HANDLE = "awakeandalign_";
 
@@ -100,6 +100,57 @@ function EmbedSocialWidget({ dataRef }: { dataRef: string }) {
   );
 }
 
+const IG_EMBED_SKELETON_CLASS =
+  "instagram-embed-inner min-h-[480px] w-full md:min-h-[520px] rounded-md bg-sand/25";
+
+/**
+ * Defers iframe + EmbedSocial script/DOM until the feed is near the viewport (saves network + main thread on homepage scroll).
+ */
+function LazyInstagramFeedEmbed({
+  embedIframeUrl,
+  embedRef,
+}: {
+  embedIframeUrl: string | null;
+  embedRef: string | null;
+}) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [load, setLoad] = useState(false);
+
+  useEffect(() => {
+    if (!embedIframeUrl && !embedRef) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setLoad(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [embedIframeUrl, embedRef]);
+
+  return (
+    <div ref={sentinelRef} className="w-full">
+      {load && embedIframeUrl ? (
+        <iframe
+          src={embedIframeUrl}
+          title="Instagram feed"
+          className="h-[420px] min-w-full shrink-0 border-0 md:h-[520px] md:min-w-0"
+          loading="lazy"
+        />
+      ) : load && embedRef ? (
+        <EmbedSocialWidget dataRef={embedRef} />
+      ) : (
+        <div className={IG_EMBED_SKELETON_CLASS} aria-hidden />
+      )}
+    </div>
+  );
+}
+
 type InstagramCarouselProps = {
   /** EmbedSocial data-ref from server env. */
   embedRef?: string | null;
@@ -185,15 +236,8 @@ export default function InstagramCarousel({ embedRef, embedIframeUrl }: Instagra
         </a>
         <div className="instagram-embed-mobile-scroll mt-6 overflow-hidden rounded-lg border border-sand bg-background/90 md:overflow-visible">
           <div className="instagram-embed-scroll-container flex max-h-[420px] overflow-x-auto overflow-y-hidden px-[calc((100vw-280px)/2)] -mx-4 md:mx-0 md:px-0 md:max-h-none md:overflow-visible md:block scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            {embedIframeUrl ? (
-              <iframe
-                src={embedIframeUrl}
-                title="Instagram feed"
-                className="h-[420px] min-w-full shrink-0 border-0 md:h-[520px] md:min-w-0"
-                loading="lazy"
-              />
-            ) : embedRef ? (
-              <EmbedSocialWidget dataRef={embedRef} />
+            {embedIframeUrl || embedRef ? (
+              <LazyInstagramFeedEmbed embedIframeUrl={embedIframeUrl ?? null} embedRef={embedRef ?? null} />
             ) : null}
           </div>
         </div>

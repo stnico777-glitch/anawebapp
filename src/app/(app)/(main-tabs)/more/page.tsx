@@ -177,7 +177,11 @@ export default async function MorePage() {
                     ·
                   </span>
                   <span>
-                    <Link href="/community" className="font-medium text-foreground underline-offset-4 hover:text-sky-blue hover:underline">
+                    <Link
+                      href="/community"
+                      prefetch={false}
+                      className="font-medium text-foreground underline-offset-4 hover:text-sky-blue hover:underline"
+                    >
                       Prayer & Praise
                     </Link>{" "}
                     — share requests and celebrations with the community.

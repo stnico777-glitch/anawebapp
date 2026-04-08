@@ -91,7 +91,11 @@ export default function Footer({ bleedBackground = false }: FooterProps) {
             <p className={FOOTER_HEADING_CLASS}>Prayer & praise</p>
             <ul className="mt-3 space-y-2">
               <li><Link href="/journaling" className={FOOTER_LINK_CLASS}>Prayer journal</Link></li>
-              <li><Link href="/community" className={FOOTER_LINK_CLASS}>Community</Link></li>
+              <li>
+                <Link href="/community" prefetch={false} className={FOOTER_LINK_CLASS}>
+                  Community
+                </Link>
+              </li>
             </ul>
             <p className={`mt-6 ${FOOTER_HEADING_CLASS}`}>Download our app</p>
             <div className="mt-2 flex flex-col gap-2">

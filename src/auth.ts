@@ -1,11 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
 
 /**
  * Server-side session shape compatible with previous NextAuth usage.
+ * Deduplicated per request via React `cache` when called from multiple server components.
  */
-export async function auth() {
+export const auth = cache(async function auth() {
   const env = getSupabasePublicEnv();
   if (!env) return null;
 
@@ -53,4 +55,4 @@ export async function auth() {
       isSubscriber: profile?.is_subscriber ?? false,
     },
   };
-}
+});

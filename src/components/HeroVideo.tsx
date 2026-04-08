@@ -1,28 +1,73 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useSyncExternalStore, useRef, useState, useEffect, useCallback } from "react";
 
-const HERO_FORWARD = "/hero-video.mp4#t=0.001";
-/** Time-reversed encode of the same clip — plays forward for smooth “backward” motion (see `npm run hero:reverse`). */
-const HERO_REVERSE = "/hero-video-reverse.mp4#t=0.001";
+/** Web-optimized H.264 @ 30fps (`npm run hero:30fps`). Avoids 4K HEVC + oversized carousel sources. */
+const HERO_CLIP_HASH = "#t=0.001";
 
-/** Opening clip, then Awake + Align hero (see `public/hero-carousel-awake-align.mp4`). */
-const HERO_CAROUSEL = [
-  "/hero-video.mp4#t=0.001",
-  "/hero-carousel-awake-align.mp4#t=0.001",
+const HERO_VIDEO = {
+  sm: `/hero-video-sm.mp4${HERO_CLIP_HASH}`,
+  lg: `/hero-video-lg.mp4${HERO_CLIP_HASH}`,
+} as const;
+
+const HERO_REVERSE = {
+  sm: `/hero-video-reverse-sm.mp4${HERO_CLIP_HASH}`,
+  lg: `/hero-video-reverse-lg.mp4${HERO_CLIP_HASH}`,
+} as const;
+
+const HERO_CAROUSEL_CLIPS = [
+  { sm: HERO_VIDEO.sm, lg: HERO_VIDEO.lg },
+  {
+    sm: `/hero-carousel-awake-align-sm.mp4${HERO_CLIP_HASH}`,
+    lg: `/hero-carousel-awake-align-lg.mp4${HERO_CLIP_HASH}`,
+  },
 ] as const;
+
+const HERO_POSTER = "/hero-video-poster.jpg";
 
 /** First carousel clip only — longer on-screen (timeline still runs to `ended`). */
 const FIRST_HERO_CLIP_PLAYBACK_RATE = 0.75;
 
-function playbackRateForHeroCarouselSrc(src: string): number {
-  return src.startsWith("/hero-video.mp4") ? FIRST_HERO_CLIP_PLAYBACK_RATE : 1;
+function playbackRateForCarouselClipIndex(clipIndex: number): number {
+  return clipIndex === 0 ? FIRST_HERO_CLIP_PLAYBACK_RATE : 1;
 }
 
-function playWhenReady(
-  el: HTMLVideoElement,
-  onStarted: () => void,
-): void {
+/**
+ * Visible slot always shows `currentIndex`; the other slot preloads the next clip.
+ * (Indexing only by slot number was wrong after the first swap and broke A→B order.)
+ */
+function carouselClipIndexForSlot(
+  slot: 0 | 1,
+  currentIndex: number,
+  visibleSlot: 0 | 1,
+  len: number,
+): number {
+  if (visibleSlot === slot) return currentIndex;
+  return (currentIndex + 1) % len;
+}
+
+function HeroResponsiveSources({
+  sm,
+  lg,
+  /** Smaller transcodes only — less decode work when user prefers reduced motion (still plays video). */
+  preferSmOnly = false,
+}: {
+  sm: string;
+  lg: string;
+  preferSmOnly?: boolean;
+}) {
+  if (preferSmOnly) {
+    return <source src={sm} type="video/mp4" />;
+  }
+  return (
+    <>
+      <source media="(max-width: 768px)" src={sm} type="video/mp4" />
+      <source src={lg} type="video/mp4" />
+    </>
+  );
+}
+
+function playWhenReady(el: HTMLVideoElement, onStarted: () => void): void {
   const run = () => {
     void el.play().then(onStarted).catch(() => {});
   };
@@ -37,10 +82,7 @@ function playWhenReady(
   el.addEventListener("canplay", onCanPlay);
 }
 
-function scheduleSwapOnFirstFrame(
-  video: HTMLVideoElement,
-  onSwap: () => void,
-) {
+function scheduleSwapOnFirstFrame(video: HTMLVideoElement, onSwap: () => void) {
   const rvfc = video.requestVideoFrameCallback?.bind(video);
   if (typeof rvfc === "function") {
     rvfc(() => {
@@ -55,6 +97,48 @@ function scheduleSwapOnFirstFrame(
     }
   };
   video.addEventListener("timeupdate", onTimeUpdate);
+}
+
+function subscribePrefersReducedMotion(onStoreChange: () => void) {
+  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  mq.addEventListener("change", onStoreChange);
+  return () => mq.removeEventListener("change", onStoreChange);
+}
+
+function getPrefersReducedMotionSnapshot() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function usePrefersReducedMotion() {
+  return useSyncExternalStore(
+    subscribePrefersReducedMotion,
+    getPrefersReducedMotionSnapshot,
+    () => false,
+  );
+}
+
+/**
+ * Pauses decode/playback when the hero is off-screen (major GPU/CPU save while scrolling).
+ * Resumes when the hero intersects the viewport again.
+ */
+function useHeroInView<T extends HTMLElement>() {
+  const ref = useRef<T | null>(null);
+  const [inView, setInView] = useState(true);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { root: null, rootMargin: "0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return [ref, inView] as const;
 }
 
 /** Bias for `object-fit: cover` when the hero band is short — `upper` shows more of the top/middle of the source. */
@@ -75,8 +159,10 @@ function objectCoverPositionClass(
 
 function HeroVideoCarousel({
   objectPosition = "center",
+  preferLowBandwidth = false,
 }: {
   objectPosition?: "center" | "bottom" | "top";
+  preferLowBandwidth?: boolean;
 }) {
   const coverClass = objectCoverPositionClass(objectPosition);
   const ref0 = useRef<HTMLVideoElement>(null);
@@ -85,17 +171,19 @@ function HeroVideoCarousel({
   const currentIndexRef = useRef(0);
   /** Avoid treating a bogus `ended` at load as real (WebKit); some UIs reset `currentTime` to 0 on real `ended`. */
   const playedPastStartRef = useRef<[boolean, boolean]>([false, false]);
-  const [visibleSlot, setVisibleSlot] = useState(0);
+  const [visibleSlot, setVisibleSlot] = useState<0 | 1>(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [wrapRef, heroInView] = useHeroInView<HTMLDivElement>();
+  const heroInViewRef = useRef(heroInView);
+  useEffect(() => {
+    heroInViewRef.current = heroInView;
+  }, [heroInView]);
 
-  const src0 =
-    visibleSlot === 0
-      ? HERO_CAROUSEL[currentIndex]
-      : HERO_CAROUSEL[(currentIndex + 1) % HERO_CAROUSEL.length];
-  const src1 =
-    visibleSlot === 1
-      ? HERO_CAROUSEL[currentIndex]
-      : HERO_CAROUSEL[(currentIndex + 1) % HERO_CAROUSEL.length];
+  const len = HERO_CAROUSEL_CLIPS.length;
+  const idx0 = carouselClipIndexForSlot(0, currentIndex, visibleSlot, len);
+  const idx1 = carouselClipIndexForSlot(1, currentIndex, visibleSlot, len);
+  const clip0 = HERO_CAROUSEL_CLIPS[idx0];
+  const clip1 = HERO_CAROUSEL_CLIPS[idx1];
 
   useEffect(() => {
     visibleSlotRef.current = visibleSlot;
@@ -108,11 +196,25 @@ function HeroVideoCarousel({
   useEffect(() => {
     const el0 = ref0.current;
     const el1 = ref1.current;
-    if (el0) el0.playbackRate = playbackRateForHeroCarouselSrc(src0);
-    if (el1) el1.playbackRate = playbackRateForHeroCarouselSrc(src1);
-  }, [src0, src1]);
+    if (el0) el0.playbackRate = playbackRateForCarouselClipIndex(idx0);
+    if (el1) el1.playbackRate = playbackRateForCarouselClipIndex(idx1);
+  }, [idx0, idx1]);
+
+  useEffect(() => {
+    const v0 = ref0.current;
+    const v1 = ref1.current;
+    if (!v0 || !v1) return;
+    if (!heroInView) {
+      v0.pause();
+      v1.pause();
+      return;
+    }
+    const active = visibleSlot === 0 ? v0 : v1;
+    void active.play().catch(() => {});
+  }, [heroInView, visibleSlot]);
 
   const onSlotEnded = useCallback((slot: 0 | 1) => {
+    if (!heroInViewRef.current) return;
     if (visibleSlotRef.current !== slot) return;
     const endedEl = slot === 0 ? ref0.current : ref1.current;
     if (
@@ -130,43 +232,41 @@ function HeroVideoCarousel({
     const hiddenEl = h === 0 ? ref0.current : ref1.current;
     if (!visibleEl || !hiddenEl) return;
 
-    const nextIdx =
-      (currentIndexRef.current + 1) % HERO_CAROUSEL.length;
-    hiddenEl.playbackRate = playbackRateForHeroCarouselSrc(
-      HERO_CAROUSEL[nextIdx],
-    );
+    const nextIdx = (currentIndexRef.current + 1) % len;
+    hiddenEl.playbackRate = playbackRateForCarouselClipIndex(nextIdx);
     hiddenEl.currentTime = 0;
     let swapped = false;
     const doSwap = () => {
       if (swapped) return;
       swapped = true;
       visibleEl.pause();
-      // Keep in sync immediately so a spurious `ended` from the hidden slot
-      // reloading its `src` cannot fire before useEffect runs (see black-flash report).
       visibleSlotRef.current = h;
       setVisibleSlot(h);
       setCurrentIndex((i) => {
         playedPastStartRef.current[0] = false;
         playedPastStartRef.current[1] = false;
-        return (i + 1) % HERO_CAROUSEL.length;
+        return (i + 1) % len;
       });
     };
 
     playWhenReady(hiddenEl, () => {
       scheduleSwapOnFirstFrame(hiddenEl, doSwap);
     });
-  }, []);
+  }, [len]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-black">
+    <div
+      ref={wrapRef}
+      className="absolute inset-0 isolate overflow-hidden bg-black [transform:translateZ(0)]"
+    >
       {/*
         Stack both clips at full opacity (z-index only). Opacity:0 on the “hidden”
         slot prevents reliable decode/play on some browsers (esp. WebKit), so the
         second carousel file never appeared after the first clip ended.
       */}
       <video
+        key={`c0-${idx0}`}
         ref={ref0}
-        src={src0}
         className={`absolute inset-0 h-full w-full ${coverClass}`}
         style={{
           zIndex: visibleSlot === 0 ? 2 : 1,
@@ -175,18 +275,26 @@ function HeroVideoCarousel({
         autoPlay={visibleSlot === 0 && currentIndex === 0}
         muted
         playsInline
-        preload="auto"
+        disablePictureInPicture
+        preload={visibleSlot === 0 ? "auto" : "metadata"}
+        poster={HERO_POSTER}
         onLoadedMetadata={(e) => {
-          e.currentTarget.playbackRate = playbackRateForHeroCarouselSrc(src0);
+          e.currentTarget.playbackRate = playbackRateForCarouselClipIndex(idx0);
         }}
         onTimeUpdate={(e) => {
           if (e.currentTarget.currentTime > 0.12) playedPastStartRef.current[0] = true;
         }}
         onEnded={() => onSlotEnded(0)}
-      />
+      >
+        <HeroResponsiveSources
+          sm={clip0.sm}
+          lg={clip0.lg}
+          preferSmOnly={preferLowBandwidth}
+        />
+      </video>
       <video
+        key={`c1-${idx1}`}
         ref={ref1}
-        src={src1}
         className={`absolute inset-0 h-full w-full ${coverClass}`}
         style={{
           zIndex: visibleSlot === 1 ? 2 : 1,
@@ -194,16 +302,24 @@ function HeroVideoCarousel({
         }}
         muted
         playsInline
-        preload="auto"
+        disablePictureInPicture
+        preload={visibleSlot === 1 ? "auto" : "metadata"}
+        poster={HERO_POSTER}
         onLoadedMetadata={(e) => {
-          e.currentTarget.playbackRate = playbackRateForHeroCarouselSrc(src1);
+          e.currentTarget.playbackRate = playbackRateForCarouselClipIndex(idx1);
         }}
         onTimeUpdate={(e) => {
           if (e.currentTarget.currentTime > 0.12) playedPastStartRef.current[1] = true;
         }}
         onEnded={() => onSlotEnded(1)}
-      />
-      <div className="pointer-events-none absolute inset-0 z-[3] bg-black/10" aria-hidden />
+      >
+        <HeroResponsiveSources
+          sm={clip1.sm}
+          lg={clip1.lg}
+          preferSmOnly={preferLowBandwidth}
+        />
+      </video>
+      <div className="pointer-events-none absolute inset-0 z-[3] bg-black/5" aria-hidden />
     </div>
   );
 }
@@ -224,6 +340,7 @@ function HeroVideoPingPong({
   const [active, setActive] = useState<"forward" | "reverse">("forward");
   const [useDual, setUseDual] = useState(true);
   const useDualRef = useRef(true);
+  const [wrapRef, heroInView] = useHeroInView<HTMLDivElement>();
 
   useEffect(() => {
     useDualRef.current = useDual;
@@ -238,28 +355,25 @@ function HeroVideoPingPong({
     rafRef.current = 0;
   }, []);
 
-  const stepRafReverse = useCallback(
-    (now: number) => {
-      const v = forwardRef.current;
-      if (!v) return;
-      const last = lastFrameRef.current;
-      const raw = (now - last) / 1000;
-      const dt = Math.min(Math.max(raw, 0), 1 / 24);
-      lastFrameRef.current = now;
-      const next = v.currentTime - dt;
-      if (next <= 0.02) {
-        cancelRaf();
-        v.currentTime = 0;
-        phaseRef.current = "forward";
-        v.playbackRate = 1;
-        void v.play().catch(() => {});
-        return;
-      }
-      v.currentTime = next;
-      rafRef.current = requestAnimationFrame(stepRafReverse);
-    },
-    [cancelRaf],
-  );
+  const stepRafReverse = useCallback(function stepRafReverse(now: number) {
+    const v = forwardRef.current;
+    if (!v) return;
+    const last = lastFrameRef.current;
+    const raw = (now - last) / 1000;
+    const dt = Math.min(Math.max(raw, 0), 1 / 24);
+    lastFrameRef.current = now;
+    const next = v.currentTime - dt;
+    if (next <= 0.02) {
+      cancelRaf();
+      v.currentTime = 0;
+      phaseRef.current = "forward";
+      v.playbackRate = 1;
+      void v.play().catch(() => {});
+      return;
+    }
+    v.currentTime = next;
+    rafRef.current = requestAnimationFrame(stepRafReverse);
+  }, [cancelRaf]);
 
   const startRafReverse = useCallback(() => {
     const v = forwardRef.current;
@@ -277,6 +391,19 @@ function HeroVideoPingPong({
     lastFrameRef.current = performance.now();
     rafRef.current = requestAnimationFrame(stepRafReverse);
   }, [cancelRaf, stepRafReverse]);
+
+  useEffect(() => {
+    const fwd = forwardRef.current;
+    const rev = reverseRef.current;
+    if (!heroInView) {
+      cancelRaf();
+      fwd?.pause();
+      rev?.pause();
+      return;
+    }
+    if (active === "forward" && fwd) void fwd.play().catch(() => {});
+    else if (active === "reverse" && rev) void rev.play().catch(() => {});
+  }, [heroInView, active, cancelRaf]);
 
   useEffect(() => {
     const fwd = forwardRef.current;
@@ -338,10 +465,12 @@ function HeroVideoPingPong({
   };
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-black">
+    <div
+      ref={wrapRef}
+      className="absolute inset-0 isolate overflow-hidden bg-black [transform:translateZ(0)]"
+    >
       <video
         ref={forwardRef}
-        src={HERO_FORWARD}
         className={`absolute inset-0 h-full w-full ${coverClass}`}
         style={{
           opacity: active === "forward" ? 1 : 0,
@@ -350,15 +479,18 @@ function HeroVideoPingPong({
         autoPlay
         muted
         playsInline
-        preload="auto"
+        disablePictureInPicture
+        preload={active === "forward" ? "auto" : "metadata"}
+        poster={HERO_POSTER}
         onLoadedMetadata={(e) => {
           e.currentTarget.playbackRate = 1;
         }}
-      />
+      >
+        <HeroResponsiveSources sm={HERO_VIDEO.sm} lg={HERO_VIDEO.lg} />
+      </video>
       {useDual ? (
         <video
           ref={reverseRef}
-          src={HERO_REVERSE}
           className={`absolute inset-0 h-full w-full ${coverClass}`}
           style={{
             opacity: active === "reverse" ? 1 : 0,
@@ -366,14 +498,39 @@ function HeroVideoPingPong({
           }}
           muted
           playsInline
-          preload="auto"
+          disablePictureInPicture
+          preload={active === "reverse" ? "auto" : "metadata"}
+          poster={HERO_POSTER}
           onError={onReverseError}
           onLoadedMetadata={(e) => {
             e.currentTarget.playbackRate = 1;
           }}
-        />
+        >
+          <HeroResponsiveSources sm={HERO_REVERSE.sm} lg={HERO_REVERSE.lg} />
+        </video>
       ) : null}
-      <div className="absolute inset-0 bg-black/10" aria-hidden />
+      <div className="absolute inset-0 bg-black/5" aria-hidden />
+    </div>
+  );
+}
+
+function HeroVideoStaticPoster({
+  objectPosition = "center",
+}: {
+  objectPosition?: "center" | "bottom" | "top" | "upper";
+}) {
+  const coverClass = objectCoverPositionClass(objectPosition);
+  return (
+    <div className="absolute inset-0 isolate overflow-hidden bg-black [transform:translateZ(0)]">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static local poster; avoids next/image config for one asset */}
+      <img
+        src={HERO_POSTER}
+        alt=""
+        className={`absolute inset-0 h-full w-full ${coverClass}`}
+        decoding="async"
+        fetchPriority="high"
+      />
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-black/5" aria-hidden />
     </div>
   );
 }
@@ -390,10 +547,19 @@ export default function HeroVideo({
   variant?: HeroVideoVariant;
   objectPosition?: HeroVideoObjectPosition;
 }) {
+  const reducedMotion = usePrefersReducedMotion();
   if (variant === "carousel") {
     const carouselPos =
       objectPosition === "upper" ? "top" : objectPosition;
-    return <HeroVideoCarousel objectPosition={carouselPos} />;
+    return (
+      <HeroVideoCarousel
+        objectPosition={carouselPos}
+        preferLowBandwidth={reducedMotion}
+      />
+    );
+  }
+  if (reducedMotion) {
+    return <HeroVideoStaticPoster objectPosition={objectPosition} />;
   }
   return <HeroVideoPingPong objectPosition={objectPosition} />;
 }

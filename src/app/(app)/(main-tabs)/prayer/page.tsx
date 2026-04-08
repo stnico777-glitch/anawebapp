@@ -5,8 +5,10 @@ import { DEMO_PRAYER_LIBRARY } from "@/lib/demo-preview-data";
 import { getAudioLayoutForDisplay } from "@/lib/audio-layout";
 
 export default async function PrayerPage() {
-  const { userId, isSubscriber } = await getSessionForApp();
-  const layout = await getAudioLayoutForDisplay();
+  const [{ userId, isSubscriber }, layout] = await Promise.all([
+    getSessionForApp(),
+    getAudioLayoutForDisplay(),
+  ]);
 
   let prayers: PrayerLibraryItem[] = [];
   let completedIds: string[] = [];
