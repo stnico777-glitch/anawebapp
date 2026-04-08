@@ -180,58 +180,12 @@ body {
 }
 
 /**
- * Homepage: same layer recipe as WelcomeMessageBubble “glow layer”, scaled for a tall scroll surface.
- * Painted on ::before so it always stacks correctly; ellipses use plain % (min() in ellipse broke
- * background shorthand in some engines → solid white only).
+ * Homepage below-hero shell: flat app background (no stacked ::before gradients — cheaper scroll paint).
  */
 .homepage-imessage-surface {
   position: relative;
   isolation: isolate;
-  /* Let transparent sections (e.g. about wave strips) show the ::before gradient, not a solid white slab */
-  background-color: transparent;
-}
-
-.homepage-imessage-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  /* Scrolls with content (`scroll` avoids expensive viewport-fixed repaints on every frame). */
-  background-color: #fff;
-  background-image:
-    linear-gradient(
-      to bottom,
-      #ffffff 0%,
-      #ffffff 12%,
-      rgba(255, 255, 255, 0.92) 22%,
-      rgba(255, 255, 255, 0.5) 38%,
-      rgba(255, 255, 255, 0.18) 52%,
-      rgba(255, 255, 255, 0.06) 68%,
-      rgba(255, 255, 255, 0) 100%
-    ),
-    radial-gradient(
-      ellipse 240% 120% at 50% 100%,
-      rgba(255, 210, 150, 0.85) 0%,
-      rgba(255, 230, 185, 0.55) 24%,
-      rgba(255, 238, 210, 0.3) 45%,
-      rgba(254, 250, 240, 0.12) 62%,
-      transparent 78%
-    ),
-    radial-gradient(
-      ellipse 180% 95% at 50% 100%,
-      rgba(255, 225, 170, 0.75) 0%,
-      rgba(255, 235, 198, 0.38) 38%,
-      transparent 65%
-    ),
-    radial-gradient(
-      ellipse 140% 75% at 50% 100%,
-      rgba(255, 198, 130, 0.35) 0%,
-      transparent 58%
-    );
-  background-attachment: scroll;
-  background-repeat: no-repeat;
-  background-size: auto;
+  background-color: var(--background);
 }
 
 .scrollbar-hide {
