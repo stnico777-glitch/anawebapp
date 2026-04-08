@@ -1,8 +1,11 @@
 "use client";
 
+import { useLayoutEffect, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import HeroBrandOverlay from "@/components/HeroBrandOverlay";
 import HeroVideo from "@/components/HeroVideo";
+import usePrefersReducedMotion from "@/hooks/usePrefersReducedMotion";
+import { movementSessionChromeFadeDurationMs } from "@/lib/movement-session-transitions";
 
 function ariaLabelForPath(pathname: string): string {
   if (pathname.startsWith("/admin")) return "CMS — edit content";
@@ -31,10 +34,59 @@ function creamWordmarkForPath(pathname: string): boolean {
 export default function AppTabHeroBand() {
   const pathname = usePathname() ?? "";
   const creamWordmark = creamWordmarkForPath(pathname);
+  const isScheduleDaySession =
+    pathname.startsWith("/movement/schedule-day/") || pathname.startsWith("/schedule/movement/");
+  const reducedMotion = usePrefersReducedMotion();
+  const fadeMs = movementSessionChromeFadeDurationMs(reducedMotion);
+
+  /** Start expanded so the hero paints once, then transition out on schedule-day movement session. */
+  const [shouldHideChrome, setShouldHideChrome] = useState(false);
+
+  /* eslint-disable react-hooks/set-state-in-effect -- two-phase paint: hero visible one frame, then chrome-out */
+  useLayoutEffect(() => {
+    if (!isScheduleDaySession) {
+      setShouldHideChrome(false);
+      return;
+    }
+    if (reducedMotion) {
+      setShouldHideChrome(true);
+      return;
+    }
+    let cancelled = false;
+    let innerRaf: number | undefined;
+    const outerRaf = requestAnimationFrame(() => {
+      if (cancelled) return;
+      innerRaf = requestAnimationFrame(() => {
+        if (!cancelled) setShouldHideChrome(true);
+      });
+    });
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(outerRaf);
+      if (innerRaf !== undefined) cancelAnimationFrame(innerRaf);
+    };
+  }, [isScheduleDaySession, reducedMotion]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const hideChrome = isScheduleDaySession && shouldHideChrome;
+
+  const sectionStyle: CSSProperties = {
+    transitionProperty:
+      isScheduleDaySession && !reducedMotion ? "opacity, max-height, min-height" : "none",
+    transitionDuration: isScheduleDaySession && !reducedMotion ? `${fadeMs}ms` : "0ms",
+    transitionTimingFunction: "ease",
+    opacity: hideChrome ? 0 : 1,
+    maxHeight: hideChrome ? 0 : "min(28vh, 300px)",
+    minHeight: hideChrome ? 0 : "140px",
+    pointerEvents: hideChrome ? "none" : undefined,
+  };
+
   return (
     <section
-      className="relative h-[min(28vh,300px)] min-h-[140px] w-full overflow-hidden bg-black"
+      className="relative w-full overflow-hidden bg-black"
+      style={sectionStyle}
       aria-label={ariaLabelForPath(pathname)}
+      aria-hidden={hideChrome}
     >
       <div className="absolute left-0 right-0 top-0 z-20 h-1 bg-sky-blue" aria-hidden />
       <HeroVideo objectPosition="upper" sourceTier="appTabs" />

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import WorkoutPlayer from "@/app/(app)/(main-tabs)/movement/[id]/WorkoutPlayer";
-import { WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 import type { WorkoutRailCardWorkout } from "@/lib/workout-rail-display";
 
 export default function MovementWorkoutPlayerOverlay({
@@ -38,8 +37,6 @@ export default function MovementWorkoutPlayerOverlay({
   }, [onClose]);
 
   if (!mounted) return null;
-
-  const poster = workout.thumbnailUrl?.trim() || WEEKLY_DAY_CARD_IMAGES[0];
 
   const node = (
     <div
@@ -76,9 +73,9 @@ export default function MovementWorkoutPlayerOverlay({
         )}
         <div className="mt-6 movement-overlay-player-fade">
           <WorkoutPlayer
+            key={workout.id}
             workoutId={workout.id}
             src={workout.videoUrl}
-            poster={poster}
             title={workout.title}
             isCompleted={isCompleted}
           />

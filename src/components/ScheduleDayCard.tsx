@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 import LockIcon from "@/components/LockIcon";
 import { THEMED_LOCK_BADGE_LG_CLASS } from "@/constants/dayCardVisual";
+import { injectScheduleMovementVideoPreload } from "@/lib/schedule-movement-video-prefetch";
 
 interface ScheduleDayCardProps {
   day: {
@@ -41,6 +42,8 @@ interface ScheduleDayCardProps {
    */
   cmsMode?: boolean;
   onEditCard?: () => void;
+  /** Resolved movement MP4 URL — enables preload hints while browsing the week. */
+  movementVideoSrc?: string | null;
 }
 
 /** Prayer row — single four-point sparkle (main star from Heroicons sparkles; avoids busy multi-sparkle cluster). */
@@ -70,6 +73,19 @@ function IconAffirmation() {
   );
 }
 
+/** Heroicons outline arrow-path — restart / do again */
+function IconRestartDay() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+      />
+    </svg>
+  );
+}
+
 export default function ScheduleDayCard({
   day,
   isToday = false,
@@ -79,6 +95,7 @@ export default function ScheduleDayCard({
   lockHint,
   cmsMode = false,
   onEditCard,
+  movementVideoSrc,
 }: ScheduleDayCardProps) {
   const resolvedLockLabel =
     lockPrimaryLabel ??
@@ -92,6 +109,23 @@ export default function ScheduleDayCard({
     day.completion?.affirmationDone ?? false
   );
   const [loading, setLoading] = useState(false);
+
+  const prefetchMovementVideo = useCallback(() => {
+    if (!movementVideoSrc?.trim() || isLocked) return;
+    injectScheduleMovementVideoPreload(movementVideoSrc);
+  }, [movementVideoSrc, isLocked]);
+
+  useEffect(() => {
+    if (!isToday || !movementVideoSrc?.trim() || isLocked) return;
+    prefetchMovementVideo();
+  }, [isToday, movementVideoSrc, isLocked, prefetchMovementVideo]);
+
+  useEffect(() => {
+    if (!day.completion) return;
+    setPrayerDone(day.completion.prayerDone);
+    setWorkoutDone(day.completion.workoutDone);
+    setAffirmationDone(day.completion.affirmationDone);
+  }, [day.completion?.prayerDone, day.completion?.workoutDone, day.completion?.affirmationDone, day.id]);
 
   const prayerDoneShow = cmsMode ? false : prayerDone;
   const workoutDoneShow = cmsMode ? false : workoutDone;
@@ -132,19 +166,25 @@ export default function ScheduleDayCard({
 
   const prayerHref = "/prayer";
   const demoDay = day.id.startsWith("demo-schedule-day-");
+  /** Real days: intro + single video under Schedule (not Movement library). Demo preview: direct workout or library. */
   const workoutHref = demoDay
     ? day.workoutId
       ? `/movement/${day.workoutId}`
       : "/movement"
-    : day.dayVideoUrl?.trim() || day.workoutId
-      ? `/movement/schedule-day/${day.id}`
-      : "/movement";
+    : `/schedule/movement/${day.id}`;
 
   const allDone = done === total;
-  let startHref = "/schedule";
-  if (!prayerDoneShow) startHref = prayerHref;
-  else if (!workoutDoneShow) startHref = workoutHref;
-  else if (!affirmationDoneShow) startHref = "/journaling";
+  /** Start always opens the day movement session (intro + video), not prayer/journal order. */
+  const startHref = workoutHref;
+
+  const movementPrefetchHandlers =
+    movementVideoSrc?.trim() && !isLocked
+      ? {
+          onMouseEnter: prefetchMovementVideo,
+          onFocus: prefetchMovementVideo,
+          onPointerDown: prefetchMovementVideo,
+        }
+      : undefined;
 
   return (
     <article
@@ -263,6 +303,7 @@ export default function ScheduleDayCard({
               <Link
                 href={workoutHref}
                 className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
+                {...movementPrefetchHandlers}
               >
                 {day.workoutTitle ?? "Movement"}
               </Link>
@@ -289,7 +330,7 @@ export default function ScheduleDayCard({
           </div>
         </div>
 
-        <div className="mt-1 flex min-h-[52px] items-center justify-center">
+        <div className="relative mt-1 flex min-h-[52px] w-full items-center justify-center">
           {cmsMode && onEditCard ? (
             <button
               type="button"
@@ -306,16 +347,28 @@ export default function ScheduleDayCard({
               {resolvedLockLabel}
             </Link>
           ) : allDone ? (
-            <span
-              className="inline-flex min-w-[132px] cursor-default items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white opacity-90 [font-family:var(--font-body),sans-serif]"
-              aria-live="polite"
-            >
-              Well done
-            </span>
+            <>
+              <span
+                className="inline-flex min-w-[132px] cursor-default items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white opacity-90 [font-family:var(--font-body),sans-serif]"
+                aria-live="polite"
+              >
+                Well done
+              </span>
+              <Link
+                href={startHref}
+                className="absolute right-5 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-md p-2 text-sky-blue transition-colors hover:bg-sky-blue/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-[#F3E7CC]"
+                aria-label="Restart day"
+                title="Restart day"
+                {...movementPrefetchHandlers}
+              >
+                <IconRestartDay />
+              </Link>
+            </>
           ) : (
             <Link
               href={startHref}
               className="inline-flex min-w-[132px] items-center justify-center rounded-md bg-sky-blue px-8 py-2 text-base font-semibold text-white transition-opacity [font-family:var(--font-body),sans-serif] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
+              {...movementPrefetchHandlers}
             >
               Start
             </Link>

@@ -7,6 +7,7 @@ import {
   workoutRailThumb,
   type WorkoutRailCardWorkout,
 } from "@/lib/workout-rail-display";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 export default function MemberWorkoutRailCard({
   workout,
@@ -14,15 +15,18 @@ export default function MemberWorkoutRailCard({
   selected,
   showDone,
   showLock = false,
+  /** First visible rail cards: eager fetch for LCP without starving the whole row. */
+  imagePriority = false,
 }: {
   workout: WorkoutRailCardWorkout;
   onSelect?: (workout: WorkoutRailCardWorkout) => void;
   selected?: boolean;
   showDone?: boolean;
   showLock?: boolean;
+  imagePriority?: boolean;
 }) {
   const src = workoutRailThumb(workout);
-  const unoptimized = src.startsWith("http://") || src.startsWith("https://");
+  const unoptimized = unoptimizedRemoteImage(src);
 
   if (onSelect) {
     return (
@@ -39,6 +43,7 @@ export default function MemberWorkoutRailCard({
         lockHint={showLock ? "Sign up to unlock" : undefined}
         active={selected}
         imageLoading="eager"
+        imagePriority={imagePriority}
       />
     );
   }
@@ -53,6 +58,7 @@ export default function MemberWorkoutRailCard({
       hoverSummary={memberWorkoutRailHoverSummary(workout)}
       unoptimized={unoptimized}
       imageLoading="eager"
+      imagePriority={imagePriority}
     />
   );
 }

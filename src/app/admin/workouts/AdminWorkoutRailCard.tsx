@@ -16,6 +16,7 @@ import {
   type WorkoutRailCardWorkout,
 } from "@/lib/workout-rail-display";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 import WorkoutForm from "./WorkoutForm";
 
 export type AdminWorkoutRailCardWorkout = WorkoutRailCardWorkout;
@@ -32,7 +33,7 @@ export default function AdminWorkoutRailCard({
 }) {
   const router = useRouter();
   const src = workoutRailThumb(workout);
-  const unoptimized = src.startsWith("http://") || src.startsWith("https://");
+  const unoptimized = unoptimizedRemoteImage(src);
   const metaLine = workoutRailMetaLine(workout);
 
   async function handleDelete() {

@@ -21,6 +21,8 @@ export const PATCH = withAdmin<
     dayImageUrl,
     dayVideoUrl,
     daySubtext,
+    movementIntroHeadline,
+    movementIntroSubtext,
   } = body;
 
   const day = await prisma.scheduleDay.findUnique({
@@ -46,6 +48,14 @@ export const PATCH = withAdmin<
       }),
       ...(daySubtext !== undefined && {
         daySubtext: daySubtext === "" ? null : daySubtext,
+      }),
+      ...(movementIntroHeadline !== undefined && {
+        movementIntroHeadline:
+          movementIntroHeadline === "" ? null : movementIntroHeadline,
+      }),
+      ...(movementIntroSubtext !== undefined && {
+        movementIntroSubtext:
+          movementIntroSubtext === "" ? null : movementIntroSubtext,
       }),
     },
   });

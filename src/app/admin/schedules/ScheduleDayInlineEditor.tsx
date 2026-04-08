@@ -18,6 +18,8 @@ export type ScheduleDayEditPayload = {
   dayImageUrl: string | null;
   dayVideoUrl: string | null;
   daySubtext: string | null;
+  movementIntroHeadline: string | null;
+  movementIntroSubtext: string | null;
 };
 
 const inputClass =
@@ -37,6 +39,8 @@ export default function ScheduleDayInlineEditor({
     dayImageUrl: "",
     dayVideoUrl: "",
     daySubtext: "",
+    movementIntroHeadline: "",
+    movementIntroSubtext: "",
     prayerTitle: "",
     workoutTitle: "",
     affirmationText: "",
@@ -47,6 +51,8 @@ export default function ScheduleDayInlineEditor({
       dayImageUrl: day.dayImageUrl ?? "",
       dayVideoUrl: day.dayVideoUrl ?? "",
       daySubtext: day.daySubtext ?? "",
+      movementIntroHeadline: day.movementIntroHeadline ?? "",
+      movementIntroSubtext: day.movementIntroSubtext ?? "",
       prayerTitle: day.prayerTitle ?? "",
       workoutTitle: day.workoutTitle ?? "",
       affirmationText: day.affirmationText ?? "",
@@ -66,6 +72,8 @@ export default function ScheduleDayInlineEditor({
             dayImageUrl: form.dayImageUrl,
             dayVideoUrl: form.dayVideoUrl,
             daySubtext: form.daySubtext,
+            movementIntroHeadline: form.movementIntroHeadline,
+            movementIntroSubtext: form.movementIntroSubtext,
             prayerTitle: form.prayerTitle.trim(),
             prayerId: null,
             workoutTitle: form.workoutTitle.trim(),
@@ -139,6 +147,38 @@ export default function ScheduleDayInlineEditor({
             value={form.dayVideoUrl}
             onChange={(e) => setForm((f) => ({ ...f, dayVideoUrl: e.target.value }))}
             placeholder="https://… (optional)"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Pre-workout screen headline</label>
+          <p className="mt-0.5 text-xs text-gray">
+            Shown before the video after the member taps Start. Leave empty for the default (&quot;Hey, you made it.&quot;).
+          </p>
+          <input
+            type="text"
+            className={inputClass}
+            value={form.movementIntroHeadline}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, movementIntroHeadline: e.target.value }))
+            }
+            placeholder="Optional override"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Pre-workout screen subtext</label>
+          <p className="mt-0.5 text-xs text-gray">
+            Supporting line under the headline. Leave empty for the default encouraging copy.
+          </p>
+          <textarea
+            rows={3}
+            className={inputClass}
+            value={form.movementIntroSubtext}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, movementIntroSubtext: e.target.value }))
+            }
+            placeholder="Optional override"
           />
         </div>
 

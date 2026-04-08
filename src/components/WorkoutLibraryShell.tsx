@@ -10,6 +10,7 @@ import {
 import LockIcon from "@/components/LockIcon";
 import { THEMED_LOCK_BADGE_LG_CLASS } from "@/constants/dayCardVisual";
 import type { MovementLayoutDTO } from "@/lib/movement-layout-types";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 /**
  * Shared Movement tab layout (Library rail + Just Getting Started + Quickie).
@@ -105,9 +106,9 @@ export default function WorkoutLibraryShell({
           }`}
         >
           {heroSectionBody ??
-            movementLayout.heroTiles.map((tile) => {
-              const unoptimized =
-                tile.imageUrl.startsWith("http://") || tile.imageUrl.startsWith("https://");
+            movementLayout.heroTiles.map((tile, heroIndex) => {
+              const unoptimized = unoptimizedRemoteImage(tile.imageUrl);
+              const isPrimaryHero = heroIndex === 0;
               return (
                 <button
                   key={tile.id}
@@ -130,7 +131,8 @@ export default function WorkoutLibraryShell({
                     fill
                     className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                     sizes="(max-width: 640px) 100vw, 50vw"
-                    priority
+                    priority={isPrimaryHero}
+                    fetchPriority={isPrimaryHero ? "high" : "low"}
                     unoptimized={unoptimized}
                   />
                   <div
@@ -188,9 +190,7 @@ export default function WorkoutLibraryShell({
                   title={p.title}
                   metaLine={p.metaLine}
                   hoverSummary={p.summary}
-                  unoptimized={
-                    p.imageUrl.startsWith("http://") || p.imageUrl.startsWith("https://")
-                  }
+                  unoptimized={unoptimizedRemoteImage(p.imageUrl)}
                   showLock={isGuest}
                   lockHint={isGuest ? "Sign up to unlock" : undefined}
                   imageLoading={railImageLoading}

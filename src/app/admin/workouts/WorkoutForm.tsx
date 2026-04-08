@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminModalPortal from "@/components/AdminModalPortal";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import { confirmAdminSave } from "@/lib/admin-confirm-save";
 
@@ -127,8 +128,9 @@ export default function WorkoutForm({
         {triggerLabel ?? (workout ? "Edit" : "Add movement")}
       </button>
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
-          <form
+        <AdminModalPortal>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
+            <form
             onSubmit={handleSubmit}
             className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]"
           >
@@ -241,7 +243,8 @@ export default function WorkoutForm({
               )}
             </div>
           </form>
-        </div>
+          </div>
+        </AdminModalPortal>
       )}
     </>
   );

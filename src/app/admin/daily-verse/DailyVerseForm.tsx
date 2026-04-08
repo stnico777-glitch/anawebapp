@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminModalPortal from "@/components/AdminModalPortal";
 import { confirmAdminSave } from "@/lib/admin-confirm-save";
 
 interface DailyVerseRow {
@@ -85,8 +86,9 @@ export default function DailyVerseForm({ verse }: { verse?: DailyVerseRow }) {
         {verse ? "Edit" : "Add verse"}
       </button>
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]">
+        <AdminModalPortal>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
+            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]">
             <h3 className="text-lg font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
               {verse ? "Edit daily verse" : "Add daily verse"}
             </h3>
@@ -156,8 +158,9 @@ export default function DailyVerseForm({ verse }: { verse?: DailyVerseRow }) {
                 )}
               </div>
             </form>
+            </div>
           </div>
-        </div>
+        </AdminModalPortal>
       )}
     </div>
   );

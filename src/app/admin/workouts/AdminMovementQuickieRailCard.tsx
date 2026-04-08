@@ -11,6 +11,7 @@ import { DAY_CARD_IMAGE_HOVER } from "@/constants/dayCardVisual";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import type { MovementQuickieCardDTO } from "@/lib/movement-layout-types";
 import MovementQuickieCardForm from "./MovementQuickieCardForm";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 const editBtnClass =
   "rounded bg-black/78 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white transition hover:bg-black/88 [font-family:var(--font-body),sans-serif]";
@@ -25,8 +26,7 @@ export default function AdminMovementQuickieRailCard({
   onPreviewPlay?: (card: MovementQuickieCardDTO) => void;
 }) {
   const router = useRouter();
-  const unoptimized =
-    card.imageUrl.startsWith("http://") || card.imageUrl.startsWith("https://");
+  const unoptimized = unoptimizedRemoteImage(card.imageUrl);
 
   async function handleDelete() {
     if (!confirm(`Delete “${card.title}”?`)) return;

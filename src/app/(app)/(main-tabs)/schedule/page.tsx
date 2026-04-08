@@ -7,6 +7,11 @@ import { getDailyVerseForDateInput } from "@/lib/daily-verse";
 import { getCurrentWeekSchedule, formatWeekRange } from "@/lib/schedule";
 import { getSessionForApp } from "@/lib/auth";
 import { getDemoDailyVerse, getDemoWeekSchedule } from "@/lib/demo-preview-data";
+import { prisma } from "@/lib/prisma";
+import {
+  resolveScheduleDayPlaceholderVideoUrl,
+  resolveScheduleDayMovementVideoSrcSync,
+} from "@/lib/schedule-day-movement-defaults";
 
 /** 0 = Monday, 5 = Saturday; Sunday = 7 for "no week day" */
 function getTodayDayIndex(): number {
@@ -61,6 +66,8 @@ async function ScheduleContent({
   const schedule =
     (await getCurrentWeekSchedule(userId)) ?? getDemoWeekSchedule();
 
+  const placeholderVideoUrl = await resolveScheduleDayPlaceholderVideoUrl(prisma);
+
   const weekStart = new Date(schedule.weekStart);
   const todayDayIndex = getTodayDayIndex();
   const overallDone = schedule.days.reduce(
@@ -94,33 +101,45 @@ async function ScheduleContent({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-        {schedule.days.map((day) => (
-          <ScheduleDayCard
-            key={day.id}
-            day={{
-              id: day.id,
-              dayIndex: day.dayIndex,
-              prayerTitle: day.prayerTitle,
-              workoutTitle: day.workoutTitle,
-              affirmationText: day.affirmationText,
-              prayerId: day.prayerId ?? null,
-              workoutId: day.workoutId ?? null,
-              dayImageUrl: day.dayImageUrl ?? null,
-              dayVideoUrl: day.dayVideoUrl ?? null,
-              daySubtext: day.daySubtext ?? null,
-              completion: day.completion
-                ? {
-                    prayerDone: day.completion.prayerDone,
-                    workoutDone: day.completion.workoutDone,
-                    affirmationDone: day.completion.affirmationDone,
-                  }
-                : null,
-            }}
-            isToday={day.dayIndex === todayDayIndex}
-            isLocked={isLocked}
-            lockCtaHref={lockCtaHref}
-          />
-        ))}
+        {schedule.days.map((day) => {
+          const workoutVideoUrl =
+            "workout" in day && day.workout?.videoUrl != null
+              ? day.workout.videoUrl
+              : null;
+          const movementVideoSrc = resolveScheduleDayMovementVideoSrcSync(
+            day,
+            workoutVideoUrl,
+            placeholderVideoUrl,
+          );
+          return (
+            <ScheduleDayCard
+              key={day.id}
+              day={{
+                id: day.id,
+                dayIndex: day.dayIndex,
+                prayerTitle: day.prayerTitle,
+                workoutTitle: day.workoutTitle,
+                affirmationText: day.affirmationText,
+                prayerId: day.prayerId ?? null,
+                workoutId: day.workoutId ?? null,
+                dayImageUrl: day.dayImageUrl ?? null,
+                dayVideoUrl: day.dayVideoUrl ?? null,
+                daySubtext: day.daySubtext ?? null,
+                completion: day.completion
+                  ? {
+                      prayerDone: day.completion.prayerDone,
+                      workoutDone: day.completion.workoutDone,
+                      affirmationDone: day.completion.affirmationDone,
+                    }
+                  : null,
+              }}
+              isToday={day.dayIndex === todayDayIndex}
+              isLocked={isLocked}
+              lockCtaHref={lockCtaHref}
+              movementVideoSrc={movementVideoSrc}
+            />
+          );
+        })}
         <div className="col-span-2 flex justify-center sm:col-span-2 lg:col-span-1 lg:col-start-2">
           <div className="w-full sm:max-w-[calc((100%-1rem)/2)] lg:max-w-none">
             <ScheduleSabbathTile isToday={todayDayIndex === 7} />

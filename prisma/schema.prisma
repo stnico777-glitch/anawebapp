@@ -56,6 +56,10 @@ model ScheduleDay {
   dayImageUrl     String?  @map("day_image_url")
   dayVideoUrl     String?  @map("day_video_url")
   daySubtext      String?  @map("day_subtext")
+  /// Shown on the pre-workout screen before the day video. Falls back to app default when null.
+  movementIntroHeadline String? @map("movement_intro_headline")
+  /// Supporting line under the headline on the pre-workout screen.
+  movementIntroSubtext  String? @map("movement_intro_subtext")
 
   weekSchedule WeekSchedule        @relation(fields: [weekScheduleId], references: [id], onDelete: Cascade)
   prayer       PrayerAudio?        @relation(fields: [prayerId], references: [id], onDelete: SetNull)

@@ -560,6 +560,37 @@ body {
   animation: welcome-email-arrow-in 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/**
+ * Schedule day “Hey, you made it” card — long cream run, then cool mist → soft blue (last ~15%).
+ */
+.movement-schedule-intro-surface {
+  background-color: #fffce9;
+  background-image: linear-gradient(
+    to bottom,
+    #fffce9 0%,
+    #fffce9 58%,
+    #fffef6 72%,
+    #faf8f3 82%,
+    #f2f7fb 91%,
+    #e5eef8 100%
+  );
+}
+
+/* Schedule day movement session — “Hey, you made it” card */
+@keyframes movement-schedule-intro-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-movement-schedule-intro {
+  animation: movement-schedule-intro-in 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* Movement library: full-screen workout player — video + Finish */
 @keyframes movement-overlay-player-fade-in {
   from {
@@ -580,6 +611,11 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .animate-movement-schedule-intro {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
   .movement-overlay-player-fade,
   .movement-overlay-player-fade-delay {
     animation: none;

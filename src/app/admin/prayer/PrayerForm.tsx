@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminModalPortal from "@/components/AdminModalPortal";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import { confirmAdminSave } from "@/lib/admin-confirm-save";
 
@@ -116,11 +117,12 @@ export default function PrayerForm({
         {triggerLabel ?? (prayer ? "Edit" : "Add audio")}
       </button>
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-md rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]"
-          >
+        <AdminModalPortal>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4">
+            <form
+              onSubmit={handleSubmit}
+              className="w-full max-w-md rounded-lg border border-sand bg-white p-6 shadow-[0_8px_40px_rgba(0,0,0,0.12)] [font-family:var(--font-body),sans-serif]"
+            >
             <h2 className="text-lg font-semibold text-foreground [font-family:var(--font-headline),sans-serif]">
               {prayer ? "Edit audio" : "Add audio"}
             </h2>
@@ -212,8 +214,9 @@ export default function PrayerForm({
                 </button>
               )}
             </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        </AdminModalPortal>
       )}
     </>
   );

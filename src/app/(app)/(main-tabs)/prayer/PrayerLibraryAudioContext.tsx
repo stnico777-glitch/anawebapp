@@ -91,8 +91,8 @@ export function usePrayerLibraryAudio(): PrayerLibraryAudioContextValue {
 
 /**
  * Local time/duration for mini player + scrubbers while playing.
- * Uses `timeupdate` on the shared audio element (no extra timer) and pauses updates when the tab is hidden.
- * Snapshots live in state so we never read refs during render (eslint react-hooks/refs).
+ * Uses `requestAnimationFrame` while playing (smooth ~60fps) instead of `timeupdate` (~4Hz).
+ * Pauses the loop when the tab is hidden; snapshots stay in state (no ref reads during render).
  */
 export function usePrayerPlaybackTimes(
   playing: boolean,
@@ -136,16 +136,22 @@ export function usePrayerPlaybackTimes(
       });
       return;
     }
-    if (!docVisible) return;
+    if (!docVisible) {
+      queueMicrotask(() => {
+        syncFromAudio();
+      });
+      return;
+    }
     const a = audioRef.current;
     if (!a) return;
-    queueMicrotask(() => {
+
+    let rafId = 0;
+    const tick = () => {
       syncFromAudio();
-    });
-    a.addEventListener("timeupdate", syncFromAudio);
-    return () => {
-      a.removeEventListener("timeupdate", syncFromAudio);
+      rafId = requestAnimationFrame(tick);
     };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [playing, docVisible, audioRef, syncFromAudio]);
 
   return { currentTime: snapshot.currentTime, duration: snapshot.duration };
@@ -370,6 +376,7 @@ export function PrayerLibraryInlineScrubber() {
             type="range"
             min={0}
             max={100}
+            step={0.01}
             value={progress}
             onChange={(e) => seekPercent(parseFloat(e.target.value))}
             className="h-2 w-full cursor-pointer appearance-none rounded-sm bg-sand [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-sm [&::-webkit-slider-thumb]:bg-sky-blue"
@@ -426,13 +433,13 @@ export function PrayerMiniPlayerBar() {
             aria-hidden
           >
             <div
-              className="h-full rounded-l-full bg-sky-blue transition-[width] duration-75 ease-linear"
+              className="h-full rounded-l-full bg-sky-blue will-change-[width]"
               style={{ width: `${Math.min(100, progress)}%` }}
             />
           </div>
           {/* Playhead — slightly larger than bar for grab visibility */}
           <div
-            className="pointer-events-none absolute top-1/2 z-[5] h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-blue shadow-[0_1px_3px_rgba(0,0,0,0.22)]"
+            className="pointer-events-none absolute top-1/2 z-[5] h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-blue shadow-[0_1px_3px_rgba(0,0,0,0.22)] will-change-[left]"
             style={{ left: `${Math.min(100, Math.max(0, progress))}%` }}
             aria-hidden
           />
@@ -440,7 +447,7 @@ export function PrayerMiniPlayerBar() {
             type="range"
             min={0}
             max={100}
-            step={0.05}
+            step={0.01}
             value={progress}
             onChange={(e) => seekPercent(parseFloat(e.target.value))}
             className="absolute -inset-y-2.5 inset-x-0 z-10 cursor-pointer opacity-0 [appearance:none]"

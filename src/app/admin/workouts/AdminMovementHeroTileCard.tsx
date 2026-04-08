@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { adminJson, readAdminError } from "@/lib/admin-fetch";
 import type { MovementHeroTileDTO } from "@/lib/movement-layout-types";
 import MovementHeroTileForm from "./MovementHeroTileForm";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 const editBtnClass =
   "rounded bg-black/78 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white transition hover:bg-black/88 [font-family:var(--font-body),sans-serif]";
@@ -19,8 +20,7 @@ export default function AdminMovementHeroTileCard({
   onPreviewPlay?: (tile: MovementHeroTileDTO) => void;
 }) {
   const router = useRouter();
-  const unoptimized =
-    tile.imageUrl.startsWith("http://") || tile.imageUrl.startsWith("https://");
+  const unoptimized = unoptimizedRemoteImage(tile.imageUrl);
 
   async function handleDelete() {
     if (!confirm(`Delete hero tile “${tile.title}”?`)) return;

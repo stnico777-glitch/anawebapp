@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    formats: ["image/avif", "image/webp"],
+    /** Cache optimized variants at the CDN/edge (seconds). */
+    minimumCacheTTL: 60 * 60 * 24 * 7,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/**",
+      },
+    ],
+  },
   /** Prisma delegates (`db.dailyVerse`, etc.) are runtime-defined; bundling can leave them undefined under Turbopack. */
   serverExternalPackages: [
     "@prisma/client",
@@ -17,6 +29,11 @@ const nextConfig: NextConfig = {
       { source: "/prayer-wall", destination: "/prayer", permanent: true },
       { source: "/workouts", destination: "/movement", permanent: true },
       { source: "/workouts/:path*", destination: "/movement/:path*", permanent: true },
+      {
+        source: "/movement/schedule-day/:scheduleDayId",
+        destination: "/schedule/movement/:scheduleDayId",
+        permanent: true,
+      },
     ];
   },
 };

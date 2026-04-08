@@ -54,7 +54,8 @@ export async function getWeekScheduleForMonday(
         days: {
           orderBy: { dayIndex: "asc" },
           include: {
-            completions: userId ? { where: { userId }, take: 1 } : false,
+            workout: { select: { videoUrl: true } },
+            ...(userId ? { completions: { where: { userId }, take: 1 } } : {}),
           },
         },
       },

@@ -108,7 +108,7 @@ export default function WorkoutLibrarySection({
                 </p>
               </div>
             ) : (
-              workouts.map((w) => (
+              workouts.map((w, index) => (
                 <MemberWorkoutRailCard
                   key={w.id}
                   workout={w}
@@ -116,6 +116,7 @@ export default function WorkoutLibrarySection({
                   selected={activeWorkout?.id === w.id}
                   showDone={completedWorkoutIds.includes(w.id)}
                   showLock={isGuest}
+                  imagePriority={index < 2}
                 />
               ))
             )
