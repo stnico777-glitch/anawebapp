@@ -131,7 +131,7 @@ export function FormStyleRailCard({
 
   const inner = (
     <>
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-none bg-neutral-900">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-none bg-sand">
         <Image
           src={src}
           alt={alt}
@@ -237,7 +237,7 @@ export function FormStyleRailButton({
       style={{ scrollSnapAlign: "start" }}
     >
       <div
-        className={`relative aspect-[4/5] w-full overflow-hidden rounded-none bg-neutral-900 ${active ? "ring-2 ring-inset ring-sky-blue/90" : ""}`}
+        className={`relative aspect-[4/5] w-full overflow-hidden rounded-none bg-sand ${active ? "ring-2 ring-inset ring-sky-blue/90" : ""}`}
       >
         <Image
           src={src}

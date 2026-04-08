@@ -3,7 +3,7 @@
  * Used by homepage header, mobile menu, and footer.
  */
 export const PRIMARY_NAV = [
-  { href: "/#schedule", label: "Schedule" },
+  { href: "/schedule", label: "Schedule" },
   { href: "/movement", label: "Movement" },
   { href: "/prayer", label: "Audio" },
   { href: "/journaling", label: "Prayer journal" },
@@ -11,7 +11,7 @@ export const PRIMARY_NAV = [
   { href: "/more", label: "More" },
 ] as const;
 
-/** Logged-in app shell: same labels as marketing; schedule is the app route (not homepage anchor). */
+/** Logged-in app shell: same labels and hrefs as marketing `PRIMARY_NAV`. */
 export const APP_PRIMARY_NAV = [
   { href: "/schedule", label: "Schedule" },
   { href: "/movement", label: "Movement" },

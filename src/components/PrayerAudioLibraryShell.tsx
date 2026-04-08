@@ -39,7 +39,7 @@ function MusicSpotlightAlbumTile({
   const router = useRouter();
   const body = (
     <>
-      <div className="relative aspect-square w-full overflow-hidden rounded-sm bg-neutral-900">
+      <div className="relative aspect-square w-full overflow-hidden rounded-sm bg-sand">
         <Image
           src={album.coverUrl}
           alt={`${album.title} — ${album.artist}`}
@@ -239,7 +239,7 @@ export default function PrayerAudioLibraryShell({
                     key={tile.id}
                     type="button"
                     onClick={() => router.push(lockHref)}
-                    className="group relative block aspect-[16/9] w-full cursor-pointer overflow-hidden bg-neutral-900 text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+                    className="group relative block aspect-[16/9] w-full cursor-pointer overflow-hidden bg-sand text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
                     aria-label={`${tile.title} — ${lockHint}`}
                   >
                     <span className={`absolute left-4 top-4 z-10 ${THEMED_LOCK_BADGE_LG_CLASS}`} aria-hidden>
@@ -274,7 +274,7 @@ export default function PrayerAudioLibraryShell({
                   <Link
                     key={tile.id}
                     href={tile.linkHref}
-                    className="group relative block aspect-[16/9] overflow-hidden bg-neutral-900 sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+                    className="group relative block aspect-[16/9] overflow-hidden bg-sand sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
                   >
                     <Image
                       src={tile.imageUrl}

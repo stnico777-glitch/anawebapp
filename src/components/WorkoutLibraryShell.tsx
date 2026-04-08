@@ -110,7 +110,7 @@ export default function WorkoutLibraryShell({
                   key={tile.id}
                   type="button"
                   onClick={() => onPlayHeroTile?.(tile)}
-                  className="group relative aspect-[16/9] w-full overflow-hidden bg-neutral-900 text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
+                  className="group relative aspect-[16/9] w-full overflow-hidden bg-sand text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
                 >
                   {isGuest ? (
                     <span

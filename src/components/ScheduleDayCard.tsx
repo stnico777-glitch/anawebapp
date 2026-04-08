@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 import LockIcon from "@/components/LockIcon";
+import { THEMED_LOCK_BADGE_LG_CLASS } from "@/constants/dayCardVisual";
 
 interface ScheduleDayCardProps {
   day: {
@@ -158,7 +159,7 @@ export default function ScheduleDayCard({
       )}
       {isLocked && (
         <span
-          className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/48 shadow"
+          className={`absolute left-3 top-3 z-10 ${THEMED_LOCK_BADGE_LG_CLASS}`}
           title={resolvedLockHint}
           aria-label={resolvedLockHint}
         >

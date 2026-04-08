@@ -94,7 +94,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
           <ScrollReveal className="min-w-0" delayMs={0} {...FEATURES_CARD_REVEAL}>
             <article className={FEATURE_CARD_SHELL}>
               <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
-                <Link href="/#schedule" className="absolute inset-0 z-10">
+                <Link href="/schedule" className="absolute inset-0 z-10">
                   <span className="sr-only">Weekly schedule — curated prayer, movement and affirmations Mon–Sat</span>
                 </Link>
                 {showLockIcon && (
