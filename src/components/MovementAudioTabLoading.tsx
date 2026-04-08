@@ -1,5 +1,5 @@
 /**
- * Small sky-blue loading state for Movement + Audio tab navigations (see route `loading.tsx` files).
+ * Small sky-blue loading state for Movement, Audio, and Prayer journal tab navigations (see route `loading.tsx` files).
  */
 export default function MovementAudioTabLoading() {
   return (
