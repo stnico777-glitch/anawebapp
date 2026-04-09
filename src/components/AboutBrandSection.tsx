@@ -8,9 +8,8 @@ import {
 } from "@/lib/aboutWaveGeometry";
 
 const WAVE_SVG_TOP_CLASS = "block h-[clamp(88px,18vw,200px)] w-full";
-/** Bottom wave: slightly shorter + gentler overlap on narrow viewports so the curve doesn’t look stretched or mis-seamed. */
-const WAVE_SVG_BOTTOM_CLASS =
-  "block h-[clamp(76px,min(15vw,12dvh),160px)] w-full md:h-[clamp(88px,18vw,200px)]";
+/** Same band height as top so the upper and lower wave edges line up on all breakpoints. */
+const WAVE_SVG_BOTTOM_CLASS = WAVE_SVG_TOP_CLASS;
 
 /** Matches {@link HeroTitle} wordmark structure; theme sky-blue on pale wave band. */
 const wordmarkBase =
@@ -56,7 +55,7 @@ export default function AboutBrandSection() {
       <AboutWaveBand variant="top" />
 
       <div
-        className="relative z-[2] mb-0 -mt-8 flex min-h-[min(52dvh,420px)] items-center justify-center pb-10 md:-mb-8 md:-mt-10 md:min-h-[min(48dvh,460px)] md:pb-0"
+        className="relative z-[2] -mb-6 -mt-8 flex min-h-[min(52dvh,420px)] items-center justify-center md:-mb-8 md:-mt-10 md:min-h-[min(48dvh,460px)]"
         style={{ backgroundColor: ABOUT_WAVE_SECTION_BG }}
       >
         <div className="translate-y-2 md:translate-y-3 flex max-w-[min(100%,42rem)] flex-col items-center gap-6 px-4 md:gap-7">
@@ -84,10 +83,7 @@ export default function AboutBrandSection() {
         </div>
       </div>
 
-      {/* Mobile: single top wave + flat bottom so edges stay square with the band; desktop keeps paired waves */}
-      <div className="hidden md:block">
-        <AboutWaveBand variant="bottom" />
-      </div>
+      <AboutWaveBand variant="bottom" />
     </section>
   );
 }
