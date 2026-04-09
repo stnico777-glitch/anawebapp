@@ -51,12 +51,12 @@ export const metadata: Metadata = {
   themeColor: "#FFFCE9",
   title: "awake+align",
   description:
-    "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
+    "Structured daily faith + fitness: weekly schedules, movement, prayer audio, journaling, and Prayer & Praise community.",
   openGraph: {
     type: "website",
     title: "awake+align",
     description:
-      "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
+      "Structured daily faith + fitness: weekly schedules, movement, prayer audio, journaling, and Prayer & Praise community.",
     images: [
       {
         url: "/awake-align-preview.png",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "awake+align",
     description:
-      "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
+      "Structured daily faith + fitness: weekly schedules, movement, prayer audio, journaling, and Prayer & Praise community.",
     images: [
       {
         url: "/awake-align-preview.png",
@@ -80,11 +80,7 @@ export const metadata: Metadata = {
       },
     ],
   },
-  /** Browser tab / home-screen — brand art (link previews use the same asset via Open Graph). */
-  icons: {
-    icon: "/awake-align-preview.png",
-    apple: "/awake-align-preview.png",
-  },
+  /** Favicons / Apple touch: `app/icon.png` and `app/apple-icon.png` (brand art, same as OG image). */
 };
 
 export default function RootLayout({

@@ -14,7 +14,7 @@ import {
 
 const KAT_BUBBLES = [
   "Hey girl!! Kat here, so proud of you for taking this step to grow in your fitness and faith journey. 💛",
-  "A routine that sticks. Morning flows, prayer, and prayer & praise with others. Let's get you started.",
+  "A routine that sticks. Morning flows, prayer, and our Prayer & Praise community. Let's get you started.",
   "Drop your email below and I'll send you the free trial link.",
 ];
 const SENDER = "Kat";
@@ -44,8 +44,9 @@ export default function WelcomeMessageBubble() {
   const { showTyping, typingFading, visibleMessages } = useChatSequence({
     enabled: visible,
     messageCount: KAT_BUBBLES.length,
-    preserveOnDisable: true,
-    restartOnEnable: false,
+    /** Close/back clears timers; reopen runs the full sequence (avoids stuck typing if user backs out mid-load). */
+    preserveOnDisable: false,
+    restartOnEnable: true,
   });
 
   useEffect(() => {
