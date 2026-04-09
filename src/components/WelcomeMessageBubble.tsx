@@ -216,7 +216,7 @@ export default function WelcomeMessageBubble() {
       onClick={exitAfterSuccess ? undefined : dismiss}
     >
       <div
-        className={`welcome-bubble relative flex h-[min(820px,96dvh)] max-h-[calc(100vh-1.25rem)] w-[min(100%,min(520px,calc(100vw-1rem)))] flex-col overflow-hidden rounded-[2rem] bg-transparent font-[family-name:var(--font-body),sans-serif] shadow-2xl ring-1 ring-black/10 md:h-[740px] md:max-h-[calc(100vh-3rem)] md:w-[min(410px,100%)] ${
+        className={`welcome-bubble relative flex h-[min(860px,97dvh)] max-h-[calc(100vh-1rem)] w-[min(100%,min(560px,calc(100vw-0.75rem)))] flex-col overflow-hidden rounded-[2rem] bg-transparent font-[family-name:var(--font-body),sans-serif] shadow-2xl ring-1 ring-black/10 md:h-[780px] md:max-h-[calc(100vh-3rem)] md:w-[min(440px,100%)] ${
           exitAfterSuccess ? "animate-welcome-bubble-out" : "animate-welcome-bubble-in"
         }`}
         role="dialog"
@@ -334,8 +334,8 @@ export default function WelcomeMessageBubble() {
           <div className="flex flex-col items-start gap-1.5 px-3 pb-2">
             {visibleMessages.map((id) => (
               <div key={id} className="flex justify-start chat-sequence-msg-enter">
-                <div className="relative max-w-[min(88%,300px)] rounded-[18px] bg-[#E5E5EA] px-4 py-2.5">
-                  <p className="text-[16px] leading-[1.38] text-[#000000] hyphens-none">{KAT_BUBBLES[id]}</p>
+                <div className="relative max-w-[min(90%,330px)] rounded-[18px] bg-[#E5E5EA] px-4 py-2.5">
+                  <p className="text-[17px] leading-[1.4] text-[#000000] hyphens-none">{KAT_BUBBLES[id]}</p>
                 </div>
               </div>
             ))}
@@ -358,7 +358,7 @@ export default function WelcomeMessageBubble() {
           {showEmailArrow && (
             <div className="pointer-events-none flex justify-start px-3 pb-2 pt-0.5 sm:px-3">
               <div
-                className="welcome-email-arrow-in h-[152px] w-[152px] shrink-0 drop-shadow-sm"
+                className="welcome-email-arrow-in h-[164px] w-[164px] shrink-0 drop-shadow-sm"
                 style={{
                   backgroundColor: "#788287",
                   maskImage: "url('/welcome-email-arrow.png')",
@@ -378,18 +378,18 @@ export default function WelcomeMessageBubble() {
           {sent && (
             <>
               <div className="flex flex-col items-end px-3 pb-0.5 pt-2">
-                <div className="relative max-w-[min(88%,300px)] rounded-[18px] bg-[#007AFF] px-4 py-2.5">
-                  <p className="text-[16px] leading-[1.38] text-white break-all hyphens-none">{sentMessage}</p>
+                <div className="relative max-w-[min(90%,330px)] rounded-[18px] bg-[#007AFF] px-4 py-2.5">
+                  <p className="text-[17px] leading-[1.4] text-white break-all hyphens-none">{sentMessage}</p>
                 </div>
                 <p className="mt-0.5 text-[10px] text-[#8E8E93]">Delivered</p>
               </div>
               {sentGifShown && (
                 <div className="flex justify-start px-3 pb-1 pt-1 chat-sequence-msg-enter">
-                  <div className="relative max-w-[min(88%,300px)] overflow-hidden rounded-[18px] bg-[#E5E5EA] p-1">
+                  <div className="relative max-w-[min(90%,330px)] overflow-hidden rounded-[18px] bg-[#E5E5EA] p-1">
                     <img
                       src={REPLY_GIF_URL}
                       alt=""
-                      className="max-h-[156px] w-auto rounded-[14px] object-cover"
+                      className="max-h-[172px] w-auto rounded-[14px] object-cover"
                       width={200}
                       height={140}
                     />
@@ -409,8 +409,8 @@ export default function WelcomeMessageBubble() {
               )}
               {sentReplyShown && (
                 <div className="flex justify-start px-3 pb-1 pt-1 chat-sequence-msg-enter">
-                  <div className="relative max-w-[min(88%,300px)] rounded-[18px] bg-[#E5E5EA] px-4 py-2.5">
-                    <p className="text-[16px] leading-[1.38] text-[#000000] hyphens-none">
+                  <div className="relative max-w-[min(90%,330px)] rounded-[18px] bg-[#E5E5EA] px-4 py-2.5">
+                    <p className="text-[17px] leading-[1.4] text-[#000000] hyphens-none">
                       Got it! I'll send you the free trial link soon 💛
                     </p>
                   </div>
@@ -457,7 +457,7 @@ export default function WelcomeMessageBubble() {
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               disabled={sent}
-              className="min-h-[28px] flex-1 rounded-[20px] bg-white px-4 py-1.5 text-[15px] text-[#000000] placeholder:text-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 border border-[#C6C6C8]/50"
+              className="min-h-[30px] flex-1 rounded-[20px] bg-white px-4 py-1.5 text-[16px] text-[#000000] placeholder:text-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30 border border-[#C6C6C8]/50"
             />
             <button
               type="submit"
