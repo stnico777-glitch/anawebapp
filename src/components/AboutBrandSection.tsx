@@ -7,7 +7,10 @@ import {
   ABOUT_WAVE_VIEW_W,
 } from "@/lib/aboutWaveGeometry";
 
-const WAVE_SVG_CLASS = "block h-[clamp(88px,18vw,200px)] w-full";
+const WAVE_SVG_TOP_CLASS = "block h-[clamp(88px,18vw,200px)] w-full";
+/** Bottom wave: slightly shorter + gentler overlap on narrow viewports so the curve doesn’t look stretched or mis-seamed. */
+const WAVE_SVG_BOTTOM_CLASS =
+  "block h-[clamp(76px,min(15vw,12dvh),160px)] w-full md:h-[clamp(88px,18vw,200px)]";
 
 /** Matches {@link HeroTitle} wordmark structure; theme sky-blue on pale wave band. */
 const wordmarkBase =
@@ -21,13 +24,14 @@ function AboutWaveBand({ variant }: { variant: "top" | "bottom" }) {
   const wrapperClass =
     variant === "top"
       ? "pointer-events-none relative z-0 w-full bg-transparent leading-[0] -mt-px"
-      : "pointer-events-none relative z-0 -mt-20 mb-5 w-full bg-transparent leading-[0] md:-mt-28 md:mb-6";
+      : "pointer-events-none relative z-0 -mt-14 mb-4 w-full bg-transparent leading-[0] md:-mt-28 md:mb-6";
   const pathD = variant === "top" ? ABOUT_WAVE_TOP_PATH_D : ABOUT_WAVE_BOTTOM_PATH_D;
+  const svgClass = variant === "top" ? WAVE_SVG_TOP_CLASS : WAVE_SVG_BOTTOM_CLASS;
 
   return (
     <div className={wrapperClass}>
       <svg
-        className={WAVE_SVG_CLASS}
+        className={svgClass}
         viewBox={`0 0 ${ABOUT_WAVE_VIEW_W} ${ABOUT_WAVE_VIEW_H}`}
         preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -52,7 +56,7 @@ export default function AboutBrandSection() {
       <AboutWaveBand variant="top" />
 
       <div
-        className="relative z-[2] -mb-6 -mt-8 flex min-h-[min(52dvh,420px)] items-center justify-center md:-mb-8 md:-mt-10 md:min-h-[min(48dvh,460px)]"
+        className="relative z-[2] mb-0 -mt-8 flex min-h-[min(52dvh,420px)] items-center justify-center pb-10 md:-mb-8 md:-mt-10 md:min-h-[min(48dvh,460px)] md:pb-0"
         style={{ backgroundColor: ABOUT_WAVE_SECTION_BG }}
       >
         <div className="translate-y-2 md:translate-y-3 flex max-w-[min(100%,42rem)] flex-col items-center gap-6 px-4 md:gap-7">
@@ -61,12 +65,12 @@ export default function AboutBrandSection() {
             className="flex w-full flex-col items-center gap-1 md:gap-1.5"
           >
             <span
-              className={`${wordmarkMainClass} block text-center leading-none tracking-[0.2em] text-[clamp(2.35rem,9.75dvh,5.85rem)] md:tracking-[0.24em]`}
+              className={`${wordmarkMainClass} block text-center leading-none tracking-[0.14em] text-[clamp(1.55rem,min(10vw,6.5dvh),2.65rem)] md:text-[clamp(2.35rem,9.75dvh,5.85rem)] md:tracking-[0.24em]`}
             >
               awake+align
             </span>
             <span
-              className={`${wordmarkSubClass} mt-0.5 block text-center leading-tight tracking-[0.32em] text-[clamp(0.64rem,2.4dvh,1.38rem)] md:text-[clamp(0.74rem,2.55dvh,1.45rem)] md:tracking-[0.42em]`}
+              className={`${wordmarkSubClass} mt-0.5 block text-center leading-tight tracking-[0.32em] text-[clamp(0.48rem,min(2.7vw,1.55dvh),0.68rem)] md:text-[clamp(0.74rem,2.55dvh,1.45rem)] md:tracking-[0.42em]`}
             >
               power love sound mind
             </span>
@@ -80,7 +84,10 @@ export default function AboutBrandSection() {
         </div>
       </div>
 
-      <AboutWaveBand variant="bottom" />
+      {/* Mobile: single top wave + flat bottom so edges stay square with the band; desktop keeps paired waves */}
+      <div className="hidden md:block">
+        <AboutWaveBand variant="bottom" />
+      </div>
     </section>
   );
 }
