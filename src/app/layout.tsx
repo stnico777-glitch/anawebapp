@@ -53,12 +53,15 @@ export const metadata: Metadata = {
   description:
     "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
   openGraph: {
+    type: "website",
     title: "awake+align",
     description:
       "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
     images: [
       {
         url: "/awake-align-preview.png",
+        width: 819,
+        height: 1024,
         alt: "awake + align — power love sound mind",
       },
     ],
@@ -68,7 +71,19 @@ export const metadata: Metadata = {
     title: "awake+align",
     description:
       "Structured daily faith + fitness routines, guided schedules, prayer, movement, prayer journal, and prayer & praise.",
-    images: ["/awake-align-preview.png"],
+    images: [
+      {
+        url: "/awake-align-preview.png",
+        width: 819,
+        height: 1024,
+        alt: "awake + align — power love sound mind",
+      },
+    ],
+  },
+  /** Browser tab / home-screen — brand art (link previews use the same asset via Open Graph). */
+  icons: {
+    icon: "/awake-align-preview.png",
+    apple: "/awake-align-preview.png",
   },
 };
 
