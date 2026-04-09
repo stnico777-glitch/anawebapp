@@ -60,6 +60,8 @@ model ScheduleDay {
   movementIntroHeadline String? @map("movement_intro_headline")
   /// Supporting line under the headline on the pre-workout screen.
   movementIntroSubtext  String? @map("movement_intro_subtext")
+  /// Direct MP4/WebM played before the workout (encouragement step). Falls back to app placeholder when null.
+  movementEncouragementVideoUrl String? @map("movement_encouragement_video_url")
 
   weekSchedule WeekSchedule        @relation(fields: [weekScheduleId], references: [id], onDelete: Cascade)
   prayer       PrayerAudio?        @relation(fields: [prayerId], references: [id], onDelete: SetNull)

@@ -99,6 +99,16 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
         ? baseAppNav
         : PRIMARY_NAV;
   const [marketingScrolled, setMarketingScrolled] = useState(false);
+  const mobileMenuRef = useRef<HTMLDetailsElement>(null);
+
+  const closeMobileMenu = () => {
+    if (mobileMenuRef.current) mobileMenuRef.current.open = false;
+  };
+
+  useEffect(() => {
+    closeMobileMenu();
+  }, [pathname]);
+
   useEffect(() => {
     if (variant !== "marketing") return;
     const onScroll = () => {
@@ -153,10 +163,10 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
     <header
       className={`[font-family:var(--font-headline),sans-serif] ${
         marketingClear
-          ? "relative sticky top-0 z-50 border-b-0 bg-transparent transition-[background-color,border-width] duration-300"
+          ? "fixed top-0 left-0 right-0 z-50 border-b-0 bg-transparent transition-[background-color,border-width] duration-300"
           : variant === "marketing"
-            ? "relative sticky top-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
-            : "relative sticky top-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
+            ? "fixed top-0 left-0 right-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
+            : "fixed top-0 left-0 right-0 z-50 border-b border-sand bg-background transition-[background-color,border-color] duration-300"
       }`}
       role="banner"
     >
@@ -197,7 +207,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
           ))}
         </nav>
 
-        <details className="md:hidden">
+        <details ref={mobileMenuRef} className="md:hidden">
           <summary
             className={`list-none cursor-pointer rounded-sm px-2 py-1.5 text-xs font-medium uppercase tracking-wider focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden ${
               creamOnHero
@@ -207,11 +217,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
           >
             Menu
           </summary>
-          <div
-            className={`absolute left-0 right-0 top-full z-50 mt-0 border-b border-sand px-4 py-3 shadow-lg ${
-              variant === "app" ? "bg-background" : "bg-white"
-            }`}
-          >
+          <div className="absolute left-0 right-0 top-full z-50 mt-0 border-b border-sand bg-background px-4 py-3 shadow-lg">
             <div className="flex flex-col gap-1">
               {navItems.map(({ href, label }) => (
                 <Link
@@ -219,6 +225,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                   href={href}
                   prefetch={href === "/community" ? false : undefined}
                   className={mobileLinkClass(href)}
+                  onClick={closeMobileMenu}
                 >
                   {label}
                 </Link>
@@ -235,6 +242,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                       type="button"
                       className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
                       onClick={async () => {
+                        closeMobileMenu();
                         const supabase = tryCreateSupabaseBrowserClient();
                         if (!supabase) return;
                         await supabase.auth.signOut();
@@ -250,12 +258,14 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                     <Link
                       href="/register"
                       className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
+                      onClick={closeMobileMenu}
                     >
                       Join the movement
                     </Link>
                     <Link
                       href="/login"
                       className="rounded-sm py-2 text-left text-xs font-medium uppercase tracking-wider text-gray hover:bg-background hover:opacity-80"
+                      onClick={closeMobileMenu}
                     >
                       Member login
                     </Link>

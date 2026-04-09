@@ -31,12 +31,12 @@ export default function HeroTitle() {
       >
         <span className="flex max-w-[min(100%,42rem)] flex-col items-center gap-1 md:gap-1.5">
           <span
-            className={`${wordmarkMainClass} block text-center leading-none tracking-[0.2em] text-[clamp(2.35rem,9.75dvh,5.85rem)] md:tracking-[0.24em]`}
+            className={`${wordmarkMainClass} block text-center leading-none tracking-[0.14em] text-[clamp(1.55rem,min(10vw,6.5dvh),2.65rem)] md:text-[clamp(2.35rem,9.75dvh,5.85rem)] md:tracking-[0.24em]`}
           >
             awake+align
           </span>
           <span
-            className={`${wordmarkSubClass} mt-0.5 block text-center leading-tight tracking-[0.32em] text-[clamp(0.64rem,2.4dvh,1.38rem)] md:tracking-[0.42em] md:text-[clamp(0.74rem,2.55dvh,1.45rem)]`}
+            className={`${wordmarkSubClass} mt-0.5 block text-center leading-tight tracking-[0.32em] text-[clamp(0.48rem,min(2.7vw,1.55dvh),0.68rem)] md:text-[clamp(0.74rem,2.55dvh,1.45rem)] md:tracking-[0.42em]`}
           >
             power love sound mind
           </span>

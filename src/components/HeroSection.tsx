@@ -5,7 +5,7 @@ import HeroWelcomeChirps from "@/components/HeroWelcomeChirps";
 export default function HeroSection() {
   return (
     <section
-      className="relative z-0 -mt-14 min-h-[100dvh] h-[100dvh] overflow-hidden"
+      className="relative z-0 min-h-[100dvh] h-[100dvh] overflow-hidden"
       aria-label="Hero"
     >
       <HeroWelcomeChirps />

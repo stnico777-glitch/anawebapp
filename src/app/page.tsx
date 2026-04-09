@@ -38,7 +38,7 @@ function HomeBelowFoldFallback() {
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen bg-white font-[family-name:var(--font-body),sans-serif]">
+    <div className="relative min-h-screen max-w-[100%] bg-white font-[family-name:var(--font-body),sans-serif]">
       <a href="#main-content" className="skip-link sr-only">
         Skip to main content
       </a>

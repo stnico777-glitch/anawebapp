@@ -23,6 +23,7 @@ export const PATCH = withAdmin<
     daySubtext,
     movementIntroHeadline,
     movementIntroSubtext,
+    movementEncouragementVideoUrl,
   } = body;
 
   const day = await prisma.scheduleDay.findUnique({
@@ -56,6 +57,10 @@ export const PATCH = withAdmin<
       ...(movementIntroSubtext !== undefined && {
         movementIntroSubtext:
           movementIntroSubtext === "" ? null : movementIntroSubtext,
+      }),
+      ...(movementEncouragementVideoUrl !== undefined && {
+        movementEncouragementVideoUrl:
+          movementEncouragementVideoUrl === "" ? null : movementEncouragementVideoUrl,
       }),
     },
   });

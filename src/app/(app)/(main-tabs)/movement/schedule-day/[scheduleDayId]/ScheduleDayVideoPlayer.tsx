@@ -59,7 +59,7 @@ export default function ScheduleDayVideoPlayer({
         if (ok) hasSyncedCompletionRef.current = true;
       }
       router.refresh();
-      router.push("/schedule");
+      router.push("/journaling");
     } finally {
       setFinishBusy(false);
     }

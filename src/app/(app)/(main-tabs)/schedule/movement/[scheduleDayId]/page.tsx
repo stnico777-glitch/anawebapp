@@ -4,6 +4,7 @@ import ScheduleDayMovementSession from "@/app/(app)/(main-tabs)/movement/schedul
 import {
   resolveScheduleDayPlaceholderVideoUrl,
   resolveScheduleDayMovementVideoSrcSync,
+  resolveScheduleDayEncouragementVideoSrcSync,
 } from "@/lib/schedule-day-movement-defaults";
 
 export default async function ScheduleDayMovementPage({
@@ -34,6 +35,8 @@ export default async function ScheduleDayMovementPage({
 
   const placeholder = await resolveScheduleDayPlaceholderVideoUrl(prisma);
   const videoSrc = resolveScheduleDayMovementVideoSrcSync(day, workout?.videoUrl, placeholder);
+  const encouragementSrc = resolveScheduleDayEncouragementVideoSrcSync(day, placeholder);
+  const encouragementPoster = day.dayImageUrl?.trim() || undefined;
 
   const title = day.workoutTitle?.trim() || workout?.title || "Movement";
 
@@ -41,8 +44,8 @@ export default async function ScheduleDayMovementPage({
     <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-7xl flex-col bg-app-surface px-4 pb-10 pt-8 md:px-6 md:pb-14 md:pt-10">
       <ScheduleDayMovementSession
         scheduleDayId={day.id}
-        introHeadline={day.movementIntroHeadline}
-        introSubtext={day.movementIntroSubtext}
+        encouragementSrc={encouragementSrc}
+        encouragementPoster={encouragementPoster}
         src={videoSrc}
         title={title}
       />

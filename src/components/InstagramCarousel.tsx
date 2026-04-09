@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type CSSProperties,
-} from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 const INSTAGRAM_HANDLE = "awakeandalign_";
 
@@ -16,73 +10,9 @@ const INSTAGRAM_SECTION_LAYOUT =
 
 const INSTAGRAM_INNER_LAYOUT = "relative mx-auto flex w-full max-w-6xl flex-col";
 
-const HEADING_WAVE_MASK_STYLE: CSSProperties = {
-  backgroundColor: "var(--sky-blue)",
-  maskImage: "url('/schedule-wave.png')",
-  WebkitMaskImage: "url('/schedule-wave.png')",
-  maskRepeat: "no-repeat",
-  WebkitMaskRepeat: "no-repeat",
-  maskPosition: "center",
-  WebkitMaskPosition: "center",
-  maskSize: "contain",
-  WebkitMaskSize: "contain",
-};
-
-const HEADING_WAVE_MARK_CLASS =
-  "pointer-events-none h-16 w-[6.5rem] shrink-0 sm:h-[4.5rem] sm:w-32 md:h-20 md:w-36";
-
-const HEADING_WAVE_COUNT = 5;
-/** Narrow viewports: fewer marks so the heading row fits comfortably */
-const HEADING_WAVE_COUNT_MOBILE = 3;
-
 const IG_HEADLINE_DELAY_MS = 0;
-const IG_WAVE_BASE_MS = 95;
-const IG_WAVE_STAGGER_MS = 68;
-const IG_FOLLOW_DELAY_MS = IG_WAVE_BASE_MS + IG_WAVE_STAGGER_MS * HEADING_WAVE_COUNT + 24;
-const IG_FOLLOW_DELAY_MS_MOBILE =
-  IG_WAVE_BASE_MS + IG_WAVE_STAGGER_MS * HEADING_WAVE_COUNT_MOBILE + 24;
-
-function subscribeMinWidth768(onStoreChange: () => void) {
-  const mq = window.matchMedia("(min-width: 768px)");
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getMinWidth768Snapshot() {
-  return window.matchMedia("(min-width: 768px)").matches;
-}
-
-function useMinWidth768() {
-  return useSyncExternalStore(
-    subscribeMinWidth768,
-    getMinWidth768Snapshot,
-    () => true,
-  );
-}
-
-/** Decorative waves to the right of the Instagram section heading — stagger L→R like nav items */
-function HeadingWaveMarks({ revealed, reduceMotion }: { revealed: boolean; reduceMotion: boolean }) {
-  return (
-    <div className="flex shrink-0 items-center gap-0.5" aria-hidden>
-      {Array.from({ length: HEADING_WAVE_COUNT }, (_, i) => (
-        <div
-          key={i}
-          className={`${HEADING_WAVE_MARK_CLASS} ${
-            i >= HEADING_WAVE_COUNT_MOBILE ? "hidden md:block" : ""
-          } ${!reduceMotion && !revealed ? "opacity-0" : ""} ${
-            !reduceMotion && revealed ? "instagram-heading-animate" : ""
-          }`}
-          style={{
-            ...HEADING_WAVE_MASK_STYLE,
-            ...(!reduceMotion && revealed
-              ? ({ "--ig-reveal-delay": `${IG_WAVE_BASE_MS + i * IG_WAVE_STAGGER_MS}ms` } as CSSProperties)
-              : {}),
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+/** Follow link staggers after headline (no decorative waves). */
+const IG_FOLLOW_DELAY_MS = 120;
 
 /** Sun-over-waves mark below the feed — same mask + slate treatment as schedule sun */
 function InstagramSunBelowIcon() {
@@ -237,8 +167,6 @@ export default function InstagramCarousel({ embedRef, embedIframeUrl }: Instagra
   const sectionRef = useRef<HTMLElement | null>(null);
   const [headingRevealed, setHeadingRevealed] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const isMdUp = useMinWidth768();
-  const followRevealDelayMs = isMdUp ? IG_FOLLOW_DELAY_MS : IG_FOLLOW_DELAY_MS_MOBILE;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -296,7 +224,6 @@ export default function InstagramCarousel({ embedRef, embedIframeUrl }: Instagra
             <span className="capitalize">Join the movement</span>{" "}
             <span className="normal-case">@{INSTAGRAM_HANDLE}</span>
           </h2>
-          <HeadingWaveMarks revealed={headingRevealed} reduceMotion={reduceMotion} />
         </div>
         <a
           href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
@@ -305,7 +232,7 @@ export default function InstagramCarousel({ embedRef, embedIframeUrl }: Instagra
           className={`mt-2 inline-block ${igFollowClass}`}
           style={
             !reduceMotion && headingRevealed
-              ? ({ "--ig-reveal-delay": `${followRevealDelayMs}ms` } as CSSProperties)
+              ? ({ "--ig-reveal-delay": `${IG_FOLLOW_DELAY_MS}ms` } as CSSProperties)
               : undefined
           }
         >

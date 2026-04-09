@@ -21,7 +21,7 @@ export default function HeroBrandOverlay({ href = "/schedule", textColor = "whit
         }`}
       >
         <span
-          className={`text-3xl font-normal lowercase leading-[1.35] tracking-[0.12em] [font-family:var(--font-headline),sans-serif] [font-synthesis:none] [text-shadow:0_2px_20px_rgb(0_0_0_/_0.12)] md:text-4xl ${
+          className={`text-2xl font-normal lowercase leading-[1.35] tracking-[0.12em] [font-family:var(--font-headline),sans-serif] [font-synthesis:none] [text-shadow:0_2px_20px_rgb(0_0_0_/_0.12)] md:text-4xl ${
             isCream ? "text-background" : "text-white"
           }`}
         >

@@ -5,11 +5,12 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     /** Cache optimized variants at the CDN/edge (seconds). */
     minimumCacheTTL: 60 * 60 * 24 * 7,
+    /** Allow any path on project hosts (storage, render/image, etc.) — member rails use next/image for local assets. */
     remotePatterns: [
       {
         protocol: "https",
         hostname: "**.supabase.co",
-        pathname: "/storage/**",
+        pathname: "/**",
       },
     ],
   },

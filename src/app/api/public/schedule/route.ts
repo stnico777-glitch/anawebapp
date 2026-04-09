@@ -32,6 +32,9 @@ export async function GET(request: Request) {
         dayImageUrl: d.dayImageUrl,
         dayVideoUrl: d.dayVideoUrl,
         daySubtext: d.daySubtext,
+        movementIntroHeadline: d.movementIntroHeadline,
+        movementIntroSubtext: d.movementIntroSubtext,
+        movementEncouragementVideoUrl: d.movementEncouragementVideoUrl,
       })),
     },
   });

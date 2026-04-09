@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthFromRequest } from "@/lib/auth";
 import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -20,10 +20,10 @@ const patchSchema = z
   .strict();
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
+  const user = await requireAuthFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
@@ -38,7 +38,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
+  const user = await requireAuthFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
@@ -91,10 +91,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
+  const user = await requireAuthFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 

@@ -15,6 +15,17 @@ export function resolveScheduleDayMovementVideoSrcSync(
 }
 
 /**
+ * Encouragement step video before the workout. Uses CMS URL or the same placeholder chain as the workout.
+ */
+export function resolveScheduleDayEncouragementVideoSrcSync(
+  day: { movementEncouragementVideoUrl: string | null },
+  placeholderFallback: string,
+): string {
+  const from = day.movementEncouragementVideoUrl?.trim() || "";
+  return from || placeholderFallback;
+}
+
+/**
  * Fallback MP4 when a schedule day has no CMS `dayVideoUrl` and no linked workout `videoUrl`.
  *
  * 1. `NEXT_PUBLIC_SCHEDULE_DAY_PLACEHOLDER_VIDEO_URL` (e.g. Supabase public URL)

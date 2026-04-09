@@ -81,7 +81,7 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
         </ScrollReveal>
         <div className="mt-5 space-y-6 md:mt-6">
           <ScrollReveal
-            className="relative mx-auto w-full max-w-none"
+            className="relative mx-auto w-full max-w-none overflow-x-clip"
             delayMs={320}
             threshold={0.08}
             rootMargin="0px 0px -8% 0px"

@@ -61,23 +61,25 @@ export default function RoutineDayCardsGrid({ displayDays, showLockIcon }: Routi
           </div>
         </div>
       ))}
-      <div className="w-full">
-        <div
-          className={`${DAY_CARD_FRAME} ${SABBATH_CARD_SHADOW_RING} ${DAY_CARD_SHELL_HOVER}`}
-          aria-label="Sunday Sabbath"
-        >
-          <div className="absolute inset-0 bg-sand">
-            <Image
-              src="/sabbath-birds.png"
-              alt="Sunday — Sabbath rest"
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, min(22vw, 360px)"
-              className={DAY_CARD_IMAGE_HOVER}
-            />
-          </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 px-2.5 pb-2 pt-1 md:px-3 md:pb-2.5 md:pt-1.5">
-            <p className={SABBATH_CARD_TITLE_CLASS}>Sunday</p>
-            <p className={SABBATH_CARD_SUBTITLE_CLASS}>{SUNDAY_WORKOUT_NAME}</p>
+      <div className="col-span-2 flex w-full justify-center sm:col-span-3 md:col-span-1 md:block">
+        <div className="w-full max-w-[calc(50%-0.625rem)] sm:max-w-[calc((100%-2.5rem)/3)] md:max-w-none">
+          <div
+            className={`${DAY_CARD_FRAME} ${SABBATH_CARD_SHADOW_RING} ${DAY_CARD_SHELL_HOVER}`}
+            aria-label="Sunday Sabbath"
+          >
+            <div className="absolute inset-0 bg-sand">
+              <Image
+                src="/sabbath-birds.png"
+                alt="Sunday — Sabbath rest"
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, min(22vw, 360px)"
+                className={DAY_CARD_IMAGE_HOVER}
+              />
+            </div>
+            <div className="absolute inset-x-0 bottom-0 z-10 px-2.5 pb-2 pt-1 md:px-3 md:pb-2.5 md:pt-1.5">
+              <p className={SABBATH_CARD_TITLE_CLASS}>Sunday</p>
+              <p className={SABBATH_CARD_SUBTITLE_CLASS}>{SUNDAY_WORKOUT_NAME}</p>
+            </div>
           </div>
         </div>
       </div>

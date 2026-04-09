@@ -134,7 +134,6 @@ function PrayerAudioLibraryInner({
                     key={p.id}
                     onClick={() => selectPrayer(p.id)}
                     src={src}
-                    alt={p.title}
                     title={p.title}
                     metaLine={prayerMetaLine(p, done)}
                     hoverSummary={prayerHoverSummary(p)}

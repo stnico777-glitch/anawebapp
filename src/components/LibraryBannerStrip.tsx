@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import LockIcon from "@/components/LockIcon";
+import { CatalogCoverImage } from "@/lib/prayer-audio-display";
 import {
   DAY_CARD_IMAGE_HOVER,
   DAY_CARD_SHELL_HOVER,
@@ -209,7 +210,6 @@ export function FormStyleRailCard({
 export function FormStyleRailButton({
   onClick,
   src,
-  alt,
   title,
   metaLine,
   hoverSummary,
@@ -224,7 +224,6 @@ export function FormStyleRailButton({
 }: {
   onClick: () => void;
   src: string;
-  alt: string;
   title: string;
   metaLine: string;
   hoverSummary: string;
@@ -252,15 +251,13 @@ export function FormStyleRailButton({
       <div
         className={`relative aspect-[4/5] w-full overflow-hidden rounded-none bg-sand ${active ? "ring-2 ring-inset ring-sky-blue/90" : ""}`}
       >
-        <Image
+        <CatalogCoverImage
           src={src}
-          alt={alt}
-          fill
-          sizes={GEAR_UP_IMAGE_SIZES}
-          className={DAY_CARD_IMAGE_HOVER}
           unoptimized={unoptimized}
-          loading={imageLoading}
+          className={DAY_CARD_IMAGE_HOVER}
+          sizes={GEAR_UP_IMAGE_SIZES}
           priority={imagePriority}
+          loading={imageLoading}
         />
         <div
           className="pointer-events-none absolute left-2 bottom-2 z-[15] inline-flex max-h-[min(40vh,12rem)] max-w-[min(13.5rem,calc(100%-1rem))] min-h-0 flex-col gap-0 overflow-y-auto rounded-none border border-black/[0.08] bg-white/95 p-2.5 text-left opacity-0 shadow-sm transition-opacity duration-200 ease-out group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none md:left-3 md:bottom-3 md:max-w-[min(13.5rem,calc(100%-1.5rem))]"

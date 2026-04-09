@@ -17,13 +17,15 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-app-surface">
       <SiteHeader variant="app" />
-      <AppTabHeroBand />
-      <AdminCmsNav />
-      <main className="relative z-10 w-full max-w-none overflow-x-hidden pb-10 pt-0 md:pb-12">
-        <div className="mx-auto max-w-7xl px-4 pt-8 md:px-6 md:pt-10 [font-family:var(--font-body),sans-serif]">
-          {children}
-        </div>
-      </main>
+      <div className="pt-14">
+        <AppTabHeroBand />
+        <AdminCmsNav />
+        <main className="relative z-10 w-full max-w-none overflow-x-hidden pb-10 pt-0 md:pb-12">
+          <div className="mx-auto max-w-7xl px-4 pt-8 md:px-6 md:pt-10 [font-family:var(--font-body),sans-serif]">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

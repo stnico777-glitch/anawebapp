@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthFromRequest } from "@/lib/auth";
 import { parseJsonStringArray } from "@/lib/prayer-journal";
 import { PRESET_CATEGORY_SLUGS, slugToLabel } from "@/constants/prayerJournalNav";
 
@@ -14,8 +14,8 @@ function presetSlugsSorted(): string[] {
   });
 }
 
-export async function GET() {
-  const user = await requireAuth();
+export async function GET(request: Request) {
+  const user = await requireAuthFromRequest(request);
   if (!user) {
     return NextResponse.json({ slugs: presetSlugsSorted() });
   }

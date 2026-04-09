@@ -31,8 +31,7 @@ interface Schedule {
     dayImageUrl: string | null;
     dayVideoUrl: string | null;
     daySubtext: string | null;
-    movementIntroHeadline: string | null;
-    movementIntroSubtext: string | null;
+    movementEncouragementVideoUrl: string | null;
   }[];
 }
 
@@ -265,8 +264,7 @@ export default function SchedulesClient({
                 dayImageUrl: day.dayImageUrl,
                 dayVideoUrl: day.dayVideoUrl,
                 daySubtext: day.daySubtext,
-                movementIntroHeadline: day.movementIntroHeadline,
-                movementIntroSubtext: day.movementIntroSubtext,
+                movementEncouragementVideoUrl: day.movementEncouragementVideoUrl,
               };
               const isEditing = editDay?.id === day.id;
               if (isEditing && editDay) {

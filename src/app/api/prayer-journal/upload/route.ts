@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { requireAuth } from "@/lib/auth";
+import { requireAuthFromRequest } from "@/lib/auth";
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
 export async function POST(request: Request) {
-  const user = await requireAuth();
+  const user = await requireAuthFromRequest(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {

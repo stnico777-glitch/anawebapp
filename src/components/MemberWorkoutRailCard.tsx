@@ -33,7 +33,6 @@ export default function MemberWorkoutRailCard({
       <FormStyleRailButton
         onClick={() => onSelect(workout)}
         src={src}
-        alt=""
         title={workout.title}
         metaLine={workoutRailMetaLine(workout)}
         hoverSummary={memberWorkoutRailHoverSummary(workout)}

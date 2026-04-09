@@ -186,7 +186,6 @@ export default function WorkoutLibraryShell({
                   key={p.id}
                   onClick={() => onPlayQuickie?.(p)}
                   src={p.imageUrl}
-                  alt={p.title}
                   title={p.title}
                   metaLine={p.metaLine}
                   hoverSummary={p.summary}
