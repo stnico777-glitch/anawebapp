@@ -4,6 +4,10 @@ export const ABOUT_WAVE_VIEW_W = 1440;
 export const ABOUT_WAVE_VIEW_H = 280;
 /** 1.5 full sine cycles across the width (smooth undulation, not a single bump). */
 export const ABOUT_WAVE_CYCLES = 1.5;
+/**
+ * Half the desktop frequency — one gentler peak + trough across the band (narrow viewports).
+ */
+export const ABOUT_WAVE_CYCLES_MOBILE = ABOUT_WAVE_CYCLES / 2;
 /** Samples along each wave edge (top path, bottom path, frame clip). */
 export const ABOUT_WAVE_STEPS = 80;
 /** Vertical swing of the wave — lower = gentler curves. */
@@ -18,11 +22,24 @@ export const ABOUT_WAVE_SECTION_BG = "#E9EFF5";
 export const ABOUT_WAVE_SECTION_ACCENT = "#6EADE4";
 
 export function waveTheta(x: number): number {
-  return (ABOUT_WAVE_CYCLES * 2 * Math.PI * x) / ABOUT_WAVE_VIEW_W;
+  return waveThetaForCycles(x, ABOUT_WAVE_CYCLES);
+}
+
+function waveThetaForCycles(x: number, cycles: number): number {
+  return (cycles * 2 * Math.PI * x) / ABOUT_WAVE_VIEW_W;
 }
 
 export function waveYTop(x: number, mid: number, amp: number): number {
   return mid + amp * Math.sin(waveTheta(x));
+}
+
+function waveYTopForCycles(
+  x: number,
+  mid: number,
+  amp: number,
+  cycles: number,
+): number {
+  return mid + amp * Math.sin(waveThetaForCycles(x, cycles));
 }
 
 /**
@@ -35,32 +52,46 @@ export function waveYBottom(x: number, amp: number): number {
   return Math.max(0, Math.min(ABOUT_WAVE_VIEW_H, y));
 }
 
-function computeAboutWaveTopPath(): string {
+function waveYBottomForCycles(x: number, amp: number, cycles: number): number {
+  const sin = Math.sin(waveThetaForCycles(x, cycles));
+  const y = ABOUT_WAVE_VIEW_H - amp + amp * sin;
+  return Math.max(0, Math.min(ABOUT_WAVE_VIEW_H, y));
+}
+
+function computeAboutWaveTopPath(cycles: number): string {
   const amp = ABOUT_WAVE_AMP;
   let d = "";
   for (let i = 0; i <= ABOUT_WAVE_STEPS; i++) {
     const x = (i / ABOUT_WAVE_STEPS) * ABOUT_WAVE_VIEW_W;
-    const y = waveYTop(x, ABOUT_WAVE_MID, amp);
+    const y = waveYTopForCycles(x, ABOUT_WAVE_MID, amp, cycles);
     d += i === 0 ? `M ${x},${y.toFixed(2)}` : ` L ${x},${y.toFixed(2)}`;
   }
   d += ` L ${ABOUT_WAVE_VIEW_W},${ABOUT_WAVE_VIEW_H} L 0,${ABOUT_WAVE_VIEW_H} Z`;
   return d;
 }
 
-function computeAboutWaveBottomPath(): string {
+function computeAboutWaveBottomPath(cycles: number): string {
   const amp = ABOUT_WAVE_AMP;
   let d = `M 0,0 L ${ABOUT_WAVE_VIEW_W},0`;
   for (let i = ABOUT_WAVE_STEPS; i >= 0; i--) {
     const x = (i / ABOUT_WAVE_STEPS) * ABOUT_WAVE_VIEW_W;
-    d += ` L ${x},${waveYBottom(x, amp).toFixed(2)}`;
+    d += ` L ${x},${waveYBottomForCycles(x, amp, cycles).toFixed(2)}`;
   }
   return `${d} Z`;
 }
 
 /** Cached `d` for the full-width top wave (computed once at module load). */
-export const ABOUT_WAVE_TOP_PATH_D = computeAboutWaveTopPath();
+export const ABOUT_WAVE_TOP_PATH_D = computeAboutWaveTopPath(ABOUT_WAVE_CYCLES);
 /** Cached `d` for the full-width bottom wave. */
-export const ABOUT_WAVE_BOTTOM_PATH_D = computeAboutWaveBottomPath();
+export const ABOUT_WAVE_BOTTOM_PATH_D = computeAboutWaveBottomPath(ABOUT_WAVE_CYCLES);
+
+/** Softer undulation for `max-md` About band SVGs (half the spatial frequency of desktop). */
+export const ABOUT_WAVE_TOP_PATH_D_MOBILE = computeAboutWaveTopPath(
+  ABOUT_WAVE_CYCLES_MOBILE,
+);
+export const ABOUT_WAVE_BOTTOM_PATH_D_MOBILE = computeAboutWaveBottomPath(
+  ABOUT_WAVE_CYCLES_MOBILE,
+);
 
 /** Full-width hero wave: blue fill below the wavy top edge. */
 export function buildAboutWaveTopPath(): string {

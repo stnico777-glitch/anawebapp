@@ -1,8 +1,10 @@
 import Link from "next/link";
 import {
   ABOUT_WAVE_BOTTOM_PATH_D,
+  ABOUT_WAVE_BOTTOM_PATH_D_MOBILE,
   ABOUT_WAVE_SECTION_BG,
   ABOUT_WAVE_TOP_PATH_D,
+  ABOUT_WAVE_TOP_PATH_D_MOBILE,
   ABOUT_WAVE_VIEW_H,
   ABOUT_WAVE_VIEW_W,
 } from "@/lib/aboutWaveGeometry";
@@ -24,7 +26,10 @@ function AboutWaveBand({ variant }: { variant: "top" | "bottom" }) {
     variant === "top"
       ? "pointer-events-none relative z-0 w-full bg-transparent leading-[0] -mt-px"
       : "pointer-events-none relative z-0 -mt-14 mb-4 w-full bg-transparent leading-[0] md:-mt-28 md:mb-6";
-  const pathD = variant === "top" ? ABOUT_WAVE_TOP_PATH_D : ABOUT_WAVE_BOTTOM_PATH_D;
+  const pathDesktop =
+    variant === "top" ? ABOUT_WAVE_TOP_PATH_D : ABOUT_WAVE_BOTTOM_PATH_D;
+  const pathMobile =
+    variant === "top" ? ABOUT_WAVE_TOP_PATH_D_MOBILE : ABOUT_WAVE_BOTTOM_PATH_D_MOBILE;
   const svgClass = variant === "top" ? WAVE_SVG_TOP_CLASS : WAVE_SVG_BOTTOM_CLASS;
 
   return (
@@ -36,7 +41,9 @@ function AboutWaveBand({ variant }: { variant: "top" | "bottom" }) {
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden
       >
-        <path fill={ABOUT_WAVE_SECTION_BG} d={pathD} />
+        {/* Half the spatial frequency of desktop — one gentler peak/trough across the band */}
+        <path className="md:hidden" fill={ABOUT_WAVE_SECTION_BG} d={pathMobile} />
+        <path className="hidden md:block" fill={ABOUT_WAVE_SECTION_BG} d={pathDesktop} />
       </svg>
     </div>
   );
