@@ -38,28 +38,11 @@ const HERO_CAROUSEL_CLIPS = [
 
 const HERO_POSTER = "/hero-video-poster.jpg";
 
-/** Start loading the off-screen carousel slot this many seconds before the active clip ends. */
-const CAROUSEL_PRELOAD_HIDDEN_LEAD_SEC = 5;
-
 /** First carousel clip only — longer on-screen (timeline still runs to `ended`). */
 const FIRST_HERO_CLIP_PLAYBACK_RATE = 0.75;
 
 function playbackRateForCarouselClipIndex(clipIndex: number): number {
   return clipIndex === 0 ? FIRST_HERO_CLIP_PLAYBACK_RATE : 1;
-}
-
-/**
- * Visible slot always shows `currentIndex`; the other slot preloads the next clip.
- * (Indexing only by slot number was wrong after the first swap and broke A→B order.)
- */
-function carouselClipIndexForSlot(
-  slot: 0 | 1,
-  currentIndex: number,
-  visibleSlot: 0 | 1,
-  len: number,
-): number {
-  if (visibleSlot === slot) return currentIndex;
-  return (currentIndex + 1) % len;
 }
 
 function HeroResponsiveSources({
@@ -83,38 +66,6 @@ function HeroResponsiveSources({
   );
 }
 
-function playWhenReady(el: HTMLVideoElement, onStarted: () => void): void {
-  const run = () => {
-    void el.play().then(onStarted).catch(() => {});
-  };
-  if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-    run();
-    return;
-  }
-  const onCanPlay = () => {
-    el.removeEventListener("canplay", onCanPlay);
-    run();
-  };
-  el.addEventListener("canplay", onCanPlay);
-}
-
-function scheduleSwapOnFirstFrame(video: HTMLVideoElement, onSwap: () => void) {
-  const rvfc = video.requestVideoFrameCallback?.bind(video);
-  if (typeof rvfc === "function") {
-    rvfc(() => {
-      onSwap();
-    });
-    return;
-  }
-  const onTimeUpdate = () => {
-    if (video.currentTime > 0.01) {
-      video.removeEventListener("timeupdate", onTimeUpdate);
-      onSwap();
-    }
-  };
-  video.addEventListener("timeupdate", onTimeUpdate);
-}
-
 function subscribePrefersReducedMotion(onStoreChange: () => void) {
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
   mq.addEventListener("change", onStoreChange);
@@ -129,6 +80,25 @@ function usePrefersReducedMotion() {
   return useSyncExternalStore(
     subscribePrefersReducedMotion,
     getPrefersReducedMotionSnapshot,
+    () => false,
+  );
+}
+
+/** Matches `<source media="(max-width: 768px)">` — mobile carousel uses a dual-`<video>` handoff. */
+function subscribeHeroCarouselMobileLayout(onStoreChange: () => void) {
+  const mq = window.matchMedia("(max-width: 768px)");
+  mq.addEventListener("change", onStoreChange);
+  return () => mq.removeEventListener("change", onStoreChange);
+}
+
+function getHeroCarouselMobileLayoutSnapshot() {
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function useHeroCarouselMobileLayout() {
+  return useSyncExternalStore(
+    subscribeHeroCarouselMobileLayout,
+    getHeroCarouselMobileLayoutSnapshot,
     () => false,
   );
 }
@@ -185,7 +155,79 @@ function objectCoverPositionClass(
   }
 }
 
-function HeroVideoCarousel({
+/**
+ * Marketing hero (tablet/desktop): one `<video>`, swap sources via remount — fine where decode budget is higher.
+ */
+function HeroVideoCarouselDesktop({
+  objectPosition = "center",
+  preferLowBandwidth = false,
+}: {
+  objectPosition?: "center" | "bottom" | "top";
+  preferLowBandwidth?: boolean;
+}) {
+  const coverClass = objectCoverPositionClass(objectPosition);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [clipIndex, setClipIndex] = useState(0);
+  const [wrapRef, heroInView] = useHeroInView<HTMLDivElement>();
+  const docVisible = useDocumentVisibility();
+
+  const len = HERO_CAROUSEL_CLIPS.length;
+  const clip = HERO_CAROUSEL_CLIPS[clipIndex];
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.playbackRate = playbackRateForCarouselClipIndex(clipIndex);
+  }, [clipIndex]);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (!heroInView || !docVisible) {
+      v.pause();
+      return;
+    }
+    void v.play().catch(() => {});
+  }, [heroInView, docVisible, clipIndex]);
+
+  const handleEnded = useCallback(() => {
+    setClipIndex((i) => (i + 1) % len);
+  }, [len]);
+
+  return (
+    <div ref={wrapRef} className="absolute inset-0 isolate overflow-hidden bg-black">
+      <video
+        key={clipIndex}
+        ref={videoRef}
+        className={`absolute inset-0 h-full w-full ${coverClass}`}
+        autoPlay
+        muted
+        playsInline
+        disablePictureInPicture
+        preload="auto"
+        poster={HERO_POSTER}
+        onLoadedMetadata={(e) => {
+          e.currentTarget.playbackRate = playbackRateForCarouselClipIndex(clipIndex);
+        }}
+        onEnded={handleEnded}
+      >
+        <HeroResponsiveSources
+          sm={clip.sm}
+          lg={clip.lg}
+          preferSmOnly={preferLowBandwidth}
+        />
+      </video>
+      <div className="pointer-events-none absolute inset-0 z-[3] bg-black/5" aria-hidden />
+    </div>
+  );
+}
+
+/**
+ * Marketing hero (mobile): two persistent `<video>` elements — WebKit often freezes when remounting
+ * a single element for clip 2. Preload both; swap on `playing` so the last frame of the outgoing clip
+ * stays visible until the next decodes (no black flash).
+ */
+function HeroVideoCarouselMobile({
   objectPosition = "center",
   preferLowBandwidth = false,
 }: {
@@ -195,140 +237,106 @@ function HeroVideoCarousel({
   const coverClass = objectCoverPositionClass(objectPosition);
   const ref0 = useRef<HTMLVideoElement>(null);
   const ref1 = useRef<HTMLVideoElement>(null);
-  const visibleSlotRef = useRef(0);
-  const currentIndexRef = useRef(0);
-  /** Avoid treating a bogus `ended` at load as real (WebKit); some UIs reset `currentTime` to 0 on real `ended`. */
-  const playedPastStartRef = useRef<[boolean, boolean]>([false, false]);
-  const [visibleSlot, setVisibleSlot] = useState<0 | 1>(0);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  /** When true, the hidden slot may use `preload="auto"` so the next clip is ready near the swap. */
-  const [preloadHiddenSlot, setPreloadHiddenSlot] = useState(false);
+  const activeClipRef = useRef<0 | 1>(0);
+  const [activeClip, setActiveClip] = useState<0 | 1>(0);
   const [wrapRef, heroInView] = useHeroInView<HTMLDivElement>();
   const docVisible = useDocumentVisibility();
-  const heroInViewRef = useRef(heroInView);
-  useEffect(() => {
-    heroInViewRef.current = heroInView;
-  }, [heroInView]);
 
-  const len = HERO_CAROUSEL_CLIPS.length;
-  const idx0 = carouselClipIndexForSlot(0, currentIndex, visibleSlot, len);
-  const idx1 = carouselClipIndexForSlot(1, currentIndex, visibleSlot, len);
-  const clip0 = HERO_CAROUSEL_CLIPS[idx0];
-  const clip1 = HERO_CAROUSEL_CLIPS[idx1];
+  const clip0 = HERO_CAROUSEL_CLIPS[0];
+  const clip1 = HERO_CAROUSEL_CLIPS[1];
 
   useEffect(() => {
-    visibleSlotRef.current = visibleSlot;
-  }, [visibleSlot]);
+    activeClipRef.current = activeClip;
+  }, [activeClip]);
 
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    const el0 = ref0.current;
-    const el1 = ref1.current;
-    if (el0) el0.playbackRate = playbackRateForCarouselClipIndex(idx0);
-    if (el1) el1.playbackRate = playbackRateForCarouselClipIndex(idx1);
-  }, [idx0, idx1]);
+  const applyPlaybackRate = useCallback((el: HTMLVideoElement, clip: 0 | 1) => {
+    el.playbackRate = playbackRateForCarouselClipIndex(clip);
+  }, []);
 
   useEffect(() => {
     const v0 = ref0.current;
     const v1 = ref1.current;
-    if (!v0 || !v1) return;
     if (!heroInView || !docVisible) {
-      v0.pause();
-      v1.pause();
+      v0?.pause();
+      v1?.pause();
       return;
     }
-    const active = visibleSlot === 0 ? v0 : v1;
-    void active.play().catch(() => {});
-  }, [heroInView, docVisible, visibleSlot]);
-
-  const onSlotEnded = useCallback((slot: 0 | 1) => {
-    if (!heroInViewRef.current) return;
-    if (visibleSlotRef.current !== slot) return;
-    const endedEl = slot === 0 ? ref0.current : ref1.current;
-    if (
-      endedEl &&
-      Number.isFinite(endedEl.duration) &&
-      endedEl.duration > 1 &&
-      endedEl.currentTime < 0.05 &&
-      !playedPastStartRef.current[slot]
-    ) {
-      return;
+    const playActive = activeClipRef.current === 0 ? v0 : v1;
+    const pauseOther = activeClipRef.current === 0 ? v1 : v0;
+    pauseOther?.pause();
+    if (playActive) {
+      applyPlaybackRate(playActive, activeClipRef.current);
+      void playActive.play().catch(() => {});
     }
-    const v = slot;
-    const h = (1 - v) as 0 | 1;
-    const visibleEl = v === 0 ? ref0.current : ref1.current;
-    const hiddenEl = h === 0 ? ref0.current : ref1.current;
-    if (!visibleEl || !hiddenEl) return;
+  }, [heroInView, docVisible, activeClip, applyPlaybackRate]);
 
-    const nextIdx = (currentIndexRef.current + 1) % len;
-    hiddenEl.playbackRate = playbackRateForCarouselClipIndex(nextIdx);
-    hiddenEl.currentTime = 0;
-    let swapped = false;
-    const doSwap = () => {
-      if (swapped) return;
-      swapped = true;
-      visibleEl.pause();
-      setPreloadHiddenSlot(false);
-      visibleSlotRef.current = h;
-      setVisibleSlot(h);
-      setCurrentIndex((i) => {
-        playedPastStartRef.current[0] = false;
-        playedPastStartRef.current[1] = false;
-        return (i + 1) % len;
+  const handoffTo = useCallback(
+    (next: 0 | 1) => {
+      const outgoing = next === 0 ? ref1.current : ref0.current;
+      const incoming = next === 0 ? ref0.current : ref1.current;
+      if (!incoming) return;
+      const el = incoming;
+
+      let done = false;
+      function finish() {
+        if (done) return;
+        done = true;
+        el.removeEventListener("timeupdate", onTime);
+        setActiveClip(next);
+        activeClipRef.current = next;
+        outgoing?.pause();
+      }
+      const onTime = () => {
+        if (done) return;
+        if (el.currentTime > 0.04) finish();
+      };
+
+      el.currentTime = 0;
+      applyPlaybackRate(el, next);
+      el.addEventListener("playing", finish, { once: true });
+      el.addEventListener("timeupdate", onTime);
+
+      void el.play().catch(() => {
+        finish();
       });
-    };
+    },
+    [applyPlaybackRate],
+  );
 
-    playWhenReady(hiddenEl, () => {
-      scheduleSwapOnFirstFrame(hiddenEl, doSwap);
-    });
-  }, [len]);
+  const onEnded0 = useCallback(() => {
+    if (activeClipRef.current !== 0) return;
+    handoffTo(1);
+  }, [handoffTo]);
 
-  const onCarouselSlotTimeUpdate = (slot: 0 | 1) => (e: SyntheticEvent<HTMLVideoElement>) => {
-    const v = e.currentTarget;
-    const i = slot;
-    if (v.currentTime > 0.12) playedPastStartRef.current[i] = true;
-    if (visibleSlot !== slot) return;
-    const d = v.duration;
-    const t = v.currentTime;
-    if (Number.isFinite(d) && d > 0 && d - t <= CAROUSEL_PRELOAD_HIDDEN_LEAD_SEC) {
-      setPreloadHiddenSlot(true);
-    }
-  };
+  const onEnded1 = useCallback(() => {
+    if (activeClipRef.current !== 1) return;
+    handoffTo(0);
+  }, [handoffTo]);
 
-  const preloadForSlot = (slot: 0 | 1): "auto" | "metadata" | "none" => {
-    if (slot === visibleSlot) return "auto";
-    return preloadHiddenSlot ? "auto" : "none";
+  const videoProps = {
+    className: `absolute inset-0 h-full w-full ${coverClass}`,
+    muted: true as const,
+    playsInline: true as const,
+    disablePictureInPicture: true as const,
+    preload: "auto" as const,
+    poster: HERO_POSTER,
   };
 
   return (
     <div ref={wrapRef} className="absolute inset-0 isolate overflow-hidden bg-black">
-      {/*
-        Stack both clips at full opacity (z-index only). Opacity:0 on the “hidden”
-        slot prevents reliable decode/play on some browsers (esp. WebKit), so the
-        second carousel file never appeared after the first clip ended.
-      */}
       <video
-        key={`c0-${idx0}`}
         ref={ref0}
-        className={`absolute inset-0 h-full w-full ${coverClass}`}
+        {...videoProps}
         style={{
-          zIndex: visibleSlot === 0 ? 2 : 1,
-          pointerEvents: visibleSlot === 0 ? "auto" : "none",
+          opacity: activeClip === 0 ? 1 : 0,
+          zIndex: activeClip === 0 ? 2 : 1,
+          pointerEvents: activeClip === 0 ? ("auto" as const) : ("none" as const),
         }}
-        autoPlay={visibleSlot === 0 && currentIndex === 0}
-        muted
-        playsInline
-        disablePictureInPicture
-        preload={preloadForSlot(0)}
-        poster={HERO_POSTER}
+        autoPlay
         onLoadedMetadata={(e) => {
-          e.currentTarget.playbackRate = playbackRateForCarouselClipIndex(idx0);
+          applyPlaybackRate(e.currentTarget, 0);
         }}
-        onTimeUpdate={onCarouselSlotTimeUpdate(0)}
-        onEnded={() => onSlotEnded(0)}
+        onEnded={onEnded0}
       >
         <HeroResponsiveSources
           sm={clip0.sm}
@@ -337,23 +345,17 @@ function HeroVideoCarousel({
         />
       </video>
       <video
-        key={`c1-${idx1}`}
         ref={ref1}
-        className={`absolute inset-0 h-full w-full ${coverClass}`}
+        {...videoProps}
         style={{
-          zIndex: visibleSlot === 1 ? 2 : 1,
-          pointerEvents: visibleSlot === 1 ? "auto" : "none",
+          opacity: activeClip === 1 ? 1 : 0,
+          zIndex: activeClip === 1 ? 2 : 1,
+          pointerEvents: activeClip === 1 ? ("auto" as const) : ("none" as const),
         }}
-        muted
-        playsInline
-        disablePictureInPicture
-        preload={preloadForSlot(1)}
-        poster={HERO_POSTER}
         onLoadedMetadata={(e) => {
-          e.currentTarget.playbackRate = playbackRateForCarouselClipIndex(idx1);
+          applyPlaybackRate(e.currentTarget, 1);
         }}
-        onTimeUpdate={onCarouselSlotTimeUpdate(1)}
-        onEnded={() => onSlotEnded(1)}
+        onEnded={onEnded1}
       >
         <HeroResponsiveSources
           sm={clip1.sm}
@@ -362,6 +364,26 @@ function HeroVideoCarousel({
         />
       </video>
       <div className="pointer-events-none absolute inset-0 z-[3] bg-black/5" aria-hidden />
+    </div>
+  );
+}
+
+function HeroVideoCarousel({
+  objectPosition = "center",
+  preferLowBandwidth = false,
+}: {
+  objectPosition?: "center" | "bottom" | "top";
+  preferLowBandwidth?: boolean;
+}) {
+  const mobileLayout = useHeroCarouselMobileLayout();
+  const props = { objectPosition, preferLowBandwidth };
+  return (
+    <div className="contents" suppressHydrationWarning>
+      {mobileLayout ? (
+        <HeroVideoCarouselMobile {...props} />
+      ) : (
+        <HeroVideoCarouselDesktop {...props} />
+      )}
     </div>
   );
 }
