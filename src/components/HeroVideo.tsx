@@ -217,7 +217,6 @@ function HeroVideoCarouselDesktop({
           preferSmOnly={preferLowBandwidth}
         />
       </video>
-      <div className="pointer-events-none absolute inset-0 z-[3] bg-black/5" aria-hidden />
     </div>
   );
 }
@@ -363,7 +362,6 @@ function HeroVideoCarouselMobile({
           preferSmOnly={preferLowBandwidth}
         />
       </video>
-      <div className="pointer-events-none absolute inset-0 z-[3] bg-black/5" aria-hidden />
     </div>
   );
 }
@@ -529,7 +527,6 @@ function HeroVideoPlayOnce({
       >
         <HeroResponsiveSources sm={sources.sm} lg={sources.lg} />
       </video>
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-black/5" aria-hidden />
     </div>
   );
 }
@@ -726,7 +723,6 @@ function HeroVideoPingPong({
           <HeroResponsiveSources sm={reverseSources.sm} lg={reverseSources.lg} />
         </video>
       ) : null}
-      <div className="absolute inset-0 bg-black/5" aria-hidden />
     </div>
   );
 }
@@ -747,7 +743,6 @@ function HeroVideoStaticPoster({
         decoding="async"
         fetchPriority="high"
       />
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-black/5" aria-hidden />
     </div>
   );
 }

@@ -1,13 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isValidEncouragePresetKey } from "@/constants/community";
+import { COMMUNITY_VISITOR_COOKIE } from "@/lib/community-participant";
 import {
-  COMMUNITY_VISITOR_COOKIE,
-  newVisitorId,
-} from "@/lib/community-participant";
+  resolveWallParticipant,
+  VISITOR_COOKIE_OPTS,
+} from "@/lib/community-author";
+import { rateLimit, rateLimitActor } from "@/lib/rate-limit";
 import { PrayerRequestInteractionKind } from "@prisma/client";
+import { requireMemberFromRequest } from "@/lib/auth";
 
 const bodySchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("PRAY") }),
@@ -19,35 +21,6 @@ const bodySchema = z.discriminatedUnion("kind", [
     message: z.string().max(200).nullable().optional(),
   }),
 ]);
-
-const VISITOR_COOKIE_OPTS = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
-  path: "/",
-  maxAge: 60 * 60 * 24 * 365,
-};
-
-async function resolveParticipant(req: NextRequest): Promise<{
-  participantKey: string;
-  userId: string | null;
-  visitorCookie: string | null;
-}> {
-  const session = await auth();
-  if (session?.user?.id) {
-    return {
-      participantKey: `user:${session.user.id}`,
-      userId: session.user.id,
-      visitorCookie: null,
-    };
-  }
-  let vid = req.cookies.get(COMMUNITY_VISITOR_COOKIE)?.value ?? null;
-  if (!vid) {
-    vid = newVisitorId();
-    return { participantKey: `v:${vid}`, userId: null, visitorCookie: vid };
-  }
-  return { participantKey: `v:${vid}`, userId: null, visitorCookie: null };
-}
 
 async function snapshotForPrayer(prayerRequestId: string, participantKey: string) {
   const [prayCount, likeCount, encourageCount, userRows] = await Promise.all([
@@ -73,9 +46,7 @@ async function snapshotForPrayer(prayerRequestId: string, participantKey: string
     viewer: {
       pray: prayOn,
       like: likeOn,
-      encourage: enc
-        ? { presetKey: enc.presetKey, message: enc.message }
-        : null,
+      encourage: enc ? { presetKey: enc.presetKey, message: enc.message } : null,
     },
   };
 }
@@ -84,7 +55,20 @@ export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  const { participantKey, userId, visitorCookie } = await resolveParticipant(req);
+  const gate = await requireMemberFromRequest(req);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+
+  const { participantKey, userId, visitorCookie } = await resolveWallParticipant(req);
+
+  /** Anti-spam: 60 interactions per minute per actor. Plenty of headroom for real taps. */
+  const actor = rateLimitActor(userId, req);
+  const limit = rateLimit(`interact:${actor}`, 60, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Slow down a moment — too many reactions too fast." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
 
   const { id: prayerRequestId } = await ctx.params;
   const json = await req.json().catch(() => null);

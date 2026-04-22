@@ -4,11 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import VideoPlayer from "@/components/VideoPlayer";
 
-const FULL_DAY_BODY = {
-  prayerDone: true,
-  workoutDone: true,
-  affirmationDone: true,
-} as const;
+const WORKOUT_DONE_BODY = { workoutDone: true } as const;
 
 export default function ScheduleDayVideoPlayer({
   scheduleDayId,
@@ -28,13 +24,13 @@ export default function ScheduleDayVideoPlayer({
   /** After a successful PATCH this session, skip duplicate calls from video progress. */
   const hasSyncedCompletionRef = useRef(false);
 
-  const patchFullDay = useCallback(async (): Promise<boolean> => {
+  const patchWorkoutDone = useCallback(async (): Promise<boolean> => {
     try {
       const res = await fetch(`/api/schedule/${scheduleDayId}/complete`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify(FULL_DAY_BODY),
+        body: JSON.stringify(WORKOUT_DONE_BODY),
       });
       return res.ok;
     } catch {
@@ -42,20 +38,20 @@ export default function ScheduleDayVideoPlayer({
     }
   }, [scheduleDayId]);
 
-  const markDayFullyComplete = useCallback(async () => {
+  const markWorkoutComplete = useCallback(async () => {
     if (hasSyncedCompletionRef.current) return;
-    const ok = await patchFullDay();
+    const ok = await patchWorkoutDone();
     if (ok) hasSyncedCompletionRef.current = true;
-  }, [patchFullDay]);
+  }, [patchWorkoutDone]);
 
-  const onComplete = markDayFullyComplete;
+  const onComplete = markWorkoutComplete;
 
   const onFinish = useCallback(async () => {
     if (finishBusy) return;
     setFinishBusy(true);
     try {
       if (!hasSyncedCompletionRef.current) {
-        const ok = await patchFullDay();
+        const ok = await patchWorkoutDone();
         if (ok) hasSyncedCompletionRef.current = true;
       }
       router.refresh();
@@ -63,7 +59,7 @@ export default function ScheduleDayVideoPlayer({
     } finally {
       setFinishBusy(false);
     }
-  }, [finishBusy, patchFullDay, router]);
+  }, [finishBusy, patchWorkoutDone, router]);
 
   return (
     <div className="w-full">

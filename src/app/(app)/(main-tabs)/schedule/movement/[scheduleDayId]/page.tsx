@@ -41,7 +41,7 @@ export default async function ScheduleDayMovementPage({
   const title = day.workoutTitle?.trim() || workout?.title || "Movement";
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-7xl flex-col bg-app-surface px-4 pb-10 pt-8 md:px-6 md:pb-14 md:pt-10">
+    <div className="mx-auto flex min-h-[calc(100svh-6rem)] w-full max-w-7xl flex-col justify-center bg-app-surface px-4 py-4 md:px-6 md:py-6">
       <ScheduleDayMovementSession
         scheduleDayId={day.id}
         encouragementSrc={encouragementSrc}

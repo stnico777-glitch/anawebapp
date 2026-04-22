@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { requireAuth } from "@/lib/auth";
+import { requireMemberFromRequest } from "@/lib/auth";
 
 const schema = z.object({
   prayerDone: z.boolean().optional(),
@@ -13,20 +13,17 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ dayId: string }> }
 ) {
-  const user = await requireAuth();
+  const gate = await requireMemberFromRequest(request);
+  if (!gate.ok) {
+    return NextResponse.json(gate.body, { status: gate.status });
+  }
+  const user = gate.user;
+
   const { dayId } = await params;
   const body = await request.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
-
-  if (!user) {
-    return NextResponse.json({
-      prayerDone: parsed.data.prayerDone ?? false,
-      workoutDone: parsed.data.workoutDone ?? false,
-      affirmationDone: parsed.data.affirmationDone ?? false,
-    });
   }
 
   const day = await prisma.scheduleDay.findUnique({

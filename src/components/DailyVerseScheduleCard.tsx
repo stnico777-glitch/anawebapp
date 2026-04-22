@@ -1,11 +1,13 @@
 import Link from "next/link";
 import type { DailyVerse } from "@prisma/client";
-import DailyVerseScheduleActions from "./DailyVerseScheduleActions";
 
 export default function DailyVerseScheduleCard({
   verse,
+  encouragementHref,
 }: {
   verse: DailyVerse | null;
+  /** Today's schedule-day encouragement viewer. Hidden when unavailable (guest / no schedule). */
+  encouragementHref?: string | null;
 }) {
   /** Parity: ScheduleScreen verseCard — same gradient as day-card body (#FFF6E6 → #F3E7CC, diagonal). */
   const verseCardShell =
@@ -22,9 +24,6 @@ export default function DailyVerseScheduleCard({
     );
   }
 
-  const journalLinkSrc = verse.text.length > 1800 ? `${verse.text.slice(0, 1800)}…` : verse.text;
-  const journalLink = `/journaling?verseRef=${encodeURIComponent(verse.reference)}&verseText=${encodeURIComponent(journalLinkSrc)}`;
-
   return (
     <div className={verseCardShell} style={verseCardGradient}>
       <p className="text-xs uppercase tracking-[0.14em] text-gray/90">Verse of the day</p>
@@ -37,19 +36,25 @@ export default function DailyVerseScheduleCard({
       <p className="mt-3 text-sm leading-relaxed text-gray md:text-base line-clamp-4 md:line-clamp-none">
         {verse.text}
       </p>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <DailyVerseScheduleActions
-          reference={verse.reference}
-          text={verse.text}
-          translation={verse.translation}
-        />
-        <Link
-          href={journalLink}
-          className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          Pray with this
-        </Link>
-      </div>
+      {encouragementHref ? (
+        <div className="mt-4 flex justify-center">
+          <Link
+            href={encouragementHref}
+            className="group inline-flex items-center gap-2 rounded-full bg-background px-3.5 py-1.5 text-sm font-semibold text-sky-blue shadow-[0_1px_2px_rgba(120,130,135,0.08)] transition-[transform,box-shadow,background-color] duration-200 ease-out motion-safe:hover:-translate-y-0.5 motion-safe:hover:scale-[1.04] hover:bg-background/90 hover:shadow-[0_6px_18px_rgba(120,130,135,0.18)] active:translate-y-0 active:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-[#FFF6E6] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:scale-100"
+            aria-label="Play today's encouragement"
+          >
+            <span>Encouragement</span>
+            <span
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-blue text-white shadow-sm transition-transform duration-200 ease-out motion-safe:group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              aria-hidden
+            >
+              <svg className="h-3 w-3 translate-x-[1px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

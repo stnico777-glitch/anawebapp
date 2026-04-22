@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuthFromRequest } from "@/lib/auth";
+import { requireAuthFromRequest, requireMemberFromRequest } from "@/lib/auth";
 import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const take = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? "50") || 50));
 
   if (!user) {
-    return NextResponse.json([]);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -36,21 +36,28 @@ export async function GET(request: Request) {
       where: {
         userId: user.id,
         ...(status ? { status } : {}),
-        ...(tag ? { tags: { string_contains: `"${tag}"` } } : {}),
+        // `tags` is a JSON array column; Prisma's `array_contains` for a root-level
+        // JSON array expects an array argument. Passing a raw string matches nothing.
+        ...(tag ? { tags: { array_contains: [tag] } } : {}),
       },
       orderBy: { createdAt: "desc" },
       take,
     });
 
     return NextResponse.json(entries);
-  } catch {
-    return NextResponse.json([]);
+  } catch (err) {
+    console.error("prayer-journal GET failed", err);
+    return NextResponse.json(
+      { error: "Failed to load journal entries" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(request: Request) {
-  const user = await requireAuthFromRequest(request);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const gate = await requireMemberFromRequest(request);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+  const user = gate.user;
 
   const body = await request.json();
   const parsed = createSchema.safeParse(body);

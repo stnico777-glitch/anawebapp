@@ -16,12 +16,3 @@ export type AudioEssentialTileDTO = {
   linkHref: string;
   sortOrder: number;
 };
-
-export type MusicSpotlightAlbumDTO = {
-  id: string;
-  title: string;
-  artist: string;
-  coverUrl: string;
-  listenUrl: string | null;
-  sortOrder: number;
-};

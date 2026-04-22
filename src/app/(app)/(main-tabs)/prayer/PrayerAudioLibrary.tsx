@@ -21,7 +21,6 @@ import {
 import type {
   AudioCollectionCardDTO,
   AudioEssentialTileDTO,
-  MusicSpotlightAlbumDTO,
 } from "@/lib/audio-layout-types";
 
 export type { PrayerLibraryItem };
@@ -34,7 +33,6 @@ type PrayerAudioLibraryProps = {
   layout: {
     collections: AudioCollectionCardDTO[];
     essentials: AudioEssentialTileDTO[];
-    spotlight: MusicSpotlightAlbumDTO[];
   };
 };
 
@@ -142,6 +140,7 @@ function PrayerAudioLibraryInner({
                     lockHint={lockHint}
                     showDone={done}
                     active={active}
+                    imageLoading="eager"
                   />
                 );
               })}
@@ -165,7 +164,6 @@ function PrayerAudioLibraryInner({
       <PrayerAudioLibraryShell
         collectionCards={layout.collections}
         essentialTiles={layout.essentials}
-        spotlightAlbums={layout.spotlight}
         showLibraryArrows={prayers.length > 0}
         renderLibrary={renderLibrary}
         contentLocked={contentLocked}

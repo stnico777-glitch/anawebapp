@@ -10,6 +10,7 @@ import {
 } from "@/components/CommunityIcons";
 import { EncourageForm } from "./PrayerPraiseFeed";
 import CommunityPostDiscussionPanel from "./CommunityPostDiscussionPanel";
+import PostOwnerControls from "./PostOwnerControls";
 
 const ACTION_ICON = "h-4 w-4 shrink-0 opacity-[0.92]";
 
@@ -222,6 +223,21 @@ export default function CommunityPostDetailModal({
                 >
                   {live.content}
                 </p>
+                {live.ownedByViewer ? (
+                  <PostOwnerControls
+                    item={live}
+                    className="mt-3"
+                    onUpdated={(nextContent) =>
+                      setLive((cur) =>
+                        cur ? { ...cur, content: nextContent } : cur,
+                      )
+                    }
+                    onDeleted={() => {
+                      onClose();
+                      router.refresh();
+                    }}
+                  />
+                ) : null}
               </div>
             </div>
 

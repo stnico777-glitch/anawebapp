@@ -23,7 +23,10 @@ export default async function WorkoutDetailPage({
   } catch {
     workout = null;
   }
-  if (!workout) {
+  // Demo workout rows are only served to guest/preview visitors; signed-in members
+  // should get a real 404 when a workout id is missing rather than seeing the
+  // "Big Buck Bunny" placeholder that was used for design previews.
+  if (!workout && !userId) {
     const row = DEMO_WORKOUT_ROWS.find((w) => w.id === id);
     if (row) {
       workout = {

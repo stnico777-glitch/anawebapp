@@ -9,7 +9,10 @@ export type SessionForApp = {
 
 /**
  * For app pages that need userId and isSubscriber.
- * Middleware still protects app routes when not logged in.
+ *
+ * Note: The (main-tabs) app pages are intentionally publicly viewable (see
+ * `src/middleware.ts` `publicPaths`). Feature-level gates inside those pages
+ * and the `requireMember` API helper are what enforce "members can act".
  */
 export async function getSessionForApp(): Promise<SessionForApp> {
   const s = await auth();
@@ -19,14 +22,21 @@ export async function getSessionForApp(): Promise<SessionForApp> {
   };
 }
 
+export type AuthedUser = { id: string; isAdmin: boolean; isSubscriber: boolean };
+
 /**
  * For API routes that require an authenticated user.
- * Returns the session or null; caller should return 401 if null.
+ * Returns the session user (with admin/subscriber flags) or null; caller
+ * should return 401 if null.
  */
-export async function requireAuth(): Promise<{ id: string } | null> {
+export async function requireAuth(): Promise<AuthedUser | null> {
   const s = await auth();
   if (!s?.user?.id) return null;
-  return { id: s.user.id };
+  return {
+    id: s.user.id,
+    isAdmin: s.user.isAdmin ?? false,
+    isSubscriber: s.user.isSubscriber ?? false,
+  };
 }
 
 function bearerTokenFromRequest(request: Request): string | null {
@@ -42,7 +52,7 @@ function bearerTokenFromRequest(request: Request): string | null {
  */
 export async function requireAuthFromRequest(
   request: Request,
-): Promise<{ id: string } | null> {
+): Promise<AuthedUser | null> {
   const cookieUser = await requireAuth();
   if (cookieUser) return cookieUser;
 
@@ -58,5 +68,44 @@ export async function requireAuthFromRequest(
     error,
   } = await supabase.auth.getUser(token);
   if (error || !user?.id) return null;
-  return { id: user.id };
+
+  // Load admin/subscriber flags from profiles for bearer-token callers too.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin, is_subscriber")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return {
+    id: user.id,
+    isAdmin: profile?.is_admin ?? false,
+    isSubscriber: profile?.is_subscriber ?? false,
+  };
+}
+
+export type MemberGateResult =
+  | { ok: true; user: AuthedUser }
+  | { ok: false; status: 401 | 403; body: { error: string } };
+
+/**
+ * Gate an API action behind "signed-in active member".
+ *
+ * Admins bypass the subscription check. Non-members get 403 so the client
+ * can render a "Join / upgrade" CTA instead of bouncing them to /login.
+ */
+export async function requireMemberFromRequest(
+  request: Request,
+): Promise<MemberGateResult> {
+  const user = await requireAuthFromRequest(request);
+  if (!user) {
+    return { ok: false, status: 401, body: { error: "unauthorized" } };
+  }
+  if (!user.isSubscriber && !user.isAdmin) {
+    return {
+      ok: false,
+      status: 403,
+      body: { error: "membership_required" },
+    };
+  }
+  return { ok: true, user };
 }

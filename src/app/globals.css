@@ -473,23 +473,37 @@ body {
   }
 }
 
-@keyframes welcome-bubble-in {
+/* Generic "reveal from below with fade" — used by the More page founder letter expand. */
+@keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(80px);
+    transform: translate3d(0, 6px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes welcome-bubble-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 56px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 .animate-modal-backdrop-in {
-  animation: modal-backdrop-in 0.6s ease-out forwards;
+  animation: modal-backdrop-in 0.22s ease-out forwards;
 }
 
 .animate-welcome-bubble-in {
-  animation: welcome-bubble-in 1s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: welcome-bubble-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 @keyframes modal-backdrop-out {
@@ -693,39 +707,14 @@ body {
   }
 }
 
-/** Christian music spotlight — seamless infinite horizontal scroll (duplicate track + 50% translate) */
-@keyframes music-spotlight-marquee {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-.music-spotlight-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: music-spotlight-marquee 48s linear infinite;
-  will-change: transform;
-}
-
 /* Tab in background: pause infinite marquees + drop compositor hints (see DocumentVisibilityEffects). */
 .doc-hidden-pause-animations .community-bulletin-marquee-track,
 .doc-hidden-pause-animations .community-bulletin-marquee-track-reverse,
-.doc-hidden-pause-animations .music-spotlight-marquee-track,
 .doc-hidden-pause-animations .animate-marquee,
 .doc-hidden-pause-animations .prayer-answer-ring-wave,
 .doc-hidden-pause-animations .animate-welcome-glow {
   animation-play-state: paused !important;
   will-change: auto;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .music-spotlight-marquee-track {
-    animation: none;
-    will-change: auto;
-  }
 }
 
 /** Community “Bloom Scroll” — smooth enter (avoids dynamic chunk placeholder flash). */

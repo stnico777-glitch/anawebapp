@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuthFromRequest } from "@/lib/auth";
+import { requireAuthFromRequest, requireMemberFromRequest } from "@/lib/auth";
 import { PrayerJournalStatus } from "@prisma/client";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
@@ -38,8 +38,9 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuthFromRequest(request);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const gate = await requireMemberFromRequest(request);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+  const user = gate.user;
   const { id } = await params;
 
   const existing = await prisma.prayerJournalEntry.findFirst({
@@ -94,8 +95,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuthFromRequest(request);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const gate = await requireMemberFromRequest(request);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+  const user = gate.user;
   const { id } = await params;
 
   const existing = await prisma.prayerJournalEntry.findFirst({

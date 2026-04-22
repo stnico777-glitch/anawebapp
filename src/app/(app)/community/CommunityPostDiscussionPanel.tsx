@@ -15,6 +15,7 @@ type ThreadComment = {
   authorName: string;
   body: string;
   createdAt: string;
+  ownedByViewer?: boolean;
 };
 
 function formatFeedTime(iso: string): string {
@@ -59,6 +60,10 @@ export function commentsApiPath(item: CommunityFeedItem): string {
     : `/api/praise-reports/${item.id}/comments`;
 }
 
+function commentApiPath(item: CommunityFeedItem, commentId: string): string {
+  return `${commentsApiPath(item)}/${commentId}`;
+}
+
 type CommunityPostDiscussionPanelProps = {
   item: CommunityFeedItem;
   defaultCommentName?: string;
@@ -92,6 +97,13 @@ export default function CommunityPostDiscussionPanel({
   const [commentAuthor, setCommentAuthor] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [showCommentComposer, setShowCommentComposer] = useState(false);
+  const [composerError, setComposerError] = useState<string | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [commentMutateError, setCommentMutateError] = useState<string | null>(
+    null,
+  );
+  const [commentBusyId, setCommentBusyId] = useState<string | null>(null);
   const commentBodyRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -99,6 +111,10 @@ export default function CommunityPostDiscussionPanel({
     setCommentsError(null);
     setCommentAuthor(defaultCommentName?.trim() ?? "");
     setShowCommentComposer(false);
+    setComposerError(null);
+    setEditingCommentId(null);
+    setEditDraft("");
+    setCommentMutateError(null);
   }, [item.id, item.kind, defaultCommentName]);
 
   useEffect(() => {
@@ -137,6 +153,7 @@ export default function CommunityPostDiscussionPanel({
     e.preventDefault();
     if (!commentBody.trim() || postingComment) return;
     setPostingComment(true);
+    setComposerError(null);
     try {
       const res = await fetch(commentsApiPath(item), {
         method: "POST",
@@ -148,16 +165,89 @@ export default function CommunityPostDiscussionPanel({
       });
       const data = (await res.json().catch(() => null)) as
         | { comment: ThreadComment }
-        | { error?: string };
-      if (!res.ok || !data || !("comment" in data)) return;
+        | { error?: string }
+        | null;
+      if (!res.ok || !data || !("comment" in data)) {
+        const errStr = data && "error" in data ? data.error : null;
+        if (errStr === "membership_required") {
+          setComposerError(
+            "You need an active membership to add comments.",
+          );
+        } else if (errStr === "unauthorized" || res.status === 401) {
+          setComposerError("Sign in to add a comment.");
+        } else {
+          setComposerError("Could not post your comment. Try again.");
+        }
+        return;
+      }
       setComments((prev) => [...prev, data.comment]);
       setCommentBody("");
       setShowCommentComposer(false);
       const next = item.commentCount + 1;
       onCommentCountUpdate?.(next);
       router.refresh();
+    } catch {
+      setComposerError("Could not post your comment. Check your connection.");
     } finally {
       setPostingComment(false);
+    }
+  }
+
+  async function saveCommentEdit(commentId: string) {
+    const trimmed = editDraft.trim();
+    if (!trimmed) return;
+    setCommentBusyId(commentId);
+    setCommentMutateError(null);
+    try {
+      const res = await fetch(commentApiPath(item, commentId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: trimmed }),
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { comment: ThreadComment }
+        | { error?: string }
+        | null;
+      if (!res.ok || !data || !("comment" in data)) {
+        setCommentMutateError(
+          data && "error" in data && data.error === "membership_required"
+            ? "Membership required to edit comments."
+            : "Could not save changes. Try again.",
+        );
+        return;
+      }
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId
+            ? { ...c, body: data.comment.body, ownedByViewer: true }
+            : c,
+        ),
+      );
+      setEditingCommentId(null);
+      setEditDraft("");
+    } finally {
+      setCommentBusyId(null);
+    }
+  }
+
+  async function deleteComment(commentId: string) {
+    if (!window.confirm("Delete this comment? This can't be undone.")) return;
+    setCommentBusyId(commentId);
+    setCommentMutateError(null);
+    try {
+      const res = await fetch(commentApiPath(item, commentId), {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        setCommentMutateError("Could not delete comment. Try again.");
+        return;
+      }
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+      const next = Math.max(0, item.commentCount - 1);
+      onCommentCountUpdate?.(next);
+      router.refresh();
+    } finally {
+      setCommentBusyId(null);
     }
   }
 
@@ -195,35 +285,102 @@ export default function CommunityPostDiscussionPanel({
         <p className="mt-3 text-sm text-gray">No replies yet.</p>
       ) : (
         <ul className="mt-3 space-y-4" aria-label="Comment thread">
-          {comments.map((c) => (
-            <li key={c.id} className="flex gap-2.5 sm:gap-3">
-              <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-app-surface text-xs font-semibold text-foreground ring-1 ring-sand"
-                aria-hidden
-              >
-                {feedAvatarLetter(c.authorName, c.body)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <header className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-                  <span className="text-sm font-semibold text-foreground">
-                    {c.authorName}
-                  </span>
-                  <span className="text-gray">·</span>
-                  <time
-                    dateTime={c.createdAt}
-                    className="text-xs text-gray"
-                  >
-                    {formatFeedTime(c.createdAt)}
-                  </time>
-                </header>
-                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                  {c.body}
-                </p>
-              </div>
-            </li>
-          ))}
+          {comments.map((c) => {
+            const isEditing = editingCommentId === c.id;
+            const busy = commentBusyId === c.id;
+            return (
+              <li key={c.id} className="flex gap-2.5 sm:gap-3">
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-app-surface text-xs font-semibold text-foreground ring-1 ring-sand"
+                  aria-hidden
+                >
+                  {feedAvatarLetter(c.authorName, c.body)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <header className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                    <span className="text-sm font-semibold text-foreground">
+                      {c.authorName}
+                    </span>
+                    <span className="text-gray">·</span>
+                    <time dateTime={c.createdAt} className="text-xs text-gray">
+                      {formatFeedTime(c.createdAt)}
+                    </time>
+                  </header>
+                  {isEditing ? (
+                    <div className="mt-2 space-y-2">
+                      <textarea
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        maxLength={2000}
+                        rows={3}
+                        disabled={busy}
+                        className="w-full resize-y rounded-lg border border-sand bg-white px-3 py-2 text-sm text-foreground focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={busy || !editDraft.trim()}
+                          onClick={() => saveCommentEdit(c.id)}
+                          className="rounded-full bg-sky-blue px-3 py-1.5 text-xs font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {busy ? "Saving…" : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            setEditingCommentId(null);
+                            setEditDraft("");
+                          }}
+                          className="rounded-full border border-sand bg-white px-3 py-1.5 text-xs font-medium text-gray hover:bg-app-surface"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                        {c.body}
+                      </p>
+                      {c.ownedByViewer ? (
+                        <div className="mt-1 flex flex-wrap gap-2 text-xs">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              setEditingCommentId(c.id);
+                              setEditDraft(c.body);
+                              setCommentMutateError(null);
+                            }}
+                            className="text-foreground/80 underline-offset-2 hover:underline disabled:opacity-60"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => deleteComment(c.id)}
+                            className="text-accent-pink underline-offset-2 hover:underline disabled:opacity-60"
+                          >
+                            {busy ? "Deleting…" : "Delete"}
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
+
+      {commentMutateError ? (
+        <p className="mt-2 text-xs text-accent-pink" role="alert">
+          {commentMutateError}
+        </p>
+      ) : null}
 
       {showCommentComposer ? (
         <form
@@ -264,6 +421,11 @@ export default function CommunityPostDiscussionPanel({
           >
             {postingComment ? "Posting…" : "Post comment"}
           </button>
+          {composerError ? (
+            <p className="text-xs text-accent-pink" role="alert">
+              {composerError}
+            </p>
+          ) : null}
         </form>
       ) : null}
     </div>

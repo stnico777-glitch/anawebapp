@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createClient } from "@supabase/supabase-js";
-import { PrayerRequestInteractionKind, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { addDaysUtc, utcMondayMidnightForInstant } from "../src/lib/weekScheduleCalendar";
@@ -11,7 +11,6 @@ import { toEntryDate } from "../src/lib/journal";
 import {
   DEFAULT_AUDIO_COLLECTION_CARDS,
   DEFAULT_AUDIO_ESSENTIAL_TILES,
-  DEFAULT_MUSIC_SPOTLIGHT_ALBUMS,
 } from "../src/lib/audio-layout-defaults";
 import { ensureMovementLayoutSeeded, seedMovementHeroAndQuickieIfEmpty } from "../src/lib/movement-layout";
 
@@ -123,18 +122,6 @@ async function seedAudioTabLayout() {
         subtitle: row.subtitle,
         imageUrl: row.imageUrl,
         linkHref: row.linkHref,
-        sortOrder: i,
-      })),
-    });
-  }
-  const nS = await prisma.musicSpotlightEntry.count();
-  if (nS === 0) {
-    await prisma.musicSpotlightEntry.createMany({
-      data: DEFAULT_MUSIC_SPOTLIGHT_ALBUMS.map((row, i) => ({
-        title: row.title,
-        artist: row.artist,
-        coverUrl: row.coverUrl,
-        listenUrl: row.listenUrl,
         sortOrder: i,
       })),
     });
@@ -355,151 +342,6 @@ async function main() {
           reference: v.reference,
           text: v.text,
           translation: v.translation,
-        },
-      });
-    }
-  }
-
-  const prayerRequestCount = await prisma.prayerRequest.count();
-  if (prayerRequestCount === 0) {
-    const base = new Date();
-    const makeDate = (daysAgo: number) => {
-      const d = new Date(base);
-      d.setDate(d.getDate() - daysAgo);
-      return d;
-    };
-    await prisma.prayerRequest.createMany({
-      data: [
-        { content: "Please pray for my sister’s health. She’s going through a difficult season and we’re trusting God for healing. Thank you ♡", authorName: "Megan", createdAt: makeDate(0) },
-        { content: "Closer relationship with Jesus. I want to hear His voice more clearly and follow where He leads.", authorName: "James", createdAt: makeDate(1) },
-        { content: "Dear Lord, I need Your guidance with a big decision at work. Please walk with me in clarity and peace.", authorName: "Rachel", createdAt: makeDate(1) },
-        { content: "Praying for my family—that we would grow in faith together and support each other. Grateful for this community ♡", authorName: "David", createdAt: makeDate(2) },
-        { content: "Thank you for your prayers. My mom’s surgery went well. Please keep praying for her recovery.", authorName: "Sarah", createdAt: makeDate(2) },
-        { content: "Strength for the week ahead. Body, mind, and spirit—I want to honor God in all of it.", authorName: "Chris", createdAt: makeDate(3) },
-        { content: "Please pray for peace in our home. We’re going through some tension and need God’s grace to lead.", authorName: "Elena", createdAt: makeDate(4) },
-        { content: "Wisdom as a parent. I want to point my kids to Jesus and love them well. ♡", authorName: "Michael", createdAt: makeDate(5) },
-        { content: "Thankful for this prayer wall. Please pray that I would stay consistent in my quiet time and movement.", authorName: "Jordan", createdAt: makeDate(6) },
-      ],
-    });
-  }
-
-  /** Mock praise wall posts — idempotent: skips rows already in DB (matched by exact content). */
-  const mockPraiseReports: { content: string; authorName: string; daysAgo: number }[] = [
-    { content: "God answered prayer — my contract renewal came through! Thank you for standing with me in faith.", authorName: "Taylor", daysAgo: 0 },
-    { content: "A whole month sober. Grateful to Jesus and this community for every encouraging word.", authorName: "Alex", daysAgo: 0 },
-    { content: "We welcomed our daughter this week. Healthy, strong, and so loved. Praise God from whom all blessings flow.", authorName: "Priya", daysAgo: 1 },
-    { content: "Finally made peace with my sister after years of distance. Only God could have softened both of our hearts.", authorName: "Marcus", daysAgo: 1 },
-    { content: "Passed my board exam on the second try. Studied with scriptures plastered on the wall — He is faithful.", authorName: "Nina", daysAgo: 2 },
-    { content: "Church small group feels like family now. Didn’t think I’d ever belong somewhere again — He restores.", authorName: "Leo", daysAgo: 2 },
-    { content: "Rain after a long drought, literally and spiritually. Fields and soul both drinking it in.", authorName: "Aisha", daysAgo: 3 },
-    { content: "Ten years married today. Through valleys and mountaintops, grace has carried us. Celebrating Jesus.", authorName: "Jon + Beth", daysAgo: 4 },
-    { content: "First paycheck from the new career path. Scared to leap; God caught me. Grateful isn’t big enough.", authorName: "Sam", daysAgo: 0 },
-    { content: "Our foster placement became adoption final today. The judge cried. We all did. God is kind.", authorName: "Renee", daysAgo: 1 },
-    { content: "Tumor markers came back clear. Still processing the gift. Thank you for praying when I couldn’t speak.", authorName: "Damon", daysAgo: 1 },
-    { content: "Spoke at youth night — three kids stayed after to pray. That’s the win. Not my talk; His presence.", authorName: "Imani", daysAgo: 2 },
-    { content: "Paid off the last student loan. Snowball + Sabbath rhythm + unexpected bonus. Only God.", authorName: "Greg", daysAgo: 3 },
-    { content: "Mom came to Easter service with me. First time in fifteen years. Soft tears, loud worship.", authorName: "Viv", daysAgo: 3 },
-    { content: "Garden froze last week; this morning we still had strawberries. Small mercy, loud praise.", authorName: "Hank", daysAgo: 4 },
-    { content: "Language exam passed — we’re cleared to serve overseas next spring. Stunned and thankful.", authorName: "Noah & Kate", daysAgo: 4 },
-    { content: "Therapist said she sees real change. I feel it too. Jesus + work + community = hope.", authorName: "Monica", daysAgo: 5 },
-    { content: "Coffee shop barista asked why I’m peaceful. Got to share the whole story. Best tip jar ever.", authorName: "Eli", daysAgo: 5 },
-    { content: "House offer accepted under asking. Not lucky — led. Closing next month. Hallelujah.", authorName: "Tessa", daysAgo: 6 },
-    { content: "Band played our first originals night. Room sang along. What started in the garage ended in worship.", authorName: "Jules", daysAgo: 6 },
-  ];
-
-  const praiseContentSet = new Set(
-    (await prisma.praiseReport.findMany({ select: { content: true } })).map((r) => r.content),
-  );
-  const praiseBase = new Date();
-  const praiseAt = (daysAgo: number) => {
-    const d = new Date(praiseBase);
-    d.setDate(d.getDate() - daysAgo);
-    return d;
-  };
-  const newPraises = mockPraiseReports
-    .filter((m) => !praiseContentSet.has(m.content))
-    .map((m) => ({
-      content: m.content,
-      authorName: m.authorName,
-      createdAt: praiseAt(m.daysAgo),
-    }));
-  if (newPraises.length > 0) {
-    await prisma.praiseReport.createMany({ data: newPraises });
-  }
-
-  /**
-   * Demo engagement counts (idempotent): synthetic participants so the wall shows real-looking tallies.
-   * Keys are prefixed so they never collide with real `user:` / `v:` participants.
-   */
-  const demoPrayTargets = [3, 12, 5, 20, 8, 1, 14, 7, 9, 24, 6, 11, 15, 4, 18];
-  const demoEncTargets = [2, 5, 1, 8, 3, 4, 6, 2, 7, 9, 3, 5, 4, 1, 6];
-  const demoCelTargets = [4, 14, 6, 18, 9, 2, 11, 5, 16, 7, 12, 20, 8, 3, 22];
-
-  const allPrayers = await prisma.prayerRequest.findMany({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-  for (let i = 0; i < allPrayers.length; i++) {
-    const { id } = allPrayers[i]!;
-    const wantPray = demoPrayTargets[i % demoPrayTargets.length]!;
-    const wantEnc = demoEncTargets[i % demoEncTargets.length]!;
-    const prayPrefix = `seed:demo:${id}:pray:`;
-    const encPrefix = `seed:demo:${id}:enc:`;
-
-    const havePray = await prisma.prayerRequestInteraction.count({
-      where: {
-        prayerRequestId: id,
-        kind: PrayerRequestInteractionKind.PRAY,
-        participantKey: { startsWith: prayPrefix },
-      },
-    });
-    for (let j = havePray; j < wantPray; j++) {
-      await prisma.prayerRequestInteraction.create({
-        data: {
-          prayerRequestId: id,
-          participantKey: `${prayPrefix}${j}`,
-          kind: PrayerRequestInteractionKind.PRAY,
-        },
-      });
-    }
-
-    const haveEnc = await prisma.prayerRequestInteraction.count({
-      where: {
-        prayerRequestId: id,
-        kind: PrayerRequestInteractionKind.ENCOURAGE,
-        participantKey: { startsWith: encPrefix },
-      },
-    });
-    for (let j = haveEnc; j < wantEnc; j++) {
-      await prisma.prayerRequestInteraction.create({
-        data: {
-          prayerRequestId: id,
-          participantKey: `${encPrefix}${j}`,
-          kind: PrayerRequestInteractionKind.ENCOURAGE,
-        },
-      });
-    }
-  }
-
-  const allPraises = await prisma.praiseReport.findMany({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-  for (let i = 0; i < allPraises.length; i++) {
-    const { id } = allPraises[i]!;
-    const want = demoCelTargets[i % demoCelTargets.length]!;
-    const celPrefix = `seed:demo:${id}:cel:`;
-    const have = await prisma.praiseReportLike.count({
-      where: {
-        praiseReportId: id,
-        participantKey: { startsWith: celPrefix },
-      },
-    });
-    for (let j = have; j < want; j++) {
-      await prisma.praiseReportLike.create({
-        data: {
-          praiseReportId: id,
-          participantKey: `${celPrefix}${j}`,
         },
       });
     }

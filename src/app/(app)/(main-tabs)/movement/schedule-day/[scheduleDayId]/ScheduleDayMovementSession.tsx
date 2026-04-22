@@ -61,14 +61,22 @@ export default function ScheduleDayMovementSession({
     setStep("workout");
   }, []);
 
+  /** Encouragement video: high priority, fires as soon as the intro chrome lands. */
   useEffect(() => {
     if (!introEntered || !encouragementSrc.trim()) return;
-    injectScheduleMovementVideoPreload(encouragementSrc);
+    injectScheduleMovementVideoPreload(encouragementSrc, { priority: "high" });
   }, [introEntered, encouragementSrc]);
 
+  /** Workout video: low priority + 1.5s delay so the encouragement gets clean
+   *  bandwidth to start playing first. Once it's rolling, the workout quietly
+   *  fills the buffer in the background — so by the time the user taps Next
+   *  after the encouragement, the workout is ready to play instantly. */
   useEffect(() => {
     if (!introEntered || !src.trim()) return;
-    injectScheduleMovementVideoPreload(src);
+    const timeoutId = setTimeout(() => {
+      injectScheduleMovementVideoPreload(src, { priority: "low" });
+    }, 1500);
+    return () => clearTimeout(timeoutId);
   }, [introEntered, src]);
 
   const encouragementOpacity = introEntered && step === "encouragement" ? 1 : 0;

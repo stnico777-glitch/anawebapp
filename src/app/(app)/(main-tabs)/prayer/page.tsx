@@ -28,7 +28,10 @@ export default async function PrayerPage() {
     // e.g. Vercel without hosted DATABASE_URL
   }
 
-  if (prayers.length === 0) {
+  // Guests see demo library so the marketing preview still looks populated. Real signed-in
+  // users see an empty library (PrayerAudioLibrary will render its empty state) rather than
+  // believing demo tracks are real content.
+  if (prayers.length === 0 && !userId) {
     prayers = DEMO_PRAYER_LIBRARY as PrayerLibraryItem[];
   }
 

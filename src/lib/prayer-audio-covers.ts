@@ -1,4 +1,5 @@
 import { AUDIO_LIBRARY_MIXED_COVER_CYCLE } from "@/constants/audioLibraryCovers";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 export type PrayerLibraryItem = {
   id: string;
@@ -49,8 +50,7 @@ export function coverForPrayer(
     if (!u) {
       return { src: FALLBACK_COVERS[index % FALLBACK_COVERS.length]!, unoptimized: false };
     }
-    const unoptimized = /^https?:\/\//i.test(u);
-    return { src: u, unoptimized };
+    return { src: u, unoptimized: unoptimizedRemoteImage(u) };
   }
   return { src: FALLBACK_COVERS[index % FALLBACK_COVERS.length]!, unoptimized: false };
 }

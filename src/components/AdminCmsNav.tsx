@@ -10,6 +10,8 @@ const ITEMS = [
   { href: "/admin/prayer-journal", label: "Journal" },
   { href: "/admin/schedules", label: "Schedules" },
   { href: "/admin/daily-verse", label: "Daily verses" },
+  { href: "/admin/community", label: "Prayer & Praise" },
+  { href: "/admin/feedback", label: "Feedback" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {

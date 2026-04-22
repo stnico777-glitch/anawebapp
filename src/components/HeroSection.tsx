@@ -1,6 +1,5 @@
 import HeroVideo from "@/components/HeroVideo";
 import HeroTitle from "@/components/HeroTitle";
-import HeroWelcomeChirps from "@/components/HeroWelcomeChirps";
 
 export default function HeroSection() {
   return (
@@ -8,7 +7,6 @@ export default function HeroSection() {
       className="relative z-0 min-h-[100dvh] h-[100dvh] overflow-hidden"
       aria-label="Hero"
     >
-      <HeroWelcomeChirps />
       <HeroVideo variant="carousel" />
       <main id="main-content" className="relative z-10 flex h-full flex-col items-center justify-start pt-[min(14rem,30dvh)] px-6 text-center md:pt-[min(17rem,35dvh)] lg:pt-[min(18.5rem,37dvh)]" role="main">
         <HeroTitle />

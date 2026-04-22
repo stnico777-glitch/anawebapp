@@ -18,6 +18,8 @@ export type ScheduleDayEditPayload = {
   dayImageUrl: string | null;
   dayVideoUrl: string | null;
   daySubtext: string | null;
+  movementIntroHeadline: string | null;
+  movementIntroSubtext: string | null;
   movementEncouragementVideoUrl: string | null;
 };
 
@@ -38,6 +40,8 @@ export default function ScheduleDayInlineEditor({
     dayImageUrl: "",
     dayVideoUrl: "",
     daySubtext: "",
+    movementIntroHeadline: "",
+    movementIntroSubtext: "",
     movementEncouragementVideoUrl: "",
     prayerTitle: "",
     workoutTitle: "",
@@ -49,6 +53,8 @@ export default function ScheduleDayInlineEditor({
       dayImageUrl: day.dayImageUrl ?? "",
       dayVideoUrl: day.dayVideoUrl ?? "",
       daySubtext: day.daySubtext ?? "",
+      movementIntroHeadline: day.movementIntroHeadline ?? "",
+      movementIntroSubtext: day.movementIntroSubtext ?? "",
       movementEncouragementVideoUrl: day.movementEncouragementVideoUrl ?? "",
       prayerTitle: day.prayerTitle ?? "",
       workoutTitle: day.workoutTitle ?? "",
@@ -69,11 +75,11 @@ export default function ScheduleDayInlineEditor({
             dayImageUrl: form.dayImageUrl,
             dayVideoUrl: form.dayVideoUrl,
             daySubtext: form.daySubtext,
+            movementIntroHeadline: form.movementIntroHeadline,
+            movementIntroSubtext: form.movementIntroSubtext,
             movementEncouragementVideoUrl: form.movementEncouragementVideoUrl,
             prayerTitle: form.prayerTitle.trim(),
-            prayerId: null,
             workoutTitle: form.workoutTitle.trim(),
-            workoutId: null,
             affirmationText: form.affirmationText,
           }),
         },
@@ -161,6 +167,38 @@ export default function ScheduleDayInlineEditor({
             value={form.dayVideoUrl}
             onChange={(e) => setForm((f) => ({ ...f, dayVideoUrl: e.target.value }))}
             placeholder="https://… (optional)"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Movement intro headline</label>
+          <p className="mt-0.5 text-xs text-gray">
+            Shown on the pre-workout screen before the day video. Leave empty to use the app default.
+          </p>
+          <input
+            type="text"
+            className={inputClass}
+            value={form.movementIntroHeadline}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, movementIntroHeadline: e.target.value }))
+            }
+            placeholder="e.g. Move with intention today"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Movement intro subtext</label>
+          <p className="mt-0.5 text-xs text-gray">
+            Supporting line under the intro headline.
+          </p>
+          <input
+            type="text"
+            className={inputClass}
+            value={form.movementIntroSubtext}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, movementIntroSubtext: e.target.value }))
+            }
+            placeholder="Optional subtext"
           />
         </div>
 

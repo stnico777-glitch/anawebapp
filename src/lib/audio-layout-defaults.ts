@@ -2,7 +2,6 @@ import { PRAYER_COVER_PATHS } from "@/constants/prayerCovers";
 import type {
   AudioCollectionCardDTO,
   AudioEssentialTileDTO,
-  MusicSpotlightAlbumDTO,
 } from "@/lib/audio-layout-types";
 
 const PLAN_HREF = "/prayer#prayer-library";
@@ -100,72 +99,5 @@ export const DEFAULT_AUDIO_ESSENTIAL_TILES: AudioEssentialTileDTO[] = [
     imageUrl: "/music-spotlight/02-creation-vinyl.png",
     linkHref: PLAN_HREF,
     sortOrder: 1,
-  },
-];
-
-export const DEFAULT_MUSIC_SPOTLIGHT_ALBUMS: MusicSpotlightAlbumDTO[] = [
-  {
-    id: "default-spotlight-0",
-    title: "Trust in God",
-    artist: "feat. Chris Brown",
-    coverUrl: "/music-spotlight/01-trust-in-god.png",
-    listenUrl: null,
-    sortOrder: 0,
-  },
-  {
-    id: "default-spotlight-1",
-    title: "The Gift of Sound",
-    artist: "Sunday Hymnal",
-    coverUrl: "/music-spotlight/02-creation-vinyl.png",
-    listenUrl: null,
-    sortOrder: 1,
-  },
-  {
-    id: "default-spotlight-2",
-    title: "Scratch the Amen",
-    artist: "DJ Whiskers",
-    coverUrl: "/music-spotlight/03-dj-cat.png",
-    listenUrl: null,
-    sortOrder: 2,
-  },
-  {
-    id: "default-spotlight-3",
-    title: "No Longer Bound",
-    artist: "Rise Collective",
-    coverUrl: "/music-spotlight/04-no-longer-bound.png",
-    listenUrl: null,
-    sortOrder: 3,
-  },
-  {
-    id: "default-spotlight-4",
-    title: "Out on the Water",
-    artist: "Selah Blue",
-    coverUrl: "/music-spotlight/05-ocean-solitude.png",
-    listenUrl: null,
-    sortOrder: 4,
-  },
-  {
-    id: "default-spotlight-5",
-    title: "God Is Good",
-    artist: "Glow Worship",
-    coverUrl: "/music-spotlight/06-god-is-good.png",
-    listenUrl: null,
-    sortOrder: 5,
-  },
-  {
-    id: "default-spotlight-6",
-    title: "Through the Veil",
-    artist: "Cloud & Crown",
-    coverUrl: "/music-spotlight/07-heaven-gaze.png",
-    listenUrl: null,
-    sortOrder: 6,
-  },
-  {
-    id: "default-spotlight-7",
-    title: "Neon Psalms",
-    artist: "Retro Saints",
-    coverUrl: "/music-spotlight/08-night-drive.png",
-    listenUrl: null,
-    sortOrder: 7,
   },
 ];

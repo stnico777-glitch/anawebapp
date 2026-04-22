@@ -1,39 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { COMMUNITY_VISITOR_COOKIE } from "@/lib/community-participant";
 import {
-  COMMUNITY_VISITOR_COOKIE,
-  newVisitorId,
-} from "@/lib/community-participant";
-
-const VISITOR_COOKIE_OPTS = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  secure: process.env.NODE_ENV === "production",
-  path: "/",
-  maxAge: 60 * 60 * 24 * 365,
-};
-
-async function resolveParticipant(req: NextRequest): Promise<{
-  participantKey: string;
-  userId: string | null;
-  visitorCookie: string | null;
-}> {
-  const session = await auth();
-  if (session?.user?.id) {
-    return {
-      participantKey: `user:${session.user.id}`,
-      userId: session.user.id,
-      visitorCookie: null,
-    };
-  }
-  let vid = req.cookies.get(COMMUNITY_VISITOR_COOKIE)?.value ?? null;
-  if (!vid) {
-    vid = newVisitorId();
-    return { participantKey: `v:${vid}`, userId: null, visitorCookie: vid };
-  }
-  return { participantKey: `v:${vid}`, userId: null, visitorCookie: null };
-}
+  resolveWallParticipant,
+  VISITOR_COOKIE_OPTS,
+} from "@/lib/community-author";
+import { rateLimit, rateLimitActor } from "@/lib/rate-limit";
+import { requireMemberFromRequest } from "@/lib/auth";
 
 async function snapshotForPraise(praiseReportId: string, participantKey: string) {
   const [count, row] = await Promise.all([
@@ -52,7 +25,20 @@ export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
-  const { participantKey, userId, visitorCookie } = await resolveParticipant(req);
+  const gate = await requireMemberFromRequest(req);
+  if (!gate.ok) return NextResponse.json(gate.body, { status: gate.status });
+
+  const { participantKey, userId, visitorCookie } = await resolveWallParticipant(req);
+
+  /** Anti-spam: 60 celebrates per minute per actor. */
+  const actor = rateLimitActor(userId, req);
+  const limit = rateLimit(`celebrate:${actor}`, 60, 60_000);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: "Slow down a moment — too many reactions too fast." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
 
   const { id: praiseReportId } = await ctx.params;
   const exists = await prisma.praiseReport.findUnique({

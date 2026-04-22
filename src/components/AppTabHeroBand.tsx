@@ -34,8 +34,12 @@ function creamWordmarkForPath(pathname: string): boolean {
 export default function AppTabHeroBand() {
   const pathname = usePathname() ?? "";
   const creamWordmark = creamWordmarkForPath(pathname);
+  /** Collapses the hero band on every schedule-day session (movement + encouragement).
+   *  Keeps the video centered in the viewport instead of pushed below a 140 px band. */
   const isScheduleDaySession =
-    pathname.startsWith("/movement/schedule-day/") || pathname.startsWith("/schedule/movement/");
+    pathname.startsWith("/movement/schedule-day/") ||
+    pathname.startsWith("/schedule/movement/") ||
+    pathname.startsWith("/schedule/encouragement/");
   const reducedMotion = usePrefersReducedMotion();
   const fadeMs = movementSessionChromeFadeDurationMs(reducedMotion);
 
@@ -90,9 +94,14 @@ export default function AppTabHeroBand() {
     >
       <div className="absolute left-0 right-0 top-0 z-20 h-1 bg-sky-blue" aria-hidden />
       <HeroVideo objectPosition="upper" sourceTier="appTabs" />
-      {/* Clear at top; smooth linear fade to cream by 90%; bottom 10% solid at fold. */}
+      {/* Clear at top; smooth linear fade to cream by 90%; bottom 10% solid at fold.
+          Explicit cream at 0 alpha (matches `--background` #FFFCE9) + okLab interpolation — avoids muddy sRGB ramps. */}
       <div
-        className="pointer-events-none absolute inset-0 z-[5] bg-[linear-gradient(to_bottom,transparent_0%,var(--background)_90%,var(--background)_100%)]"
+        className="pointer-events-none absolute inset-0 z-[5]"
+        style={{
+          background:
+            "linear-gradient(to bottom in oklab, rgba(255, 252, 233, 0) 0%, var(--background) 90%, var(--background) 100%)",
+        }}
         aria-hidden
       />
       <HeroBrandOverlay textColor={creamWordmark ? "cream" : "white"} />

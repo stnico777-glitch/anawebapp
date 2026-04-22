@@ -71,12 +71,12 @@ export default function ScheduleSection({ schedule, showLockIcon = false }: Sche
             id="schedule-heading"
             className="mt-3 text-center text-3xl font-normal capitalize leading-[1.4] tracking-[0.135em] text-gray [font-synthesis:none] md:mt-3.5 md:text-4xl [font-family:var(--font-headline),sans-serif]"
           >
-            Your Weekly Routine
+            Your Daily Routine
           </h2>
         </ScrollReveal>
         <ScrollReveal className="w-full" delayMs={270} {...MARKETING_SECTION_HEADER_REVEAL}>
-          <p className="mt-1.5 text-center text-sm lowercase tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:mt-2 md:text-base">
-            monday → saturday · movement split &amp; affirmation each day
+          <p className="mt-1.5 text-center text-sm tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:mt-2 md:text-base">
+            to grow stronger and closer to God
           </p>
         </ScrollReveal>
         <div className="mt-5 space-y-6 md:mt-6">

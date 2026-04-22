@@ -29,7 +29,7 @@ function HomeBelowFoldFallback() {
         <div className="mx-auto h-3 max-w-md animate-pulse rounded-full bg-sand/80" />
         <div className="mx-auto mt-4 h-3 max-w-sm animate-pulse rounded-full bg-sand/60" />
         <p className="mt-6 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
-          Loading weekly routine…
+          Loading daily routine…
         </p>
       </div>
     </div>

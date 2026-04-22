@@ -24,6 +24,18 @@ export default function DeferredMarketingBubbles() {
   const usedIdleCallbackRef = useRef(false);
 
   useEffect(() => {
+    /** Warm the WelcomeMessageBubble chunk on idle so the first open (intersection or
+     * reopen tap) doesn't wait on a round-trip before the entrance animation starts. */
+    const prefetchChunks = () => {
+      void import("@/components/WelcomeMessageBubble");
+      void import("@/components/FloatingMessageBubble");
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(prefetchChunks, { timeout: 2500 });
+    } else {
+      window.setTimeout(prefetchChunks, 800);
+    }
+
     let scrollHandler: (() => void) | null = null;
 
     const cancelScheduledReveal = () => {

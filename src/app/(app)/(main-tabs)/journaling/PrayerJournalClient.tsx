@@ -216,7 +216,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
 
   const filterSummaryParts: string[] = [];
   if (statusFilter !== "ALL") {
-    const labels: Record<string, string> = { ACTIVE: "Unanswered", ANSWERED: "Answered", PAUSED: "Archive" };
+    const labels: Record<string, string> = { ACTIVE: "Waiting", ANSWERED: "Answered", PAUSED: "Archive" };
     filterSummaryParts.push(labels[statusFilter] ?? statusFilter);
   }
   if (tagFilter) {

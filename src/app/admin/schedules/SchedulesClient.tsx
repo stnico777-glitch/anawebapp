@@ -7,8 +7,10 @@ import ScheduleDayCard from "@/components/ScheduleDayCard";
 import ScheduleSabbathTile from "@/components/ScheduleSabbathTile";
 import { formatWeekRange } from "@/lib/dateFormat";
 import {
+  addDaysUtc,
   getMondayUTC,
   parseScheduleDateInput,
+  utcDateInputStringForInstant,
   utcMidnightForUtcDate,
   weekScheduleAnchorKeyUTC,
 } from "@/lib/weekScheduleCalendar";
@@ -31,6 +33,8 @@ interface Schedule {
     dayImageUrl: string | null;
     dayVideoUrl: string | null;
     daySubtext: string | null;
+    movementIntroHeadline: string | null;
+    movementIntroSubtext: string | null;
     movementEncouragementVideoUrl: string | null;
   }[];
 }
@@ -52,6 +56,7 @@ export default function SchedulesClient({
   const [selectedId, setSelectedId] = useState<string>(() => sorted[0]?.id ?? "");
   const [creating, setCreating] = useState(false);
   const [deletingWeekId, setDeletingWeekId] = useState<string | null>(null);
+  const [duplicatingWeekId, setDuplicatingWeekId] = useState<string | null>(null);
   const [editDay, setEditDay] = useState<ScheduleDayEditPayload | null>(null);
   const [selectWeekDate, setSelectWeekDate] = useState(() =>
     sorted[0] ? sorted[0].weekStart.slice(0, 10) : "",
@@ -122,6 +127,50 @@ export default function SchedulesClient({
     await createSchedule(selectWeekDate);
   }
 
+  async function duplicateSchedule(scheduleId: string) {
+    const source = sorted.find((x) => x.id === scheduleId);
+    if (!source) return;
+    const sourceMonday = new Date(source.weekStart);
+    const defaultTarget = utcDateInputStringForInstant(addDaysUtc(sourceMonday, 7));
+    const promptMsg =
+      `Duplicate the week of ${formatWeekRange(sourceMonday, { includeYear: true })} ` +
+      `into a new week. Enter any date in the target week (YYYY-MM-DD) — we snap to Monday.`;
+    const input = window.prompt(promptMsg, defaultTarget);
+    if (input == null) return;
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    const parsed = parseScheduleDateInput(trimmed);
+    if (Number.isNaN(parsed.getTime())) {
+      alert("That date isn't valid. Use YYYY-MM-DD.");
+      return;
+    }
+    const targetMonday = utcMidnightForUtcDate(getMondayUTC(parsed));
+    const sourceMondayUtc = utcMidnightForUtcDate(getMondayUTC(sourceMonday));
+    if (targetMonday.getTime() === sourceMondayUtc.getTime()) {
+      alert("Target week is the same as the source week. Pick a different week.");
+      return;
+    }
+    setDuplicatingWeekId(scheduleId);
+    try {
+      const res = await adminJson("/api/admin/schedules", {
+        method: "POST",
+        body: JSON.stringify({ duplicateFromId: scheduleId, weekStart: trimmed }),
+      });
+      if (!res.ok) {
+        alert(await readAdminError(res));
+        return;
+      }
+      const data = (await res.json().catch(() => null)) as { id?: string } | null;
+      if (data?.id) {
+        setSelectedId(data.id);
+        setSelectWeekDate(utcDateInputStringForInstant(targetMonday));
+      }
+      router.refresh();
+    } finally {
+      setDuplicatingWeekId(null);
+    }
+  }
+
   async function deleteSchedule(scheduleId: string) {
     const s = sorted.find((x) => x.id === scheduleId);
     const label = s
@@ -164,13 +213,17 @@ export default function SchedulesClient({
             All weeks in database ({sorted.length})
           </p>
           <p className="mb-3 text-xs text-gray [font-family:var(--font-body),sans-serif]">
-            Tap a week to open it in the grid below. Newest first. Use delete to remove a week from the
-            database (including day rows and completion data).
+            Tap a week to open it in the grid below. Newest first. Use Duplicate to clone a week into a
+            new Monday (copies every day’s thumbnail, encouragement video, workout, subtext, and
+            titles). Use Delete to remove a week from the database (including day rows and completion
+            data).
           </p>
           <ul className="flex max-h-48 flex-col gap-1 overflow-y-auto sm:max-h-none sm:flex-row sm:flex-wrap">
             {sorted.map((s) => {
               const active = s.id === selectedId;
-              const busy = deletingWeekId === s.id;
+              const deleting = deletingWeekId === s.id;
+              const duplicating = duplicatingWeekId === s.id;
+              const rowBusy = deleting || duplicating;
               return (
                 <li key={s.id} className="flex max-w-full items-stretch gap-1 sm:max-w-none">
                   <button
@@ -189,12 +242,21 @@ export default function SchedulesClient({
                   </button>
                   <button
                     type="button"
+                    title="Duplicate this week into a new week (copies thumbnails, videos, subtext, titles, and encouragement video)"
+                    disabled={rowBusy || duplicatingWeekId !== null || deletingWeekId !== null}
+                    onClick={() => void duplicateSchedule(s.id)}
+                    className="shrink-0 rounded-md border border-sand bg-white px-2.5 py-2 text-sm font-medium text-sky-blue transition hover:bg-sky-blue/10 disabled:cursor-not-allowed disabled:opacity-50 [font-family:var(--font-body),sans-serif]"
+                  >
+                    {duplicating ? "…" : "Duplicate"}
+                  </button>
+                  <button
+                    type="button"
                     title="Delete this week from the database"
-                    disabled={busy || deletingWeekId !== null}
+                    disabled={rowBusy || deletingWeekId !== null}
                     onClick={() => void deleteSchedule(s.id)}
                     className="shrink-0 rounded-md border border-sand bg-white px-2.5 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 [font-family:var(--font-body),sans-serif]"
                   >
-                    {busy ? "…" : "Delete"}
+                    {deleting ? "…" : "Delete"}
                   </button>
                 </li>
               );
@@ -243,9 +305,20 @@ export default function SchedulesClient({
                   {formatWeekRange(new Date(selected.weekStart))}
                 </p>
               </div>
-              <p className="shrink-0 text-sm font-semibold uppercase tracking-[0.04em] text-sky-blue [font-family:var(--font-body),sans-serif]">
-                0/7 complete
-              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void duplicateSchedule(selected.id)}
+                  disabled={duplicatingWeekId !== null || deletingWeekId !== null}
+                  className={toolbarBtnClass}
+                  title="Duplicate this week (copies every day's thumbnail, encouragement video, workout, subtext, and titles)"
+                >
+                  {duplicatingWeekId === selected.id ? "Duplicating…" : "Duplicate week"}
+                </button>
+                <p className="text-sm font-semibold uppercase tracking-[0.04em] text-sky-blue [font-family:var(--font-body),sans-serif]">
+                  0/7 complete
+                </p>
+              </div>
             </div>
             <div className="h-px bg-[rgba(232,228,212,0.9)]" aria-hidden />
           </div>
@@ -264,6 +337,8 @@ export default function SchedulesClient({
                 dayImageUrl: day.dayImageUrl,
                 dayVideoUrl: day.dayVideoUrl,
                 daySubtext: day.daySubtext,
+                movementIntroHeadline: day.movementIntroHeadline,
+                movementIntroSubtext: day.movementIntroSubtext,
                 movementEncouragementVideoUrl: day.movementEncouragementVideoUrl,
               };
               const isEditing = editDay?.id === day.id;

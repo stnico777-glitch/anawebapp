@@ -7,6 +7,7 @@ import { DAY_NAMES, WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 import LockIcon from "@/components/LockIcon";
 import { THEMED_LOCK_BADGE_LG_CLASS } from "@/constants/dayCardVisual";
 import { injectScheduleMovementVideoPreload } from "@/lib/schedule-movement-video-prefetch";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 interface ScheduleDayCardProps {
   day: {
@@ -46,14 +47,14 @@ interface ScheduleDayCardProps {
   movementVideoSrc?: string | null;
 }
 
-/** Prayer row — single four-point sparkle (main star from Heroicons sparkles; avoids busy multi-sparkle cluster). */
-function IconPrayer() {
+/** Encouragement row — heroicons outline play (bullet is now the encouragement video link). */
+function IconEncouragementPlay() {
   return (
     <svg className="h-4 w-4 shrink-0 text-gray" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"
+        d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972L6.917 19.333c-.75.412-1.667-.13-1.667-.986V5.653z"
       />
     </svg>
   );
@@ -110,22 +111,26 @@ export default function ScheduleDayCard({
   );
   const [loading, setLoading] = useState(false);
 
+  /** Hover / focus / pointer-down warms today's workout MP4 before navigation.
+   *  We intentionally do NOT prefetch on mount — many schedule visits are just to
+   *  toggle a checkbox or read the verse and never start a workout. Prefetching
+   *  on every page load was burning bandwidth on visits that never needed the video. */
   const prefetchMovementVideo = useCallback(() => {
     if (!movementVideoSrc?.trim() || isLocked) return;
     injectScheduleMovementVideoPreload(movementVideoSrc);
   }, [movementVideoSrc, isLocked]);
 
   useEffect(() => {
-    if (!isToday || !movementVideoSrc?.trim() || isLocked) return;
-    prefetchMovementVideo();
-  }, [isToday, movementVideoSrc, isLocked, prefetchMovementVideo]);
-
-  useEffect(() => {
     if (!day.completion) return;
     setPrayerDone(day.completion.prayerDone);
     setWorkoutDone(day.completion.workoutDone);
     setAffirmationDone(day.completion.affirmationDone);
-  }, [day.completion?.prayerDone, day.completion?.workoutDone, day.completion?.affirmationDone, day.id]);
+  }, [
+    day.completion?.prayerDone,
+    day.completion?.workoutDone,
+    day.completion?.affirmationDone,
+    day.id,
+  ]);
 
   const prayerDoneShow = cmsMode ? false : prayerDone;
   const workoutDoneShow = cmsMode ? false : workoutDone;
@@ -164,8 +169,9 @@ export default function ScheduleDayCard({
     }
   }
 
-  const prayerHref = "/prayer";
   const demoDay = day.id.startsWith("demo-schedule-day-");
+  /** First bullet = encouragement video. Demo days have no persistence, so fall back to the prayer library. */
+  const firstBulletHref = demoDay ? "/prayer" : `/schedule/encouragement/${day.id}`;
   /** Real days: intro + single video under Schedule (not Movement library). Demo preview: direct workout or library. */
   const workoutHref = demoDay
     ? day.workoutId
@@ -177,8 +183,12 @@ export default function ScheduleDayCard({
   /** Start always opens the day movement session (intro + video), not prayer/journal order. */
   const startHref = workoutHref;
 
+  /** Only prefetch for today's card. Hovering/tabbing through other days would
+   *  otherwise pre-download 6 unrelated workouts (huge Bunny/Supabase egress hit
+   *  with zero UX benefit — those videos are only opened when the user navigates
+   *  to next week's schedule). Non-today cards just load on click. */
   const movementPrefetchHandlers =
-    movementVideoSrc?.trim() && !isLocked
+    isToday && movementVideoSrc?.trim() && !isLocked
       ? {
           onMouseEnter: prefetchMovementVideo,
           onFocus: prefetchMovementVideo,
@@ -213,9 +223,10 @@ export default function ScheduleDayCard({
             src={day.dayImageUrl}
             alt=""
             fill
-            unoptimized
+            unoptimized={unoptimizedRemoteImage(day.dayImageUrl)}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
             className="object-cover object-center"
+            loading="eager"
           />
         ) : (
           <Image
@@ -224,6 +235,7 @@ export default function ScheduleDayCard({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 360px"
             className="object-cover object-center"
+            loading="eager"
           />
         )}
         {/* Parity: ScheduleScreen dayImageShade — uniform 20% black */}
@@ -273,16 +285,16 @@ export default function ScheduleDayCard({
               {prayerDoneShow ? <span className="text-[11px] leading-none text-white">✓</span> : null}
             </button>
             {isLocked ? (
-              <span className="min-w-0 flex-1 cursor-default text-sm text-gray">{day.prayerTitle ?? "Prayer"}</span>
+              <span className="min-w-0 flex-1 cursor-default text-sm text-gray">{day.prayerTitle ?? "Encouragement"}</span>
             ) : (
               <Link
-                href={prayerHref}
+                href={firstBulletHref}
                 className="min-w-0 flex-1 text-sm text-gray hover:text-sky-blue hover:underline"
               >
-                {day.prayerTitle ?? "Prayer"}
+                {day.prayerTitle ?? "Encouragement"}
               </Link>
             )}
-            <IconPrayer />
+            <IconEncouragementPlay />
           </div>
 
           <div className="flex items-center gap-1">

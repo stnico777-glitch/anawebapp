@@ -7,6 +7,7 @@ import type {
   CommunityFeedPraiseItem,
 } from "@/lib/community-feed";
 import CommunityPostDiscussionPanel from "./CommunityPostDiscussionPanel";
+import PostOwnerControls from "./PostOwnerControls";
 import {
   ENCOURAGE_PRESETS,
   labelForEncouragePreset,
@@ -409,6 +410,29 @@ export default function PrayerPraiseFeed({
                         onSubmit={(body) => postPrayerInteraction(item.id, body)}
                       />
                     )}
+                    {item.ownedByViewer ? (
+                      <PostOwnerControls
+                        item={item}
+                        className="mt-2"
+                        onUpdated={(nextContent) =>
+                          setItems((prev) =>
+                            prev.map((it) =>
+                              it.kind === "prayer" && it.id === item.id
+                                ? { ...it, content: nextContent }
+                                : it,
+                            ),
+                          )
+                        }
+                        onDeleted={() =>
+                          setItems((prev) =>
+                            prev.filter(
+                              (it) =>
+                                !(it.kind === "prayer" && it.id === item.id),
+                            ),
+                          )
+                        }
+                      />
+                    ) : null}
                     {isExpanded ? (
                       <div
                         ref={expandedRef}
@@ -568,6 +592,29 @@ export default function PrayerPraiseFeed({
                         {item.commentCount}
                       </button>
                     </div>
+                    {item.ownedByViewer ? (
+                      <PostOwnerControls
+                        item={item}
+                        className="mt-2"
+                        onUpdated={(nextContent) =>
+                          setItems((prev) =>
+                            prev.map((it) =>
+                              it.kind === "praise" && it.id === item.id
+                                ? { ...it, content: nextContent }
+                                : it,
+                            ),
+                          )
+                        }
+                        onDeleted={() =>
+                          setItems((prev) =>
+                            prev.filter(
+                              (it) =>
+                                !(it.kind === "praise" && it.id === item.id),
+                            ),
+                          )
+                        }
+                      />
+                    ) : null}
                     {isExpanded ? (
                       <div
                         ref={expandedRef}

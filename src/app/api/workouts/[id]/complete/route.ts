@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireMemberFromRequest } from "@/lib/auth";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await requireAuth();
-  if (!user) return NextResponse.json({ success: true }); // no-op when not logged in
+  const gate = await requireMemberFromRequest(request);
+  if (!gate.ok) {
+    return NextResponse.json(gate.body, { status: gate.status });
+  }
+  const user = gate.user;
 
   const { id } = await params;
   const workout = await prisma.workout.findUnique({ where: { id } });

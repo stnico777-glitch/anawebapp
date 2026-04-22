@@ -30,7 +30,7 @@ function humanizeSlug(slug: string): string {
 }
 
 export const STATUS_NAV = [
-  { key: "ACTIVE" as const, apiValue: "ACTIVE" as const, label: "Unanswered" },
+  { key: "ACTIVE" as const, apiValue: "ACTIVE" as const, label: "Waiting" },
   { key: "ANSWERED" as const, apiValue: "ANSWERED" as const, label: "Answered" },
   { key: "PAUSED" as const, apiValue: "PAUSED" as const, label: "Archive" },
 ] as const;

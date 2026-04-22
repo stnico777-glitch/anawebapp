@@ -128,7 +128,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
             <article className={FEATURE_CARD_SHELL}>
               <div className="relative aspect-[10/9] w-full min-h-0 overflow-hidden">
                 <Link href="/movement" className="absolute inset-0 z-10">
-                  <span className="sr-only">Movement — Pilates, yoga, and strength on demand</span>
+                  <span className="sr-only">Movement library — Pilates, yoga, and strength on demand</span>
                 </Link>
                 {showLockIcon && (
                   <span
@@ -148,7 +148,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/22 via-black/[0.04] to-black/10" aria-hidden />
                 <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] px-3 pt-5 text-center sm:px-4 sm:pt-6">
                   <p className={FEATURE_TOP_KICKER}>On-demand</p>
-                  <p className={FEATURE_TOP_TITLE}>Movement</p>
+                  <p className={FEATURE_TOP_TITLE}>Movement Library</p>
                 </div>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] px-3 pb-4 text-center sm:px-4 sm:pb-5">
                   <p className={FEATURE_BOTTOM_LINE}>Pilates &amp; strength · meet you where you are</p>

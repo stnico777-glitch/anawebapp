@@ -5,13 +5,17 @@ import { useEffect, useRef, useState } from "react";
 const MARQUEE_ITEMS = [
   "Start your 7-day free trial",
   "✦",
-  "No credit card required",
-  "✦",
   "“Power, love and a sound mind” — 2 Timothy 1:7",
   "✦",
   "awake + align — Faith, fitness & routine",
 ];
 
+/**
+ * Marketing marquee on the public home page. Intentionally **not** a real trial
+ * gate — actual membership/trial enforcement happens on the server via
+ * `getSessionForApp().isSubscriber` and the `requireMemberFromRequest` helper
+ * for write endpoints. Don't repurpose this banner for entitlement logic.
+ */
 export default function TrialBanner() {
   const rootRef = useRef<HTMLDivElement>(null);
   /** Assume visible for first paint; IO updates to pause when scrolled away. */
@@ -53,9 +57,7 @@ export default function TrialBanner() {
                 ? "text-accent-amber"
                 : item === "awake + align — Faith, fitness & routine" || item.startsWith("“Power,")
                   ? "text-xs font-medium tracking-wide md:text-sm [font-family:var(--font-headline),sans-serif] italic"
-                  : item === "No credit card required"
-                    ? "text-xs text-background/90 md:text-sm [font-family:var(--font-body),sans-serif]"
-                    : "text-xs font-medium tracking-wide md:text-sm [font-family:var(--font-body),sans-serif]"
+                  : "text-xs font-medium tracking-wide md:text-sm [font-family:var(--font-body),sans-serif]"
             }
           >
             {item}

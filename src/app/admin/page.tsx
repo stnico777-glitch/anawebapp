@@ -8,13 +8,27 @@ export default async function AdminDashboard() {
   let scheduleCount: number;
   let verseCount: number;
   let memberCount: number;
+  let communityPostCount: number;
+  let feedbackCount: number;
   try {
-    [workoutCount, prayerCount, scheduleCount, verseCount, memberCount] = await Promise.all([
+    [
+      workoutCount,
+      prayerCount,
+      scheduleCount,
+      verseCount,
+      memberCount,
+      communityPostCount,
+      feedbackCount,
+    ] = await Promise.all([
       prisma.workout.count(),
       prisma.prayerAudio.count(),
       prisma.weekSchedule.count(),
       prisma.dailyVerse.count(),
       prisma.profile.count(),
+      Promise.all([prisma.prayerRequest.count(), prisma.praiseReport.count()]).then(
+        ([a, b]) => a + b,
+      ),
+      prisma.feedback.count(),
     ]);
   } catch (e) {
     console.error("[admin] Prisma counts failed (check Vercel logs + DATABASE_URL / SSL):", e);
@@ -37,6 +51,18 @@ export default async function AdminDashboard() {
     },
     { href: "/admin/schedules", label: "Schedules", count: scheduleCount, subtitle: "items · tap to edit" },
     { href: "/admin/daily-verse", label: "Daily verses", count: verseCount, subtitle: "items · tap to edit" },
+    {
+      href: "/admin/community",
+      label: "Prayer & Praise",
+      count: communityPostCount,
+      subtitle: "posts · tap to moderate",
+    },
+    {
+      href: "/admin/feedback",
+      label: "Feedback",
+      count: feedbackCount,
+      subtitle: "submissions · tap to review",
+    },
   ] as const;
 
   return (
