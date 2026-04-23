@@ -50,6 +50,8 @@ const publicPaths = [
   "/journaling",
   "/community",
   "/more",
+  "/privacy",
+  "/terms",
 ];
 
 export async function middleware(req: NextRequest) {
