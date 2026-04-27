@@ -328,15 +328,22 @@ model PraiseReportComment {
 
 model AudioCollectionCard {
   id        String   @id @default(uuid()) @db.Uuid
+  /** One of: AFFIRMATIONS | SCRIPTURE_READING | MEDITATIONS. Stored as a string (not enum)
+   *  so the CMS can introduce a new row category without a schema migration. */
+  category  String   @default("AFFIRMATIONS")
   title     String
-  metaLine  String   @map("meta_line")
+  metaLine  String   @default("") @map("meta_line")
   imageUrl  String   @map("image_url")
-  summary   String
+  summary   String   @default("")
+  /** When set, clicking the card plays this audio in the bottom mini-player.
+   *  When empty, the card falls back to navigating to `linkHref` (legacy collection page link). */
+  audioUrl  String   @default("") @map("audio_url")
   linkHref  String   @default("/prayer#prayer-library") @map("link_href")
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([category, sortOrder])
   @@map("audio_collection_card")
 }
 
@@ -372,7 +379,30 @@ model MovementHeroTile {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  items MovementHeroCollectionItem[]
+
   @@map("movement_hero_tile")
+}
+
+/// Entries that make up a hero tile "collection" (e.g. Day 1..Day 6 of a starter series).
+/// When a tile has ≥1 items, clicking Explore opens the collection view instead of playing
+/// the tile's own video. `dayIndex` drives the "Day N" label; `sortOrder` drives card order.
+model MovementHeroCollectionItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  heroTileId  String   @map("hero_tile_id") @db.Uuid
+  dayIndex    Int      @map("day_index")
+  title       String
+  imageUrl    String   @map("image_url")
+  videoUrl    String   @default("") @map("video_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  heroTile MovementHeroTile @relation(fields: [heroTileId], references: [id], onDelete: Cascade)
+
+  @@unique([heroTileId, dayIndex])
+  @@index([heroTileId, sortOrder])
+  @@map("movement_hero_collection_item")
 }
 
 model MovementQuickieCard {

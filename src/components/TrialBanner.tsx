@@ -7,7 +7,7 @@ const MARQUEE_ITEMS = [
   "✦",
   "“Power, love and a sound mind” — 2 Timothy 1:7",
   "✦",
-  "awake + align — Faith, fitness & routine",
+  "awake + align — Pilates, prayer & community",
 ];
 
 /**
@@ -55,7 +55,7 @@ export default function TrialBanner() {
             className={
               item === "✦"
                 ? "text-accent-amber"
-                : item === "awake + align — Faith, fitness & routine" || item.startsWith("“Power,")
+                : item === "awake + align — Pilates, prayer & community" || item.startsWith("“Power,")
                   ? "text-xs font-medium tracking-wide md:text-sm [font-family:var(--font-headline),sans-serif] italic"
                   : "text-xs font-medium tracking-wide md:text-sm [font-family:var(--font-body),sans-serif]"
             }

@@ -3,26 +3,38 @@ import {
   DEFAULT_AUDIO_COLLECTION_CARDS,
   DEFAULT_AUDIO_ESSENTIAL_TILES,
 } from "@/lib/audio-layout-defaults";
-import type {
-  AudioCollectionCardDTO,
-  AudioEssentialTileDTO,
+import {
+  AUDIO_COLLECTION_CATEGORIES,
+  type AudioCollectionCardDTO,
+  type AudioCollectionCategory,
+  type AudioEssentialTileDTO,
 } from "@/lib/audio-layout-types";
+
+function normalizeCategory(raw: string): AudioCollectionCategory {
+  return (AUDIO_COLLECTION_CATEGORIES as readonly string[]).includes(raw)
+    ? (raw as AudioCollectionCategory)
+    : "AFFIRMATIONS";
+}
 
 function mapCollection(row: {
   id: string;
+  category: string;
   title: string;
   metaLine: string;
   imageUrl: string;
   summary: string;
+  audioUrl: string;
   linkHref: string;
   sortOrder: number;
 }): AudioCollectionCardDTO {
   return {
     id: row.id,
+    category: normalizeCategory(row.category),
     title: row.title,
     metaLine: row.metaLine,
     imageUrl: row.imageUrl,
     summary: row.summary,
+    audioUrl: row.audioUrl,
     linkHref: row.linkHref,
     sortOrder: row.sortOrder,
   };
@@ -59,10 +71,12 @@ export async function ensureAudioLayoutSeeded(): Promise<void> {
     if (nC === 0) {
       await prisma.audioCollectionCard.createMany({
         data: DEFAULT_AUDIO_COLLECTION_CARDS.map((row, i) => ({
+          category: row.category,
           title: row.title,
           metaLine: row.metaLine,
           imageUrl: row.imageUrl,
           summary: row.summary,
+          audioUrl: row.audioUrl,
           linkHref: row.linkHref,
           sortOrder: i,
         })),

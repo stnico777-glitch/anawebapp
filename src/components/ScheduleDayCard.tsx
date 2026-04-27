@@ -47,29 +47,46 @@ interface ScheduleDayCardProps {
   movementVideoSrc?: string | null;
 }
 
-/** Encouragement row — heroicons outline play (bullet is now the encouragement video link). */
-function IconEncouragementPlay() {
+/** Encouragement row — blank open book (Heroicons outline `book-open`, MIT). */
+function IconEncouragement() {
   return (
     <svg className="h-4 w-4 shrink-0 text-gray" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972L6.917 19.333c-.75.412-1.667-.13-1.667-.986V5.653z"
+        d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
       />
     </svg>
   );
 }
+/** Movement row — butterfly (Phosphor Icons `butterfly` regular, MIT). */
 function IconWorkout() {
   return (
-    <svg className="h-4 w-4 shrink-0 text-gray" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    <svg
+      className="h-4 w-4 shrink-0 text-gray"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={16}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      viewBox="0 0 256 256"
+      aria-hidden
+    >
+      <line x1="128" y1="56" x2="128" y2="180" />
+      <path d="M187.76,151.94c8.05.48,29.5-1.29,37.36-32.23C233.21,87.84,240.22,48,208.93,48S128,95.8,128,127.67C128,95.8,78.36,48,47.07,48S22.79,87.84,30.88,119.71c7.86,30.94,29.31,32.71,37.36,32.23" />
+      <path d="M88,144a36.11,36.11,0,1,0,40,36,36,36,0,1,0,40-36" />
     </svg>
   );
 }
+/** Affirmation row — Latin cross (taller vertical bar, horizontal near the top). */
 function IconAffirmation() {
   return (
     <svg className="h-4 w-4 shrink-0 text-gray" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.5 3h3v3.5h5v3h-5v11h-3v-11h-5v-3h5V3z"
+      />
     </svg>
   );
 }
@@ -294,7 +311,7 @@ export default function ScheduleDayCard({
                 {day.prayerTitle ?? "Encouragement"}
               </Link>
             )}
-            <IconEncouragementPlay />
+            <IconEncouragement />
           </div>
 
           <div className="flex items-center gap-1">

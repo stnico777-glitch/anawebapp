@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useMemo, useState, type RefObject } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import PrayerAudioLibraryShell from "@/components/PrayerAudioLibraryShell";
 import {
@@ -9,23 +9,19 @@ import {
   PrayerMiniPlayerBar,
   usePrayerLibraryAudio,
 } from "./PrayerLibraryAudioContext";
-import PrayerLibraryCompletionBridge from "./PrayerLibraryCompletionBridge";
-import { FormStyleRailButton, GEAR_UP_CAROUSEL_ROW_CLASS } from "@/components/LibraryBannerStrip";
+import { type PrayerLibraryItem } from "@/lib/prayer-audio-display";
 import {
-  type PrayerLibraryItem,
-  coverForPrayer,
-  railCoversDeduped,
-  prayerMetaLine,
-  prayerHoverSummary,
-} from "@/lib/prayer-audio-display";
-import type {
-  AudioCollectionCardDTO,
-  AudioEssentialTileDTO,
+  AUDIO_COLLECTION_CATEGORY_LABELS,
+  type AudioCollectionCardDTO,
+  type AudioEssentialTileDTO,
 } from "@/lib/audio-layout-types";
+import { unoptimizedRemoteImage } from "@/lib/remote-image";
 
 export type { PrayerLibraryItem };
 
 type PrayerAudioLibraryProps = {
+  /** Library prayer rows are still fetched server-side (admin uses them) but the member view
+   *  no longer renders them — kept on the props for shape stability with the page route. */
   prayers: PrayerLibraryItem[];
   completedIds: string[];
   isSubscriber: boolean;
@@ -37,138 +33,55 @@ type PrayerAudioLibraryProps = {
 };
 
 function PrayerAudioLibraryInner({
-  prayers,
-  completedIds,
   isSubscriber,
   isGuest = false,
   layout,
 }: PrayerAudioLibraryProps) {
   const router = useRouter();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const { setTrack, clearTrack } = usePrayerLibraryAudio();
+  /** Currently-playing collection card (Affirmations / Scripture / Meditations). Tracks the
+   *  card id so multiple cards sharing the same placeholder mp3 still highlight correctly. */
+  const [collectionActiveId, setCollectionActiveId] = useState<string | null>(null);
+  const { setTrack } = usePrayerLibraryAudio();
   const contentLocked = isGuest || !isSubscriber;
   const lockHref = isGuest ? "/register" : "/subscribe";
   const lockHint = isGuest ? "Sign up to unlock" : "Subscribe to unlock";
 
-  const selected = useMemo(
-    () => (selectedId ? prayers.find((p) => p.id === selectedId) ?? null : null),
-    [prayers, selectedId],
-  );
-
-  useLayoutEffect(() => {
-    if (!selected) {
-      clearTrack();
-      return;
-    }
-    if (contentLocked) {
-      clearTrack();
-      return;
-    }
-    const idx = prayers.findIndex((x) => x.id === selected.id);
-    const cover = coverForPrayer(selected, idx);
-    const subtitle =
-      [selected.scripture?.trim(), selected.description?.trim()].filter(Boolean).join(" · ") ||
-      "Guided audio";
-    setTrack({
-      prayerId: selected.id,
-      src: selected.audioUrl,
-      title: selected.title,
-      subtitle,
-      duration: selected.duration,
-      coverSrc: cover.src,
-      coverUnoptimized: cover.unoptimized,
-      locked: false,
-    });
-  }, [selected, contentLocked, prayers, setTrack, clearTrack]);
-
-  const prayerRailCovers = useMemo(() => railCoversDeduped(prayers), [prayers]);
-
-  const selectPrayer = useCallback(
-    (id: string) => {
+  const handlePlayCollectionAudio = useCallback(
+    (card: AudioCollectionCardDTO) => {
       if (contentLocked) {
         router.push(lockHref);
         return;
       }
-      setSelectedId(id);
-      requestAnimationFrame(() => {
-        document.getElementById("prayer-library-rail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const src = card.audioUrl?.trim();
+      if (!src) return;
+      setCollectionActiveId(card.id);
+      const subtitle =
+        AUDIO_COLLECTION_CATEGORY_LABELS[card.category] ?? card.metaLine ?? "Audio";
+      setTrack({
+        // Reuse `prayerId` for the collection card id so the existing mini-player + favorites
+        // wiring works without duplicating types. Card ids are uuid-prefixed and won't collide.
+        prayerId: card.id,
+        src,
+        title: card.title,
+        subtitle,
+        duration: 0,
+        coverSrc: card.imageUrl,
+        coverUnoptimized: unoptimizedRemoteImage(card.imageUrl),
+        locked: false,
       });
     },
-    [contentLocked, lockHref, router],
-  );
-
-  const renderLibrary = useCallback(
-    (audioLibraryRef: RefObject<HTMLDivElement | null>) => (
-      <>
-        {prayers.length === 0 ? (
-          <div className="rounded-sm border border-dashed border-sand bg-cream/60 py-16 text-center">
-            <p className="text-gray [font-family:var(--font-body),sans-serif]">
-              No sessions yet. Run{" "}
-              <code className="rounded-sm bg-cream px-1.5 py-0.5 text-sm">npm run db:seed</code> for sample
-              entries.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div id="prayer-library-rail" className="scroll-mt-8">
-              {!selected && (
-                <p className="mb-4 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
-                  Choose a session below — playback controls are at the bottom of the screen.
-                </p>
-              )}
-            </div>
-
-            <div
-              ref={audioLibraryRef}
-              className={GEAR_UP_CAROUSEL_ROW_CLASS}
-              style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
-            >
-              {prayers.map((p, index) => {
-                const { src, unoptimized } = prayerRailCovers[index]!;
-                const done = completedIds.includes(p.id);
-                const active = selectedId === p.id;
-                return (
-                  <FormStyleRailButton
-                    key={p.id}
-                    onClick={() => selectPrayer(p.id)}
-                    src={src}
-                    title={p.title}
-                    metaLine={prayerMetaLine(p, done)}
-                    hoverSummary={prayerHoverSummary(p)}
-                    unoptimized={unoptimized}
-                    showLock={contentLocked}
-                    lockHint={lockHint}
-                    showDone={done}
-                    active={active}
-                    imageLoading="eager"
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
-      </>
-    ),
-    [prayers, prayerRailCovers, selected, selectedId, completedIds, contentLocked, lockHint, selectPrayer],
+    [contentLocked, lockHref, router, setTrack],
   );
 
   return (
     <PrayerLibraryLayoutPadding>
-      {selected && isSubscriber ? (
-        <PrayerLibraryCompletionBridge
-          prayerId={selected.id}
-          isCompleted={completedIds.includes(selected.id)}
-          isLocked={false}
-        />
-      ) : null}
       <PrayerAudioLibraryShell
         collectionCards={layout.collections}
-        essentialTiles={layout.essentials}
-        showLibraryArrows={prayers.length > 0}
-        renderLibrary={renderLibrary}
         contentLocked={contentLocked}
         lockHref={lockHref}
         lockHint={lockHint}
+        onPlayCollectionAudio={handlePlayCollectionAudio}
+        activeCollectionAudioId={collectionActiveId}
       />
       <PrayerMiniPlayerBar />
     </PrayerLibraryLayoutPadding>

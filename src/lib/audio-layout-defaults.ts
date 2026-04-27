@@ -1,103 +1,119 @@
-import { PRAYER_COVER_PATHS } from "@/constants/prayerCovers";
-import type {
-  AudioCollectionCardDTO,
-  AudioEssentialTileDTO,
+import {
+  type AudioCollectionCardDTO,
+  type AudioCollectionCategory,
+  type AudioEssentialTileDTO,
 } from "@/lib/audio-layout-types";
 
 const PLAN_HREF = "/prayer#prayer-library";
 
-/** Fallback when the database has no rows yet (e.g. before seed). Ids are not stable for admin APIs. */
-export const DEFAULT_AUDIO_COLLECTION_CARDS: AudioCollectionCardDTO[] = (
-  [
-    {
-      title: "7 Days of Morning Prayer",
-      metaLine: "Plan · 7 sessions",
-      image: PRAYER_COVER_PATHS[6],
-      summary:
-        "Gentle guided openings for the first week—short listens you can stack daily or repeat when mornings feel full.",
-    },
-    {
-      title: "Peace & Stillness Series",
-      metaLine: "Series · 5 sessions",
-      image: PRAYER_COVER_PATHS[1],
-      summary:
-        "Slower tempos and breath-led pauses when you need your nervous system to catch up with your spirit.",
-    },
-    {
-      title: "Anxiety to Rest",
-      metaLine: "Journey · 4 sessions",
-      image: PRAYER_COVER_PATHS[7],
-      summary:
-        "Honest prayers that name worry, trade it for truth, and land in a quieter mind before you sleep.",
-    },
-    {
-      title: "Gratitude & Praise",
-      metaLine: "Collection · 6 sessions",
-      image: PRAYER_COVER_PATHS[0],
-      summary:
-        "Celebrate small wins and big mercy—audio that turns your attention toward what God is already doing.",
-    },
-    {
-      title: "Sabbath Soul Sundays",
-      metaLine: "Rest · 3 sessions",
-      image: PRAYER_COVER_PATHS[5],
-      summary:
-        "Lower volume, fewer words, more room—ideal when you want rest without rushing back to the week.",
-    },
-    {
-      title: "Affirmations Intensive",
-      metaLine: "Challenge · 7 sessions",
-      image: PRAYER_COVER_PATHS[3],
-      summary:
-        "Short declarative listens you can loop while driving, walking, or folding laundry—truth on repeat.",
-    },
-    {
-      title: "Scripture Listening Path",
-      metaLine: "Audio · 8 sessions",
-      image: PRAYER_COVER_PATHS[4],
-      summary:
-        "Let the Word read to you—clean pacing and space between phrases so sentences can land.",
-    },
-    {
-      title: "Evening Wind-Down",
-      metaLine: "Night · 5 sessions",
-      image: PRAYER_COVER_PATHS[0],
-      summary:
-        "Unhook from the day with slower voice and softer music—bridge the gap between doing and sleeping.",
-    },
-    {
-      title: "Healing & Hope",
-      metaLine: "Focus · 4 sessions",
-      image: PRAYER_COVER_PATHS[2],
-      summary:
-        "When you’re tender-hearted but still believing—honest language and steady reminders you’re held.",
-    },
-  ] as const
-).map((p, i) => ({
-  id: `default-collection-${i}`,
-  title: p.title,
-  metaLine: p.metaLine,
-  imageUrl: p.image,
-  summary: p.summary,
-  linkHref: PLAN_HREF,
-  sortOrder: i,
-}));
+/** Placeholder audio used by every default card so the bottom mini-player has something to play
+ *  before editors wire up real recordings via the CMS. */
+const PLACEHOLDER_AUDIO_URL =
+  "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
-export const DEFAULT_AUDIO_ESSENTIAL_TILES: AudioEssentialTileDTO[] = [
-  {
-    id: "default-essential-0",
-    title: "Guided prayer",
-    subtitle: "stillness · presence · breath",
-    imageUrl: PRAYER_COVER_PATHS[5],
-    linkHref: PLAN_HREF,
-    sortOrder: 0,
-  },
-  {
-    id: "default-essential-1",
-    title: "Scripture & stillness",
-    subtitle: "listen · rest · renew",
-    imageUrl: "/music-spotlight/02-creation-vinyl.png",
-    linkHref: PLAN_HREF,
-    sortOrder: 1,
-  },
+/** Gradient cover thumbnails uploaded to the Supabase `audio thumbnails` public bucket.
+ *  The bucket name has a space, hence the `%20` URL encoding; we use percent-encoded
+ *  filenames (e.g. `10%20(1).png`) so any subsequent path normalization does not break them. */
+const SUPABASE_AUDIO_THUMBNAIL_BASE =
+  "https://zzndnyvonsvxbkcplewo.supabase.co/storage/v1/object/public/audio%20thumbnails";
+
+const SUPABASE_GRADIENT_COVERS = [
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/2.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/3.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/4.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/5.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/6.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/7.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/8.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/9.png`,
+  `${SUPABASE_AUDIO_THUMBNAIL_BASE}/10%20(1).png`,
 ];
+
+/** Cycles through the Supabase gradient covers so each card gets a different gradient.
+ *  Starts at a category-specific offset so the three rails don't all open with the same cover. */
+function coverFor(category: AudioCollectionCategory, index: number): string {
+  const offsetByCategory: Record<AudioCollectionCategory, number> = {
+    AFFIRMATIONS: 0,
+    SCRIPTURE_READING: 3,
+    MEDITATIONS: 5,
+  };
+  const offset = offsetByCategory[category] ?? 0;
+  return SUPABASE_GRADIENT_COVERS[
+    (offset + index) % SUPABASE_GRADIENT_COVERS.length
+  ]!;
+}
+
+/** Source-of-truth for the three default audio rails. Editors can re-order, edit, and add
+ *  cards via the admin CMS once seeded — these only seed an empty database. */
+const DEFAULT_CARDS: Array<{ category: AudioCollectionCategory; title: string }> = [
+  { category: "AFFIRMATIONS", title: "Getting Ready" },
+  { category: "AFFIRMATIONS", title: "Before a Date" },
+  { category: "AFFIRMATIONS", title: "Before a Test" },
+  { category: "AFFIRMATIONS", title: "When You Feel Anxious" },
+  { category: "AFFIRMATIONS", title: "For Comfort" },
+  { category: "AFFIRMATIONS", title: "For Boldness" },
+  { category: "AFFIRMATIONS", title: "Morning Affirmations" },
+  { category: "AFFIRMATIONS", title: "Before Bed" },
+  { category: "AFFIRMATIONS", title: "Embracing God's Love" },
+  { category: "AFFIRMATIONS", title: "Receiving God's Grace" },
+  { category: "AFFIRMATIONS", title: "When You Feel Lonely" },
+  { category: "AFFIRMATIONS", title: "Body Image & Self-Worth" },
+  { category: "AFFIRMATIONS", title: "Walking in Purity" },
+  { category: "AFFIRMATIONS", title: "In a Season of Waiting" },
+  { category: "AFFIRMATIONS", title: "When You Need Clarity" },
+  { category: "AFFIRMATIONS", title: "When You Feel Burnt Out" },
+  { category: "AFFIRMATIONS", title: "Trusting God" },
+  { category: "AFFIRMATIONS", title: "Healing Your Body" },
+  { category: "AFFIRMATIONS", title: "Walking in Fearlessness" },
+  { category: "AFFIRMATIONS", title: "Posting on Social Media" },
+  { category: "AFFIRMATIONS", title: "Before You Eat" },
+
+  { category: "SCRIPTURE_READING", title: "The Beatitudes" },
+  { category: "SCRIPTURE_READING", title: "Psalms Series" },
+  { category: "SCRIPTURE_READING", title: "The Gospel of John" },
+  { category: "SCRIPTURE_READING", title: "Paul's Letters" },
+
+  { category: "MEDITATIONS", title: "Nailing Shame to the Cross" },
+  { category: "MEDITATIONS", title: "At the Feet of Jesus" },
+  { category: "MEDITATIONS", title: "God's Unfailing Love" },
+  { category: "MEDITATIONS", title: "Stillness & Presence" },
+  { category: "MEDITATIONS", title: "The Breath of the Lord" },
+  { category: "MEDITATIONS", title: "Surrender & Trust" },
+  { category: "MEDITATIONS", title: "Reflecting on God's Character" },
+  { category: "MEDITATIONS", title: "Forgiveness & Freedom" },
+  { category: "MEDITATIONS", title: "Walking on Water (Walking Meditation)" },
+  { category: "MEDITATIONS", title: "Walking Into Your Purpose (Walking Meditation)" },
+  { category: "MEDITATIONS", title: "Letting Go of Your Past (Walking Meditation)" },
+];
+
+/** Per-category running indices used to (a) pick a unique cover and (b) keep sortOrder stable
+ *  inside each rail. Without per-category indexing, the global index would skew rail ordering. */
+function buildDefaults(): AudioCollectionCardDTO[] {
+  const counts: Record<AudioCollectionCategory, number> = {
+    AFFIRMATIONS: 0,
+    SCRIPTURE_READING: 0,
+    MEDITATIONS: 0,
+  };
+  return DEFAULT_CARDS.map((card, i) => {
+    const idx = counts[card.category]++;
+    return {
+      id: `default-collection-${i}`,
+      category: card.category,
+      title: card.title,
+      metaLine: "",
+      imageUrl: coverFor(card.category, idx),
+      summary: "",
+      audioUrl: PLACEHOLDER_AUDIO_URL,
+      linkHref: PLAN_HREF,
+      sortOrder: idx,
+    };
+  });
+}
+
+/** Fallback when the database has no rows yet (e.g. before seed). Ids are not stable for admin APIs. */
+export const DEFAULT_AUDIO_COLLECTION_CARDS: AudioCollectionCardDTO[] = buildDefaults();
+
+/** Essentials tiles — kept available for admin/legacy consumers, not rendered on the member
+ *  prayer page anymore. Safe to delete the table + this constant entirely once the admin
+ *  CMS removes the corresponding section. */
+export const DEFAULT_AUDIO_ESSENTIAL_TILES: AudioEssentialTileDTO[] = [];

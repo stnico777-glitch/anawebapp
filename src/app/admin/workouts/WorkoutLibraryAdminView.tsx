@@ -7,7 +7,7 @@ import MovementLayoutVideoOverlay, {
 } from "@/components/MovementLayoutVideoOverlay";
 import { RAIL_CARD_WIDTH } from "@/components/LibraryBannerStrip";
 import type {
-  MovementHeroTileDTO,
+  MovementHeroCollectionItemDTO,
   MovementLayoutDTO,
   MovementQuickieCardDTO,
 } from "@/lib/movement-layout-types";
@@ -16,7 +16,7 @@ import AdminWorkoutRailCard, {
 } from "./AdminWorkoutRailCard";
 import WorkoutForm from "./WorkoutForm";
 import MovementLandingCopyForm from "./MovementLandingCopyForm";
-import MovementHeroTileForm from "./MovementHeroTileForm";
+import MovementHeroCollectionItemForm from "./MovementHeroCollectionItemForm";
 import MovementQuickieCardForm from "./MovementQuickieCardForm";
 import AdminMovementHeroTileCard from "./AdminMovementHeroTileCard";
 import AdminMovementQuickieRailCard from "./AdminMovementQuickieRailCard";
@@ -24,6 +24,14 @@ import AdminMovementQuickieRailCard from "./AdminMovementQuickieRailCard";
 const addTriggerClass =
   "shrink-0 rounded-md bg-sky-blue px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 [font-family:var(--font-body),sans-serif]";
 
+/** Mirrors the member "Just Getting Started" section for admins:
+ *  - Section heading + tagline (editable via `MovementLandingCopyForm`)
+ *  - 6-item grid of collection days (2 rows × 3 cols, row-major) with Edit/Delete overlays
+ *    and an onClick preview that plays the item's video in the overlay — same as members see.
+ *  - "Add day" toolbar button creates a new item under the singleton hero tile.
+ *  Parent hero tile metadata (title/subtitle/image) still lives in the DB but is intentionally
+ *  hidden here — it no longer drives any member-facing visual, so we don't ask admins to fill it.
+ */
 export default function WorkoutLibraryAdminView({
   workouts,
   movementLayout,
@@ -33,16 +41,19 @@ export default function WorkoutLibraryAdminView({
 }) {
   const [layoutPreview, setLayoutPreview] = useState<MovementLayoutVideoPayload | null>(null);
 
-  const previewHero = useCallback((tile: MovementHeroTileDTO) => {
-    const url = tile.videoUrl?.trim();
-    if (!url) return;
-    setLayoutPreview({
-      title: tile.title,
-      subtitle: tile.subtitle,
-      videoUrl: url,
-      poster: tile.imageUrl,
-    });
-  }, []);
+  const previewItem = useCallback(
+    (item: MovementHeroCollectionItemDTO) => {
+      const url = item.videoUrl?.trim();
+      if (!url) return;
+      setLayoutPreview({
+        title: item.title,
+        subtitle: `Day ${item.dayIndex}`,
+        videoUrl: url,
+        poster: item.imageUrl,
+      });
+    },
+    [],
+  );
 
   const previewQuickie = useCallback((card: MovementQuickieCardDTO) => {
     const url = card.videoUrl?.trim();
@@ -55,16 +66,43 @@ export default function WorkoutLibraryAdminView({
     });
   }, []);
 
-  const heroSectionBody =
-    movementLayout.heroTiles.length === 0 ? (
-      <p className="col-span-full px-4 py-8 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
-        No hero tiles yet. Use <strong className="font-semibold text-foreground">Add hero tile</strong>.
-      </p>
-    ) : (
-      movementLayout.heroTiles.map((t) => (
-        <AdminMovementHeroTileCard key={t.id} tile={t} onPreviewPlay={previewHero} />
-      ))
-    );
+  const primaryTile = movementLayout.heroTiles[0] ?? null;
+  const items = primaryTile?.items ?? [];
+  /** When there are gaps (e.g. admin deleted Day 3), prefill the next "Add day" to the
+   *  lowest unused slot starting at 1. Falls back to `items.length + 1` if the series is clean. */
+  const usedDayIndices = new Set(items.map((i) => i.dayIndex));
+  let nextDayIndex = items.length + 1;
+  for (let d = 1; d <= Math.max(items.length + 1, 6); d++) {
+    if (!usedDayIndices.has(d)) {
+      nextDayIndex = d;
+      break;
+    }
+  }
+
+  const heroSectionBody = !primaryTile ? (
+    <p className="rounded-md border border-dashed border-sand bg-white/80 px-4 py-8 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
+      No collection yet. Click{" "}
+      <strong className="font-semibold text-foreground">Add day</strong> above to create the
+      first day of the series.
+    </p>
+  ) : items.length === 0 ? (
+    <p className="rounded-md border border-dashed border-sand bg-white/80 px-4 py-8 text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">
+      No days in this collection yet. Use{" "}
+      <strong className="font-semibold text-foreground">Add day</strong> to build Day 1..Day N.
+    </p>
+  ) : (
+    <div className="grid w-full grid-cols-3 grid-rows-2 gap-0">
+      {items.map((item, idx) => (
+        <AdminMovementHeroTileCard
+          key={item.id}
+          tile={primaryTile}
+          item={item}
+          onPreviewPlay={previewItem}
+          imagePriority={idx < 2}
+        />
+      ))}
+    </div>
+  );
 
   const quickieRail =
     movementLayout.quickieCards.length === 0 ? (
@@ -105,7 +143,14 @@ export default function WorkoutLibraryAdminView({
         justStartedToolbar={
           <>
             <MovementLandingCopyForm copy={movementLayout.copy} triggerLabel="Edit section copy" />
-            <MovementHeroTileForm triggerLabel="Add hero tile" triggerClassName={addTriggerClass} />
+            {primaryTile ? (
+              <MovementHeroCollectionItemForm
+                heroTileId={primaryTile.id}
+                nextDayIndex={nextDayIndex}
+                triggerLabel="Add day"
+                triggerClassName={addTriggerClass}
+              />
+            ) : null}
           </>
         }
         heroSectionBody={heroSectionBody}

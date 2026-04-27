@@ -10,6 +10,7 @@ import MovementLayoutVideoOverlay, {
 } from "@/components/MovementLayoutVideoOverlay";
 import { RAIL_CARD_WIDTH } from "@/components/LibraryBannerStrip";
 import type {
+  MovementHeroCollectionItemDTO,
   MovementHeroTileDTO,
   MovementLayoutDTO,
   MovementQuickieCardDTO,
@@ -50,6 +51,8 @@ export default function WorkoutLibrarySection({
     setLayoutVideo(null);
   }, []);
 
+  /** Legacy single-video hero tile (pre-collection data shape). Only reachable when
+   *  the primary hero tile has zero items; otherwise the 6-card grid is rendered instead. */
   const onPlayHeroTile = useCallback(
     (tile: MovementHeroTileDTO) => {
       if (isGuest) {
@@ -63,6 +66,24 @@ export default function WorkoutLibrarySection({
         subtitle: tile.subtitle,
         videoUrl: url,
         poster: tile.imageUrl,
+      });
+    },
+    [isGuest, router],
+  );
+
+  const onPlayCollectionItem = useCallback(
+    (item: MovementHeroCollectionItemDTO) => {
+      if (isGuest) {
+        router.push("/register");
+        return;
+      }
+      const url = item.videoUrl?.trim();
+      if (!url) return;
+      setLayoutVideo({
+        title: item.title,
+        subtitle: `Day ${item.dayIndex}`,
+        videoUrl: url,
+        poster: item.imageUrl,
       });
     },
     [isGuest, router],
@@ -94,6 +115,7 @@ export default function WorkoutLibrarySection({
         <WorkoutLibraryShell
           movementLayout={movementLayout}
           onPlayHeroTile={onPlayHeroTile}
+          onPlayCollectionItem={onPlayCollectionItem}
           onPlayQuickie={onPlayQuickie}
           isGuest={isGuest}
           railImageLoading="eager"

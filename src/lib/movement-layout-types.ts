@@ -3,6 +3,16 @@ export type MovementLandingCopyDTO = {
   quickieIntro: string;
 };
 
+export type MovementHeroCollectionItemDTO = {
+  id: string;
+  heroTileId: string;
+  dayIndex: number;
+  title: string;
+  imageUrl: string;
+  videoUrl: string;
+  sortOrder: number;
+};
+
 export type MovementHeroTileDTO = {
   id: string;
   title: string;
@@ -10,6 +20,10 @@ export type MovementHeroTileDTO = {
   imageUrl: string;
   videoUrl: string;
   sortOrder: number;
+  /** Collection entries (e.g. Day 1..Day 6). When non-empty, these render as the
+   *  "Just Getting Started" 3×2 grid directly on the Movement tab; otherwise the tile falls
+   *  back to its legacy single-video button layout (older CMS data). */
+  items: MovementHeroCollectionItemDTO[];
 };
 
 export type MovementQuickieCardDTO = {

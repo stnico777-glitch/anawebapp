@@ -411,6 +411,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
               const hasPrayerBody = e.content.trim().length > 0;
               const showBody = isBodyExpanded;
               const thumb = photos[0];
+              const showListThumb = Boolean(thumb) || isTeamWelcome;
 
               const optionsOpen = journalOptionsOpenId === e.id;
 
@@ -419,36 +420,31 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
                   key={e.id}
                   className="relative rounded-xl border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900"
                 >
-                  <div className="flex gap-3">
-                    <div
-                      className={`shrink-0 ${hasPrayerBody ? "cursor-pointer" : ""}`}
-                      onClick={() => {
-                        if (hasPrayerBody) toggleJournalExpanded(e.id);
-                      }}
-                    >
-                      {thumb ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={thumb}
-                          alt=""
-                          className="h-14 w-14 rounded-full object-cover ring-2 ring-stone-100 dark:ring-stone-700"
-                        />
-                      ) : isTeamWelcome ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={TEAM_WELCOME_AVATAR_SRC}
-                          alt="From the Awake & Align team"
-                          className="h-14 w-14 rounded-full object-cover ring-2 ring-sky-blue/30 dark:ring-sky-blue/40"
-                        />
-                      ) : (
-                        <div
-                          className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-sm font-medium text-stone-400 dark:bg-stone-800 dark:text-stone-500"
-                          aria-hidden
-                        >
-                          ···
-                        </div>
-                      )}
-                    </div>
+                  <div className={`flex ${showListThumb ? "gap-3" : ""}`}>
+                    {showListThumb ? (
+                      <div
+                        className={`shrink-0 ${hasPrayerBody ? "cursor-pointer" : ""}`}
+                        onClick={() => {
+                          if (hasPrayerBody) toggleJournalExpanded(e.id);
+                        }}
+                      >
+                        {thumb ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={thumb}
+                            alt=""
+                            className="h-14 w-14 rounded-full object-cover ring-2 ring-stone-100 dark:ring-stone-700"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={TEAM_WELCOME_AVATAR_SRC}
+                            alt="From the Awake & Align team"
+                            className="h-14 w-14 rounded-full object-cover ring-2 ring-sky-blue/30 dark:ring-sky-blue/40"
+                          />
+                        )}
+                      </div>
+                    ) : null}
                     <div className="flex min-w-0 flex-1 flex-col">
                       <div
                         className={hasPrayerBody ? "cursor-pointer" : undefined}
@@ -709,8 +705,8 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             </span>
-                            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground [font-family:var(--font-headline),sans-serif]">
-                              God did — prayer answered
+                            <span className="text-xs font-semibold tracking-tight text-foreground [font-family:var(--font-headline),sans-serif]">
+                              Answered and aligned! God always shows up. &lt;3
                             </span>
                           </div>
                         )}
@@ -778,7 +774,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
                 id="prayer-celebrate-title"
                 className="text-center text-xl font-semibold tracking-tight text-foreground dark:text-stone-100 [font-family:var(--font-headline),sans-serif]"
               >
-                Whoa — your prayer was answered!
+                Answered and aligned! God always shows up. &lt;3
               </h2>
               <p className="mt-3 text-center text-sm leading-relaxed text-gray dark:text-stone-400 [font-family:var(--font-body),sans-serif]">
                 Take a breath and give thanks. When you&apos;re ready, mark it below.

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/auth";
@@ -7,7 +8,7 @@ import SubmitFeedbackCard from "./SubmitFeedbackCard";
 export const metadata: Metadata = {
   title: "More | awake + align",
   description:
-    "FAQs, ways to connect, ambassador info, the Awake & Align book, and meet founder Kat Jackson.",
+    "FAQs, ways to connect, ambassador info, the Awake & Align book, and meet founder Kathryn Jackson.",
 };
 
 const CARD_SHELL =
@@ -16,10 +17,62 @@ const CARD_SHELL =
 const DETAILS_CLASS =
   "group border-b border-sand py-4 first:pt-0 last:border-b-0 [font-family:var(--font-body),sans-serif]";
 
-const faqItems: { q: string; a: string }[] = [
+/** Italic scripture quote shown beneath a FAQ answer. Sky-blue accent rule on the left ties
+ *  the verse styling into the rest of the page palette without competing with the answer copy. */
+function Verse({ children, reference }: { children: ReactNode; reference: string }) {
+  return (
+    <blockquote className="mt-3 border-l-2 border-sky-blue/50 pl-3 text-sm italic leading-relaxed text-gray/90 [font-family:var(--font-body),sans-serif]">
+      &ldquo;{children}&rdquo;{" "}
+      <span className="not-italic text-gray/70">— {reference}</span>
+    </blockquote>
+  );
+}
+
+const faqItems: { q: string; a: ReactNode }[] = [
   {
-    q: "What is awake + align?",
-    a: "A faith-forward rhythm for your week—prayer, movement, and rest—with audio, guided sessions, and community so you can remember, return, and rejoice.",
+    q: "How do I get the most out of this membership?",
+    a: (
+      <>
+        <p>
+          Show up daily, stay on track with the schedule. The schedule is designed for you to grow optimally
+          both spiritually and physically in under 30 min a day.
+        </p>
+        <Verse reference="James 4:8">Draw near to God, and He will draw near to you.</Verse>
+      </>
+    ),
+  },
+  {
+    q: "Why Pilates?",
+    a: (
+      <>
+        <p>
+          Pilates helps you move with intention, build strength, and honor your body, without any spiritual
+          roots like yoga. Here, we simply pair movement with Jesus.
+        </p>
+        <Verse reference="1 Corinthians 6:19">Your body is a temple of the Holy Spirit&hellip;</Verse>
+      </>
+    ),
+  },
+  {
+    q: "Why is there no workout on Sunday?",
+    a: (
+      <>
+        <p>Sunday is a Sabbath rhythm, a day to rest, worship, and be still with God.</p>
+        <Verse reference="Genesis 2:3">Then God blessed the seventh day and made it holy.</Verse>
+      </>
+    ),
+  },
+  {
+    q: "I’m new here. How do I start?",
+    a: "Start with the Beginner Week to learn breath and foundational Pilates movements. Then build consistency by following the daily rhythm of movement, scripture, and prayer.",
+  },
+  {
+    q: "Props or no props?",
+    a: "Props are optional but can help deepen your workout when used. Most sessions are designed with just your bodyweight and a mat.",
+  },
+  {
+    q: "What is Awake & Align?",
+    a: "A consistent way to seek the Lord daily, blending movement, prayer, and scripture into an achievable routine in under 30 min a day. Everything you need to grow as a confident daughter of Christ.",
   },
   {
     q: "How does my subscription work?",
@@ -34,12 +87,12 @@ const faqItems: { q: string; a: string }[] = [
     a: "Open your account settings, tap Subscription, and select Cancel. You'll keep full access through the end of your current billing period, then the account shifts to a free preview with limited content.",
   },
   {
-    q: "Do I need any special equipment for the movement sessions?",
-    a: "Not at all. Most sessions use only a mat and bodyweight. A few optional add-ons (light weights, resistance band, a small pilates ball) are mentioned when useful but never required.",
+    q: "Do I need any special equipment?",
+    a: "Props are optional, but helpful for added resistance. Most workouts only require your bodyweight and a mat.",
   },
   {
     q: "Are the workouts beginner-friendly?",
-    a: "Yes. Every session has modification cues, and the library is tagged by intensity so you can choose a gentle recovery flow or a stronger strength day. If something feels too much, swap to an easier day on the schedule.",
+    a: "Yes, every session includes modifications you can follow at your own pace. You can always return to the Beginner Week to build confidence.",
   },
   {
     q: "Can I use the app on more than one device?",
@@ -55,7 +108,7 @@ const faqItems: { q: string; a: string }[] = [
   },
   {
     q: "Where do I go for prayer and encouragement?",
-    a: "Open Prayer & Praise from the nav to share requests and celebrate answered prayer with the community. Your private prayer journal lives under Prayer journal.",
+    a: "Use the Community tab to share prayer requests and celebrate answered prayers. Your private Prayer Journal is always available for personal time with God.",
   },
   {
     q: "I forgot my password — what do I do?",
@@ -63,7 +116,18 @@ const faqItems: { q: string; a: string }[] = [
   },
   {
     q: "Who can I contact for help?",
-    a: "Use the Submit feedback tile above, the Contact link in the site footer, or message us on Instagram @awakeandalign_—we read every note.",
+    a: (
+      <>
+        For support, email{" "}
+        <a
+          href="mailto:kat@awakeandalign.fit"
+          className="font-medium text-sky-blue underline-offset-4 hover:underline"
+        >
+          kat@awakeandalign.fit
+        </a>{" "}
+        and we will get back to you. We look at all messages!
+      </>
+    ),
   },
 ];
 
@@ -128,7 +192,7 @@ export default async function MorePage() {
                   <summary className="cursor-pointer list-none pr-2 text-sm font-medium text-foreground marker:content-none [&::-webkit-details-marker]:hidden [&::after]:float-right [&::after]:text-sky-blue [&::after]:content-['+'] group-open:[&::after]:content-['−']">
                     {q}
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-gray">{a}</p>
+                  <div className="mt-3 space-y-3 text-sm leading-relaxed text-gray">{a}</div>
                 </details>
               ))}
             </div>
@@ -257,7 +321,7 @@ export default async function MorePage() {
                 id="founder-heading"
                 className="mt-1 text-xl font-semibold tracking-tight text-foreground md:text-2xl [font-family:var(--font-headline),sans-serif]"
               >
-                Kat Jackson
+                Kathryn Jackson
               </h2>
             </div>
             <div className="mx-auto mt-6 grid max-w-[520px] grid-cols-2 gap-5 md:gap-6">
@@ -269,7 +333,7 @@ export default async function MorePage() {
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-sand ring-1 ring-accent-amber/20">
                   <Image
                     src="/founder-kat.png"
-                    alt="Kat Jackson, founder of awake + align"
+                    alt="Kathryn Jackson, founder of awake + align"
                     fill
                     sizes="(max-width: 640px) 44vw, 260px"
                     className="object-cover object-center"
@@ -281,7 +345,7 @@ export default async function MorePage() {
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[2px] bg-sand ring-1 ring-accent-amber/20">
                   <Image
                     src="/founder-kat-2-v2.png"
-                    alt="Kat Jackson on a yoga mat with wrist weights"
+                    alt="Kathryn Jackson on a yoga mat with wrist weights"
                     fill
                     sizes="(max-width: 640px) 44vw, 260px"
                     className="object-cover object-center"

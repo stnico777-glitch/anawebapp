@@ -19,7 +19,7 @@ export default function Footer({ bleedBackground = false }: FooterProps) {
       role="contentinfo"
     >
       <p className="py-5 text-center text-sm italic text-sky-blue [font-family:var(--font-headline),sans-serif] bg-pastel-blue-light">
-        Faith, fitness & routine — Start your 7-day free trial
+        Pilates, prayer & community — Start your 7-day free trial
       </p>
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
