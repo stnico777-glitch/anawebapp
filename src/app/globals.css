@@ -73,42 +73,51 @@ body {
   width: 100%;
 }
 
-/* Community bulletin: infinite horizontal marquee (duplicated track at 50% width). */
-@keyframes community-bulletin-marquee {
-  from {
+/* Community bulletin: horizontally drifting “sway” (single, unique track; no duplicated cards). */
+@keyframes community-bulletin-sway {
+  0% {
     transform: translate3d(0, 0, 0);
   }
-  to {
-    transform: translate3d(-50%, 0, 0);
+  50% {
+    transform: translate3d(
+      calc(-1 * var(--community-bulletin-sway-drift, 40px)),
+      0,
+      0
+    );
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
   }
 }
 
-.community-bulletin-marquee-track {
-  animation: community-bulletin-marquee var(--community-bulletin-marquee-duration) linear
+.community-bulletin-sway-track {
+  animation: community-bulletin-sway var(--community-bulletin-sway-duration, 18s) ease-in-out
     infinite;
 }
 
-/* Second row: same track pattern, runs rightward (opposite direction), same speed. */
-@keyframes community-bulletin-marquee-reverse {
-  from {
-    transform: translate3d(-50%, 0, 0);
+@keyframes community-bulletin-sway-reverse {
+  0% {
+    transform: translate3d(0, 0, 0);
   }
-  to {
+  50% {
+    transform: translate3d(var(--community-bulletin-sway-drift, 40px), 0, 0);
+  }
+  100% {
     transform: translate3d(0, 0, 0);
   }
 }
 
-.community-bulletin-marquee-track-reverse {
-  animation: community-bulletin-marquee-reverse var(--community-bulletin-marquee-duration-reverse)
-    linear infinite;
+.community-bulletin-sway-track-reverse {
+  animation: community-bulletin-sway-reverse var(--community-bulletin-sway-duration, 18s)
+    ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .community-bulletin-marquee-track {
+  .community-bulletin-sway-track {
     animation: none;
   }
 
-  .community-bulletin-marquee-track-reverse {
+  .community-bulletin-sway-track-reverse {
     animation: none;
   }
 }

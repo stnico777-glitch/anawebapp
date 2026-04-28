@@ -162,6 +162,13 @@ function BulletinMarqueeRow({
   /** When true, infinite marquee CSS is paused (e.g. section off-screen). */
   pauseAnimation?: boolean;
 }) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [sway, setSway] = useState<{ driftPx: number; durationSec: number }>(() => ({
+    driftPx: 40,
+    durationSec: 18,
+  }));
+
   if (rowItems.length === 0) {
     if (whenEmpty == null) return null;
     return (
@@ -174,12 +181,33 @@ function BulletinMarqueeRow({
     );
   }
 
-  // The previous marquee effect duplicated the feed items to create an "infinite" loop.
-  // That can be misread as duplicate posts, so we keep the Bloom Scroll strictly unique.
-  const track = rowItems;
-  const motionClass = "";
-  const pauseClass =
-    motionClass && pauseAnimation ? " marquee-pause-when-hidden" : "";
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+    if (!viewport || !track) return;
+
+    const compute = () => {
+      const maxScroll = Math.max(0, track.scrollWidth - viewport.clientWidth);
+      const driftPx = Math.max(40, Math.min(520, maxScroll || 56));
+      // Heuristic: longer drift => longer cycle, keep within a pleasant range.
+      const durationSec = Math.max(14, Math.min(34, 14 + driftPx / 18));
+      setSway({ driftPx, durationSec });
+    };
+
+    compute();
+    const ro = new ResizeObserver(() => compute());
+    ro.observe(viewport);
+    ro.observe(track);
+    return () => ro.disconnect();
+  }, [rowItems.length]);
+
+  const motionClass =
+    reduceMotion
+      ? ""
+      : direction === "forward"
+        ? "community-bulletin-sway-track"
+        : "community-bulletin-sway-track-reverse";
+  const pauseClass = motionClass && pauseAnimation ? " marquee-pause-when-hidden" : "";
 
   return (
     <div className="mt-6 first:mt-0">
@@ -187,18 +215,28 @@ function BulletinMarqueeRow({
         {label}
       </p>
       <div
+        ref={viewportRef}
         className={`relative px-0 ${
           reduceMotion ? "overflow-x-visible" : "[overflow-x:clip]"
         }`}
       >
         <div
+          ref={trackRef}
           className={`flex gap-3 px-4 pb-1 pt-4 md:gap-4 md:px-6 ${
             reduceMotion
               ? "w-full max-w-full flex-wrap justify-center"
               : `w-max ${motionClass}${pauseClass}`
           }`}
+          style={
+            reduceMotion
+              ? undefined
+              : ({
+                  ["--community-bulletin-sway-drift" as any]: `${sway.driftPx}px`,
+                  ["--community-bulletin-sway-duration" as any]: `${sway.durationSec}s`,
+                } as React.CSSProperties)
+          }
         >
-          {track.map((h, i) => (
+          {rowItems.map((h, i) => (
             <button
               key={`${h.kind}-${h.id}-row-${direction}-${i}`}
               type="button"
