@@ -174,17 +174,10 @@ function BulletinMarqueeRow({
     );
   }
 
-  /* Duplicated track only for the animated marquee; reduced-motion uses a single set + wrap. */
-  const track =
-    !reduceMotion && rowItems.length >= 2
-      ? [...rowItems, ...rowItems]
-      : rowItems;
-  const motionClass =
-    reduceMotion || rowItems.length < 2
-      ? ""
-      : direction === "forward"
-        ? "community-bulletin-marquee-track"
-        : "community-bulletin-marquee-track-reverse";
+  // The previous marquee effect duplicated the feed items to create an "infinite" loop.
+  // That can be misread as duplicate posts, so we keep the Bloom Scroll strictly unique.
+  const track = rowItems;
+  const motionClass = "";
   const pauseClass =
     motionClass && pauseAnimation ? " marquee-pause-when-hidden" : "";
 
