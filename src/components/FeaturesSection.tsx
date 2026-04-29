@@ -86,7 +86,7 @@ export default function FeaturesSection({ showLockIcon = false }: FeaturesSectio
         </ScrollReveal>
         <ScrollReveal className="w-full" delayMs={270} {...MARKETING_SECTION_HEADER_REVEAL}>
           <p className="mt-1 text-center text-sm lowercase tracking-[0.12em] text-gray [font-family:var(--font-body),sans-serif] md:mt-1.5 md:text-base">
-            Faith + fitness, all in one place
+            Pilates, prayer, &amp; community
           </p>
         </ScrollReveal>
 
