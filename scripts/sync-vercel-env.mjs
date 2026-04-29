@@ -1,15 +1,23 @@
 /**
- * One-off: push local .env values to Vercel (production + preview).
+ * Push local env to Vercel (production + preview).
+ * Loads `.env` then `.env.local` (override) so secrets like `DATABASE_URL` can live in `.env.local` only.
  * Run: node scripts/sync-vercel-env.mjs
  */
-import "dotenv/config";
+import dotenv from "dotenv";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(scriptDir, "..");
 process.chdir(root);
+
+dotenv.config({ path: path.join(root, ".env") });
+const localPath = path.join(root, ".env.local");
+if (fs.existsSync(localPath)) {
+  dotenv.config({ path: localPath, override: true });
+}
 
 /** Default if .env still has localhost — change in Vercel or set VERCEL_PRODUCTION_SITE_URL in .env */
 const DEFAULT_PRODUCTION_SITE_URL = "https://anawebapp.vercel.app";
@@ -26,10 +34,15 @@ function resolveSiteUrl(target) {
 }
 
 function vercelEnvAdd(name, target, value, { sensitive = false } = {}) {
-  const args = ["vercel", "env", "add", name, target];
-  if (sensitive) args.push("--sensitive");
-  args.push("--value", value, "--force", "--yes");
-  const r = spawnSync("npx", args, { stdio: "inherit", shell: false });
+  /** Vercel CLI 50+ Preview: pass empty string as git-branch = all preview branches (non-interactive). */
+  const vercelArgs = ["env", "add", name, target];
+  if (target === "preview") vercelArgs.push("");
+  if (sensitive) vercelArgs.push("--sensitive");
+  vercelArgs.push("--value", value, "--force", "--yes", "--non-interactive");
+  const vercelBin = path.join(root, "node_modules", ".bin", "vercel");
+  const r = fs.existsSync(vercelBin)
+    ? spawnSync(vercelBin, vercelArgs, { stdio: "inherit", shell: false })
+    : spawnSync("npx", ["vercel", ...vercelArgs], { stdio: "inherit", shell: false });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
@@ -54,7 +67,7 @@ for (const target of targets) {
   for (const [name, sensitive] of fromEnv) {
     const v = process.env[name]?.trim();
     if (!v) {
-      console.error(`Missing ${name} in .env — skip`);
+      console.error(`Missing ${name} in .env / .env.local`);
       process.exit(1);
     }
     console.error(`→ ${name} (${target})`);
