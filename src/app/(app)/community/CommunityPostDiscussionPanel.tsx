@@ -66,7 +66,6 @@ function commentApiPath(item: CommunityFeedItem, commentId: string): string {
 
 type CommunityPostDiscussionPanelProps = {
   item: CommunityFeedItem;
-  defaultCommentName?: string;
   /** Called after a comment is successfully posted (new total count). */
   onCommentCountUpdate?: (nextCount: number) => void;
   className?: string;
@@ -82,7 +81,6 @@ type CommunityPostDiscussionPanelProps = {
  */
 export default function CommunityPostDiscussionPanel({
   item,
-  defaultCommentName,
   onCommentCountUpdate,
   className = "",
   align = "thread",
@@ -93,7 +91,6 @@ export default function CommunityPostDiscussionPanel({
   const lockHref = isGuest ? "/register" : "/subscribe";
   const lockHint = isGuest ? "Sign up to comment" : "Subscribe to comment";
   const formId = useId();
-  const nameInputId = `${formId}-comment-name`;
   const bodyInputId = `${formId}-comment-body`;
   const composerRegionId = `${formId}-composer`;
 
@@ -101,7 +98,6 @@ export default function CommunityPostDiscussionPanel({
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [commentBody, setCommentBody] = useState("");
-  const [commentAuthor, setCommentAuthor] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [showCommentComposer, setShowCommentComposer] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
@@ -116,13 +112,12 @@ export default function CommunityPostDiscussionPanel({
   useEffect(() => {
     setCommentBody("");
     setCommentsError(null);
-    setCommentAuthor(defaultCommentName?.trim() ?? "");
     setShowCommentComposer(false);
     setComposerError(null);
     setEditingCommentId(null);
     setEditDraft("");
     setCommentMutateError(null);
-  }, [item.id, item.kind, defaultCommentName]);
+  }, [item.id, item.kind]);
 
   useEffect(() => {
     if (!showCommentComposer) return;
@@ -167,7 +162,6 @@ export default function CommunityPostDiscussionPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           body: commentBody.trim(),
-          authorName: commentAuthor.trim() || undefined,
         }),
       });
       const data = (await res.json().catch(() => null)) as
@@ -402,19 +396,6 @@ export default function CommunityPostDiscussionPanel({
           className="mt-4 space-y-2"
           onSubmit={submitComment}
         >
-          <label className="sr-only" htmlFor={nameInputId}>
-            Your name
-          </label>
-          <input
-            id={nameInputId}
-            type="text"
-            maxLength={80}
-            autoComplete="nickname"
-            placeholder="Your name"
-            value={commentAuthor}
-            onChange={(e) => setCommentAuthor(e.target.value)}
-            className="w-full rounded-lg border border-sand bg-white px-3 py-2 text-sm text-foreground placeholder:text-gray focus:border-sky-blue focus:outline-none focus:ring-1 focus:ring-sky-blue"
-          />
           <label className="sr-only" htmlFor={bodyInputId}>
             Comment
           </label>

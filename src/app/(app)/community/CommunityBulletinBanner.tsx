@@ -287,12 +287,10 @@ function BulletinMarqueeRow({
 
 export default function CommunityBulletinBanner({
   items,
-  defaultCommentName,
   locked = false,
   isGuest = false,
 }: {
   items: CommunityFeedItem[];
-  defaultCommentName?: string;
   locked?: boolean;
   isGuest?: boolean;
 }) {
@@ -400,7 +398,6 @@ export default function CommunityBulletinBanner({
 
       <CommunityPostDetailModal
         item={expanded}
-        defaultCommentName={defaultCommentName}
         onClose={() => setExpanded(null)}
         locked={locked}
         isGuest={isGuest}

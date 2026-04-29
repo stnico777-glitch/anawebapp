@@ -32,18 +32,16 @@ export default function PrayerPraiseComposer({
   const [kind, setKind] = useState<"prayer" | "praise">("prayer");
 
   const [prayerContent, setPrayerContent] = useState("");
-  const [prayerName, setPrayerName] = useState(() => defaultDisplayName ?? "");
   const [praiseContent, setPraiseContent] = useState("");
-  const [praiseName, setPraiseName] = useState(() => defaultDisplayName ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const content = kind === "prayer" ? prayerContent : praiseContent;
   const setContent = kind === "prayer" ? setPrayerContent : setPraiseContent;
-  const name = kind === "prayer" ? prayerName : praiseName;
-  const setName = kind === "prayer" ? setPrayerName : setPraiseName;
 
-  const initial = avatarLetter(name, content, kind);
+  /** Wall posts use server-resolved profile name; avatar preview matches that source. */
+  const accountLabel = (defaultDisplayName ?? "").trim();
+  const initial = avatarLetter(accountLabel, content, kind);
 
   const canPost = useMemo(
     () => content.trim().length > 0 && !loading,
@@ -97,7 +95,6 @@ export default function PrayerPraiseComposer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: prayerContent.trim(),
-          authorName: prayerName.trim() || "Anonymous",
         }),
       });
       if (!res.ok) {
@@ -124,7 +121,6 @@ export default function PrayerPraiseComposer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: praiseContent.trim(),
-          authorName: praiseName.trim() || "Anonymous",
         }),
       });
       if (!res.ok) {
@@ -320,27 +316,13 @@ export default function PrayerPraiseComposer({
                       className="w-full resize-y rounded-lg border border-sand bg-app-surface/60 px-3 py-2.5 text-base leading-relaxed text-foreground placeholder:text-gray/70 focus:border-pastel-blue focus:outline-none focus:ring-1 focus:ring-pastel-blue"
                     />
 
-                    <div className="mt-4 flex flex-col gap-3 border-t border-sand/80 pt-4 sm:flex-row sm:items-end sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <label className="sr-only">How your name appears</label>
-                        <div className="flex flex-wrap items-center gap-2 text-sm">
-                          <span className="shrink-0 text-gray">Appear as</span>
-                          <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Anonymous"
-                            maxLength={100}
-                            className="min-w-0 flex-1 rounded-lg border border-sand bg-white px-2 py-1.5 text-foreground placeholder:text-gray/60 focus:border-pastel-blue focus:outline-none focus:ring-1 focus:ring-pastel-blue sm:max-w-[14rem]"
-                          />
-                        </div>
-                        {error && (
-                          <p className="mt-2 text-sm text-accent-pink" role="alert">
-                            {error}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex shrink-0 items-center gap-3">
+                    <div className="mt-4 space-y-2 border-t border-sand/80 pt-4">
+                      {error ? (
+                        <p className="text-sm text-accent-pink" role="alert">
+                          {error}
+                        </p>
+                      ) : null}
+                      <div className="flex items-center justify-end gap-3">
                         <span
                           className={`text-xs tabular-nums ${
                             len > maxLen - 200 ? "text-gray" : "text-gray/70"

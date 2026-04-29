@@ -32,7 +32,10 @@ export async function resolveWallAuthor(request: Request): Promise<WallAuthor | 
   // 1) Web: cookie-backed session — `auth()` already reads `profiles`
   const session = await auth();
   if (session?.user?.id) {
-    const name = session.user.name?.trim() || "Member";
+    const name =
+      session.user.name?.trim() ||
+      session.user.email?.split("@")[0]?.trim() ||
+      "Member";
     return { userId: session.user.id, displayName: name.slice(0, 80) };
   }
 

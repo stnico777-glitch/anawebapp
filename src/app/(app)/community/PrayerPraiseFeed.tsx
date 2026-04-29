@@ -84,13 +84,11 @@ function feedItemKey(item: CommunityFeedItem): string {
 export default function PrayerPraiseFeed({
   items: initialItems,
   className = "",
-  defaultCommentName,
   locked = false,
   isGuest = false,
 }: {
   items: CommunityFeedItem[];
   className?: string;
-  defaultCommentName?: string;
   /** Locked covers guests + signed-in non-subscribers. */
   locked?: boolean;
   /** When true, lockHref points to /register (vs /subscribe for non-subscribers). */
@@ -461,7 +459,6 @@ export default function PrayerPraiseFeed({
                       >
                         <CommunityPostDiscussionPanel
                           item={item}
-                          defaultCommentName={defaultCommentName}
                           align="flush"
                           locked={locked}
                           isGuest={isGuest}
@@ -645,7 +642,6 @@ export default function PrayerPraiseFeed({
                       >
                         <CommunityPostDiscussionPanel
                           item={item}
-                          defaultCommentName={defaultCommentName}
                           align="flush"
                           locked={locked}
                           isGuest={isGuest}

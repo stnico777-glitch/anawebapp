@@ -69,13 +69,11 @@ function actionBtnClass(active: boolean, busy?: boolean) {
 
 export default function CommunityPostDetailModal({
   item,
-  defaultCommentName,
   onClose,
   locked = false,
   isGuest = false,
 }: {
   item: CommunityFeedItem | null;
-  defaultCommentName?: string;
   onClose: () => void;
   locked?: boolean;
   isGuest?: boolean;
@@ -326,7 +324,6 @@ export default function CommunityPostDetailModal({
 
             <CommunityPostDiscussionPanel
               item={live}
-              defaultCommentName={defaultCommentName}
               locked={locked}
               isGuest={isGuest}
               onCommentCountUpdate={(next) =>

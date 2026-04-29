@@ -40,21 +40,11 @@ export default async function PrayerPraiseCommunityRoute() {
         </header>
       </div>
 
-      <CommunityBloomScrollIsland
-        items={items}
-        defaultCommentName={defaultDisplayName || undefined}
-        locked={locked}
-        isGuest={isGuest}
-      />
+      <CommunityBloomScrollIsland items={items} locked={locked} isGuest={isGuest} />
 
       <div className="mx-auto mt-6 max-w-6xl px-4">
         <div className="overflow-hidden rounded-2xl border border-sand bg-white shadow-sm">
-          <PrayerPraiseFeed
-            items={items}
-            defaultCommentName={defaultDisplayName || undefined}
-            locked={locked}
-            isGuest={isGuest}
-          />
+          <PrayerPraiseFeed items={items} locked={locked} isGuest={isGuest} />
         </div>
       </div>
 
