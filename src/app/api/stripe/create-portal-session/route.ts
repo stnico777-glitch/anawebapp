@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { appBaseUrl, getStripe } from "@/lib/stripe-server";
 
-export async function POST() {
+export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
@@ -25,7 +25,7 @@ export async function POST() {
     const stripe = getStripe();
     const portal = await stripe.billingPortal.sessions.create({
       customer: profile.stripeCustomerId,
-      return_url: `${appBaseUrl()}/subscribe`,
+      return_url: `${appBaseUrl(request)}/subscribe`,
     });
     if (!portal.url) {
       return NextResponse.json({ error: "Portal did not return a URL" }, { status: 500 });

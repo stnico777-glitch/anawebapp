@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const base = appBaseUrl();
+    const base = appBaseUrl(request);
     const stripe = getStripe();
     const uid = session.user.id;
     const checkout = await stripe.checkout.sessions.create({
