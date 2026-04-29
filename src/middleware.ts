@@ -75,6 +75,7 @@ export async function middleware(req: NextRequest) {
   let supabaseResponse = NextResponse.next({ request: req });
   let user: User | null = null;
   let isAdmin = false;
+  let isSubscriber = false;
 
   try {
     const supabase = createServerClient(supabaseUrl, supabaseAnon, {
@@ -112,13 +113,26 @@ export async function middleware(req: NextRequest) {
 
     if (!authError && authed) {
       user = authed;
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", authed.id)
-        .maybeSingle();
+      const [{ data: profile, error: profileError }, { data: ent, error: entError }] =
+        await Promise.all([
+          supabase
+            .from("profiles")
+            .select("is_admin, is_subscriber")
+            .eq("id", authed.id)
+            .maybeSingle(),
+          supabase
+            .from("user_entitlements")
+            .select("is_subscriber")
+            .eq("user_id", authed.id)
+            .maybeSingle(),
+        ]);
       if (!profileError) {
         isAdmin = profile?.is_admin ?? false;
+      }
+      if (!entError && ent && typeof (ent as { is_subscriber?: boolean }).is_subscriber === "boolean") {
+        isSubscriber = Boolean((ent as { is_subscriber: boolean }).is_subscriber);
+      } else if (!profileError) {
+        isSubscriber = profile?.is_subscriber ?? false;
       }
     }
   } catch (e) {
@@ -130,7 +144,8 @@ export async function middleware(req: NextRequest) {
 
   if (publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     if (isLoggedIn && (pathname === "/login" || pathname === "/register")) {
-      const r = NextResponse.redirect(new URL("/schedule", req.url));
+      const dest = isAdmin || isSubscriber ? "/schedule" : "/subscribe";
+      const r = NextResponse.redirect(new URL(dest, req.url));
       supabaseResponse.cookies.getAll().forEach((c) => r.cookies.set(c.name, c.value));
       return r;
     }

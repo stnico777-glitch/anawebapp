@@ -42,6 +42,14 @@ const fromEnv = [
   ["SUPABASE_SERVICE_ROLE_KEY", true],
 ];
 
+/** Optional — only pushed when present in `.env` (same names as `src/lib/stripe-price-env.ts`). */
+const optionalStripe = [
+  ["STRIPE_SECRET_KEY", true],
+  ["STRIPE_WEBHOOK_SECRET", true],
+  ["STRIPE_PRICE_ID_MONTHLY", false],
+  ["STRIPE_PRICE_ID_YEARLY", false],
+];
+
 for (const target of targets) {
   for (const [name, sensitive] of fromEnv) {
     const v = process.env[name]?.trim();
@@ -55,6 +63,13 @@ for (const target of targets) {
   const siteUrl = resolveSiteUrl(target);
   console.error(`→ NEXT_PUBLIC_SITE_URL (${target}) = ${siteUrl}`);
   vercelEnvAdd("NEXT_PUBLIC_SITE_URL", target, siteUrl, { sensitive: false });
+
+  for (const [name, sensitive] of optionalStripe) {
+    const v = process.env[name]?.trim();
+    if (!v) continue;
+    console.error(`→ ${name} (${target})`);
+    vercelEnvAdd(name, target, v, { sensitive });
+  }
 }
 
 const ig = process.env.NEXT_PUBLIC_INSTAGRAM_EMBED_REF?.trim();

@@ -17,11 +17,16 @@ type PanelStep = "choose" | "form";
 export default function PrayerPraiseComposer({
   defaultDisplayName,
   isGuest = false,
+  locked = false,
 }: {
   defaultDisplayName?: string;
   isGuest?: boolean;
+  /** Logged-in non-subscribers should also be locked, but routed to /subscribe instead of /register. */
+  locked?: boolean;
 }) {
   const router = useRouter();
+  const lockHref = isGuest ? "/register" : "/subscribe";
+  const showLock = locked || isGuest;
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<PanelStep>("choose");
   const [kind, setKind] = useState<"prayer" | "praise">("prayer");
@@ -55,8 +60,8 @@ export default function PrayerPraiseComposer({
   }, []);
 
   function openFab() {
-    if (isGuest) {
-      router.push("/register");
+    if (showLock) {
+      router.push(lockHref);
       return;
     }
     setOpen(true);
@@ -150,10 +155,16 @@ export default function PrayerPraiseComposer({
             type="button"
             onClick={openFab}
             className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-sky-blue text-3xl font-light leading-none text-white shadow-lg ring-2 ring-white/90 transition hover:bg-sky-blue/90 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2"
-            aria-label={isGuest ? "Sign up to post prayer or praise" : "New prayer or praise post"}
+            aria-label={
+              showLock
+                ? isGuest
+                  ? "Sign up to post prayer or praise"
+                  : "Subscribe to post prayer or praise"
+                : "New prayer or praise post"
+            }
             aria-describedby="community-fab-hint"
           >
-            {isGuest ? (
+            {showLock ? (
               <span
                 className="absolute -right-0.5 -top-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/55 shadow ring-2 ring-white"
                 aria-hidden
@@ -174,11 +185,11 @@ export default function PrayerPraiseComposer({
               aria-hidden
             />
             <p className="relative z-[1] text-left text-xs font-medium leading-snug text-foreground [font-family:var(--font-body),sans-serif] sm:text-[13px]">
-              {isGuest ? (
+              {showLock ? (
                 <>
                   <span className="block">Preview the wall</span>
                   <span className="mt-0.5 block text-gray">
-                    Sign up to share prayer or praise — tap{" "}
+                    {isGuest ? "Sign up" : "Subscribe"} to share prayer or praise — tap{" "}
                     <span className="font-semibold text-sky-blue">+</span>
                   </span>
                 </>

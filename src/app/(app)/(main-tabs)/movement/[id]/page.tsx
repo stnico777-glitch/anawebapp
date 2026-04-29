@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import WorkoutPlayer from "./WorkoutPlayer";
-import { getSessionForApp } from "@/lib/auth";
+import { auth } from "@/auth";
 import { DEMO_WORKOUT_ROWS } from "@/lib/demo-preview-data";
 import { WEEKLY_DAY_CARD_IMAGES } from "@/constants/schedule";
 
@@ -14,9 +14,13 @@ export default async function WorkoutDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { userId } = await getSessionForApp();
-
   const { id } = await params;
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+
+  const canPlayMovement =
+    !userId ||
+    ((session?.user?.isSubscriber ?? false) || (session?.user?.isAdmin ?? false));
   let workout = null as Awaited<ReturnType<typeof prisma.workout.findUnique>>;
   try {
     workout = await prisma.workout.findUnique({ where: { id } });
@@ -88,13 +92,27 @@ export default async function WorkoutDetailPage({
         </p>
       )}
       <div className="mt-6">
-        <WorkoutPlayer
-          workoutId={workout.id}
-          src={workout.videoUrl}
-          poster={workout.thumbnailUrl ?? WEEKLY_DAY_CARD_IMAGES[0]}
-          title={workout.title}
-          isCompleted={!!completed}
-        />
+        {canPlayMovement ? (
+          <WorkoutPlayer
+            workoutId={workout.id}
+            src={workout.videoUrl}
+            poster={workout.thumbnailUrl ?? WEEKLY_DAY_CARD_IMAGES[0]}
+            title={workout.title}
+            isCompleted={!!completed}
+          />
+        ) : (
+          <div className="rounded-sm border border-sand bg-white p-6 [font-family:var(--font-body),sans-serif]">
+            <p className="text-sm text-gray">
+              Subscribe to unlock movement videos and track completions.
+            </p>
+            <Link
+              href="/subscribe"
+              className="mt-3 inline-block text-sm font-medium text-sky-blue hover:text-sky-blue/80 hover:underline"
+            >
+              View plans →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

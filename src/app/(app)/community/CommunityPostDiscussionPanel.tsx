@@ -72,6 +72,9 @@ type CommunityPostDiscussionPanelProps = {
   className?: string;
   /** `flush` = full width (inline feed). `thread` = indented to match avatar column in modal. */
   align?: "thread" | "flush";
+  /** When locked (guest or signed-in non-subscriber), comment composer + edits redirect to lockHref. */
+  locked?: boolean;
+  isGuest?: boolean;
 };
 
 /**
@@ -83,8 +86,12 @@ export default function CommunityPostDiscussionPanel({
   onCommentCountUpdate,
   className = "",
   align = "thread",
+  locked = false,
+  isGuest = false,
 }: CommunityPostDiscussionPanelProps) {
   const router = useRouter();
+  const lockHref = isGuest ? "/register" : "/subscribe";
+  const lockHint = isGuest ? "Sign up to comment" : "Subscribe to comment";
   const formId = useId();
   const nameInputId = `${formId}-comment-name`;
   const bodyInputId = `${formId}-comment-body`;
@@ -269,7 +276,14 @@ export default function CommunityPostDiscussionPanel({
           className={actionBtnClass(showCommentComposer)}
           aria-expanded={showCommentComposer}
           aria-controls={composerRegionId}
-          onClick={() => setShowCommentComposer((v) => !v)}
+          aria-label={locked ? lockHint : undefined}
+          onClick={() => {
+            if (locked) {
+              router.push(lockHref);
+              return;
+            }
+            setShowCommentComposer((v) => !v);
+          }}
         >
           <IconComment className={ACTION_ICON} />
           <span>{showCommentComposer ? "Cancel" : "Comment"}</span>

@@ -4,6 +4,8 @@ import { getSessionForApp } from "@/lib/auth";
 import { DEMO_PRAYER_LIBRARY } from "@/lib/demo-preview-data";
 import { getAudioLayoutForDisplay } from "@/lib/audio-layout";
 
+export const dynamic = "force-dynamic";
+
 export default async function PrayerPage() {
   const [{ userId, isSubscriber }, layout] = await Promise.all([
     getSessionForApp(),

@@ -15,6 +15,7 @@ export default function MemberWorkoutRailCard({
   selected,
   showDone,
   showLock = false,
+  railLockHint,
   /** First visible rail cards: eager fetch for LCP without starving the whole row. */
   imagePriority = false,
 }: {
@@ -23,6 +24,8 @@ export default function MemberWorkoutRailCard({
   selected?: boolean;
   showDone?: boolean;
   showLock?: boolean;
+  /** Lock badge tooltip when `showLock`; defaults to signup copy. */
+  railLockHint?: string;
   imagePriority?: boolean;
 }) {
   const src = workoutRailThumb(workout);
@@ -39,7 +42,7 @@ export default function MemberWorkoutRailCard({
         unoptimized={unoptimized}
         showDone={showDone}
         showLock={showLock}
-        lockHint={showLock ? "Sign up to unlock" : undefined}
+        lockHint={showLock ? (railLockHint ?? "Sign up to unlock") : undefined}
         active={selected}
         imageLoading="eager"
         imagePriority={imagePriority}

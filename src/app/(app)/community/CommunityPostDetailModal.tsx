@@ -71,12 +71,17 @@ export default function CommunityPostDetailModal({
   item,
   defaultCommentName,
   onClose,
+  locked = false,
+  isGuest = false,
 }: {
   item: CommunityFeedItem | null;
   defaultCommentName?: string;
   onClose: () => void;
+  locked?: boolean;
+  isGuest?: boolean;
 }) {
   const router = useRouter();
+  const lockHref = isGuest ? "/register" : "/subscribe";
   const [live, setLive] = useState<CommunityFeedItem | null>(item);
   const [openEncourage, setOpenEncourage] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -108,6 +113,10 @@ export default function CommunityPostDetailModal({
     prayerId: string,
     body: Record<string, unknown>,
   ) {
+    if (locked) {
+      router.push(lockHref);
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(`/api/prayer-requests/${prayerId}/interactions`, {
@@ -132,6 +141,10 @@ export default function CommunityPostDetailModal({
   }
 
   async function toggleCelebrate(praiseId: string) {
+    if (locked) {
+      router.push(lockHref);
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch(`/api/praise-reports/${praiseId}/celebrate`, {
@@ -268,9 +281,13 @@ export default function CommunityPostDetailModal({
                       disabled={busy}
                       className={actionBtnClass(!!live.viewer.encourage, busy)}
                       aria-label={`Encourage — ${live.counts.encourage} ${live.counts.encourage === 1 ? "encouragement" : "encouragements"}`}
-                      onClick={() =>
-                        setOpenEncourage((o) => !o)
-                      }
+                      onClick={() => {
+                        if (locked) {
+                          router.push(lockHref);
+                          return;
+                        }
+                        setOpenEncourage((o) => !o);
+                      }}
                     >
                       <IconEncourage className={ACTION_ICON} />
                       <span>Encourage</span>
@@ -310,6 +327,8 @@ export default function CommunityPostDetailModal({
             <CommunityPostDiscussionPanel
               item={live}
               defaultCommentName={defaultCommentName}
+              locked={locked}
+              isGuest={isGuest}
               onCommentCountUpdate={(next) =>
                 setLive((cur) => (cur ? { ...cur, commentCount: next } : cur))
               }

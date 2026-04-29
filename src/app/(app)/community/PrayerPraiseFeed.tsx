@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type {
   CommunityFeedItem,
   CommunityFeedPrayerItem,
@@ -84,11 +85,19 @@ export default function PrayerPraiseFeed({
   items: initialItems,
   className = "",
   defaultCommentName,
+  locked = false,
+  isGuest = false,
 }: {
   items: CommunityFeedItem[];
   className?: string;
   defaultCommentName?: string;
+  /** Locked covers guests + signed-in non-subscribers. */
+  locked?: boolean;
+  /** When true, lockHref points to /register (vs /subscribe for non-subscribers). */
+  isGuest?: boolean;
 }) {
+  const router = useRouter();
+  const lockHref = isGuest ? "/register" : "/subscribe";
   const [items, setItems] = useState(initialItems);
   const [feedView, setFeedView] = useState<FeedView>("prayer");
   const [prayerPage, setPrayerPage] = useState(0);
@@ -175,6 +184,10 @@ export default function PrayerPraiseFeed({
     prayerId: string,
     body: Record<string, unknown>,
   ) {
+    if (locked) {
+      router.push(lockHref);
+      return;
+    }
     setBusyId(prayerId);
     try {
       const res = await fetch(`/api/prayer-requests/${prayerId}/interactions`, {
@@ -200,6 +213,10 @@ export default function PrayerPraiseFeed({
   }
 
   async function toggleCelebrate(praiseId: string) {
+    if (locked) {
+      router.push(lockHref);
+      return;
+    }
     setBusyId(praiseId);
     try {
       const res = await fetch(`/api/praise-reports/${praiseId}/celebrate`, {
@@ -379,11 +396,15 @@ export default function PrayerPraiseFeed({
                           busyId === item.id,
                         )}
                         aria-label={`Encourage — ${item.counts.encourage} ${item.counts.encourage === 1 ? "encouragement" : "encouragements"}`}
-                        onClick={() =>
+                        onClick={() => {
+                          if (locked) {
+                            router.push(lockHref);
+                            return;
+                          }
                           setOpenEncourageId((cur) =>
                             cur === item.id ? null : item.id,
-                          )
-                        }
+                          );
+                        }}
                       >
                         <IconEncourage className={ACTION_ICON} />
                         <span>Encourage</span>
@@ -442,6 +463,8 @@ export default function PrayerPraiseFeed({
                           item={item}
                           defaultCommentName={defaultCommentName}
                           align="flush"
+                          locked={locked}
+                          isGuest={isGuest}
                           onCommentCountUpdate={(next) =>
                             setItems((prev) =>
                               prev.map((it) =>
@@ -624,6 +647,8 @@ export default function PrayerPraiseFeed({
                           item={item}
                           defaultCommentName={defaultCommentName}
                           align="flush"
+                          locked={locked}
+                          isGuest={isGuest}
                           onCommentCountUpdate={(next) =>
                             setItems((prev) =>
                               prev.map((it) =>

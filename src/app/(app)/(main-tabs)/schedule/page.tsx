@@ -13,6 +13,8 @@ import {
   resolveScheduleDayMovementVideoSrcSync,
 } from "@/lib/schedule-day-movement-defaults";
 
+export const dynamic = "force-dynamic";
+
 /** 0 = Monday, 5 = Saturday; Sunday = 7 for "no week day" */
 function getTodayDayIndex(): number {
   const d = new Date().getDay();

@@ -288,9 +288,13 @@ function BulletinMarqueeRow({
 export default function CommunityBulletinBanner({
   items,
   defaultCommentName,
+  locked = false,
+  isGuest = false,
 }: {
   items: CommunityFeedItem[];
   defaultCommentName?: string;
+  locked?: boolean;
+  isGuest?: boolean;
 }) {
   const prayerRow = useMemo(() => prayersFrom(items), [items]);
   const praiseRow = useMemo(() => praisesFrom(items), [items]);
@@ -398,6 +402,8 @@ export default function CommunityBulletinBanner({
         item={expanded}
         defaultCommentName={defaultCommentName}
         onClose={() => setExpanded(null)}
+        locked={locked}
+        isGuest={isGuest}
       />
     </>
   );

@@ -9,10 +9,16 @@ import CommunityBloomScrollIsland from "./CommunityBloomScrollIsland";
 import PrayerPraiseComposer from "./PrayerPraiseComposer";
 import PrayerPraiseFeed from "./PrayerPraiseFeed";
 
+export const dynamic = "force-dynamic";
+
 /** Avoid default name `CommunityPage` — devtools `performance.measure` can throw on that label. */
 export default async function PrayerPraiseCommunityRoute() {
   const [session, cookieStore, h] = await Promise.all([auth(), cookies(), headers()]);
   const userId = session?.user?.id ?? null;
+  const isSubscriber = session?.user?.isSubscriber ?? false;
+  const isAdmin = session?.user?.isAdmin ?? false;
+  const isGuest = !userId;
+  const locked = isGuest || (!isSubscriber && !isAdmin);
   const visitorId =
     h.get(COMMUNITY_VID_HEADER) ??
     cookieStore.get(COMMUNITY_VISITOR_COOKIE)?.value ??
@@ -37,6 +43,8 @@ export default async function PrayerPraiseCommunityRoute() {
       <CommunityBloomScrollIsland
         items={items}
         defaultCommentName={defaultDisplayName || undefined}
+        locked={locked}
+        isGuest={isGuest}
       />
 
       <div className="mx-auto mt-6 max-w-6xl px-4">
@@ -44,13 +52,16 @@ export default async function PrayerPraiseCommunityRoute() {
           <PrayerPraiseFeed
             items={items}
             defaultCommentName={defaultDisplayName || undefined}
+            locked={locked}
+            isGuest={isGuest}
           />
         </div>
       </div>
 
       <PrayerPraiseComposer
         defaultDisplayName={defaultDisplayName || undefined}
-        isGuest={!userId}
+        isGuest={isGuest}
+        locked={locked}
       />
     </div>
   );

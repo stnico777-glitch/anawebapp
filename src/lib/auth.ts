@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { auth } from "@/auth";
 import { getSupabasePublicEnv } from "@/lib/supabase/env";
+import { prisma } from "@/lib/prisma";
 
 export type SessionForApp = {
   userId: string | undefined;
@@ -69,17 +70,45 @@ export async function requireAuthFromRequest(
   } = await supabase.auth.getUser(token);
   if (error || !user?.id) return null;
 
-  // Load admin/subscriber flags from profiles for bearer-token callers too.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin, is_subscriber")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: entitlements }, { data: profile }] = await Promise.all([
+    supabase
+      .from("user_entitlements")
+      .select("is_subscriber")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("is_admin, is_subscriber")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
+
+  let isAdmin = profile?.is_admin ?? false;
+  const entBearer = entitlements as { is_subscriber?: boolean } | null;
+  let isSubscriber =
+    entBearer && typeof entBearer.is_subscriber === "boolean"
+      ? entBearer.is_subscriber
+      : (profile?.is_subscriber ?? false);
+
+  try {
+    const privileged = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: { isAdmin: true, isSubscriber: true },
+    });
+    if (privileged) {
+      isAdmin = privileged.isAdmin;
+      if (!(entBearer && typeof entBearer.is_subscriber === "boolean")) {
+        isSubscriber = privileged.isSubscriber;
+      }
+    }
+  } catch {
+    /* keep Supabase-derived flags */
+  }
 
   return {
     id: user.id,
-    isAdmin: profile?.is_admin ?? false,
-    isSubscriber: profile?.is_subscriber ?? false,
+    isAdmin,
+    isSubscriber,
   };
 }
 

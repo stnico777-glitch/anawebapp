@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { HERO_TAGLINE_AUTH_CLASS } from "@/constants/brandTypography";
 import { loginAction } from "./actions";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -20,8 +18,7 @@ export default function LoginPage() {
       setError(result.error);
       return;
     }
-    router.push("/schedule");
-    router.refresh();
+    /* Successful sign-in: `loginAction` uses `redirect()` to `/schedule` or `/subscribe`. */
   }
 
   return (

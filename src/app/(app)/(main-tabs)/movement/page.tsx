@@ -8,7 +8,7 @@ import type { WorkoutRailCardWorkout } from "@/lib/workout-rail-display";
 export const dynamic = "force-dynamic";
 
 export default async function MovementPage() {
-  const { userId } = await getSessionForApp();
+  const { userId, isSubscriber } = await getSessionForApp();
 
   const [movementLayout, workouts, completedWorkoutIds] = await Promise.all([
     getMovementLayoutForDisplay(),
@@ -52,6 +52,7 @@ export default async function MovementPage() {
         workouts={workouts}
         completedWorkoutIds={completedWorkoutIds}
         isGuest={!userId}
+        isSubscriber={userId ? isSubscriber : false}
       />
     </>
   );

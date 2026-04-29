@@ -1,11 +1,11 @@
 /**
- * When you add `@stripe/stripe-js`, load it only from checkout/subscribe routes — never from `layout.tsx`.
+ * Hosted **Stripe Checkout** (this app) redirects the browser to `session.url` — no `@stripe/stripe-js` is required.
  *
- * Example (subscribe or payment page only):
+ * If you later add Payment Element / embedded UI, load Stripe.js only from that route — never from `layout.tsx`:
  *
  *   const stripe = await import("@stripe/stripe-js").then((m) => m.loadStripe(publishableKey));
  *
- * Keep `stripe` (server SDK) in API routes only; the browser bundle should not import Stripe until needed.
+ * Keep the server `stripe` SDK in API routes only.
  */
 
 export {};

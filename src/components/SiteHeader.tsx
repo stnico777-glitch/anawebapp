@@ -198,7 +198,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
             <Link
               key={href}
               href={href}
-              prefetch={href === "/community" ? false : undefined}
+              prefetch={variant === "app" ? false : href === "/community" ? false : undefined}
               className={`${desktopLinkClass(href)} ${variant === "marketing" ? "animate-nav-item-in" : ""}`}
               style={variant === "marketing" ? { animationDelay: `${idx * 85}ms` } : undefined}
             >
@@ -223,7 +223,7 @@ export default function SiteHeader({ variant = "marketing" }: SiteHeaderProps) {
                 <Link
                   key={href}
                   href={href}
-                  prefetch={href === "/community" ? false : undefined}
+                  prefetch={variant === "app" ? false : href === "/community" ? false : undefined}
                   className={mobileLinkClass(href)}
                   onClick={closeMobileMenu}
                 >

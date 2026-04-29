@@ -33,6 +33,9 @@ export default function WorkoutLibraryShell({
   onPlayCollectionItem,
   onPlayQuickie,
   isGuest = false,
+  /** When set, controls lock badges (subscriber paywall). Defaults to guest-only (`isGuest`). */
+  contentLocked,
+  lockHint,
   /** Eager-load rail thumbs so horizontal scroll does not discard decoded images on Movement tab. */
   railImageLoading = "lazy",
 }: {
@@ -53,10 +56,16 @@ export default function WorkoutLibraryShell({
   onPlayQuickie?: (card: MovementLayoutDTO["quickieCards"][number]) => void;
   /** Logged-out preview: lock affordances on hero + quickie tiles. */
   isGuest?: boolean;
+  contentLocked?: boolean;
+  lockHint?: string;
   railImageLoading?: "eager" | "lazy";
 }) {
   const programsRef = useRef<HTMLDivElement>(null);
   const newToPilatesRef = useRef<HTMLDivElement>(null);
+
+  const movementLocked = contentLocked ?? isGuest;
+  const effectiveLockHint =
+    lockHint ?? (isGuest ? "Sign up to unlock" : "Subscribe to unlock");
 
   const topPad = compactTop ? "pt-0 md:pt-2" : "pt-10 md:pt-14";
 
@@ -138,10 +147,10 @@ export default function WorkoutLibraryShell({
                     aria-label={`Day ${item.dayIndex} — ${item.title}`}
                     className="group relative aspect-[16/9] w-full cursor-pointer overflow-hidden bg-sand text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-blue disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isGuest ? (
+                    {movementLocked ? (
                       <span
                         className={`absolute left-2 top-2 z-10 ${THEMED_LOCK_BADGE_LG_CLASS}`}
-                        title="Sign up to unlock"
+                        title={effectiveLockHint}
                         aria-hidden
                       >
                         <LockIcon size="sm" className="text-white" />
@@ -192,10 +201,10 @@ export default function WorkoutLibraryShell({
                     aria-label={`Play ${tile.title}`}
                     className="group relative aspect-[16/9] w-full overflow-hidden bg-sand text-left sm:aspect-[3/2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface"
                   >
-                    {isGuest ? (
+                    {movementLocked ? (
                       <span
                         className={`absolute left-4 top-4 z-10 ${THEMED_LOCK_BADGE_LG_CLASS}`}
-                        title="Sign up to unlock"
+                        title={effectiveLockHint}
                         aria-hidden
                       >
                         <LockIcon size="sm" className="text-white" />
@@ -268,8 +277,8 @@ export default function WorkoutLibraryShell({
                   metaLine={p.metaLine}
                   hoverSummary={p.summary}
                   unoptimized={unoptimizedRemoteImage(p.imageUrl)}
-                  showLock={isGuest}
-                  lockHint={isGuest ? "Sign up to unlock" : undefined}
+                  showLock={movementLocked}
+                  lockHint={movementLocked ? effectiveLockHint : undefined}
                   imageLoading={railImageLoading}
                 />
               ))}

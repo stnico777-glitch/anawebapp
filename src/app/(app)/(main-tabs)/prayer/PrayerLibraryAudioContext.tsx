@@ -410,6 +410,7 @@ export function PrayerMiniPlayerBar() {
     track,
     seekPercent,
     togglePlay,
+    clearTrack,
     toggleFavorite,
     isFavorite,
   } = ctx;
@@ -520,6 +521,25 @@ export function PrayerMiniPlayerBar() {
               />
             </svg>
           )}
+        </button>
+
+        <button
+          type="button"
+          onClick={clearTrack}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray transition hover:bg-stone-100 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface dark:hover:bg-stone-800"
+          aria-label="Close audio player"
+          title="Close"
+        >
+          <svg
+            className="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.25}
+            aria-hidden
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
+          </svg>
         </button>
       </div>
     </div>

@@ -7,7 +7,8 @@ import { tryCreateSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/schedule";
+  /** Default new members to checkout; pass `?next=` to override (e.g. OAuth). */
+  const next = searchParams.get("next") ?? "/subscribe";
 
   if (code) {
     const supabase = await tryCreateSupabaseServerClient();

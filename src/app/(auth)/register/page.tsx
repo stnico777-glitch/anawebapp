@@ -3,51 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import { HERO_TAGLINE_AUTH_CLASS } from "@/constants/brandTypography";
-import { useRouter } from "next/navigation";
+import { registerAction } from "./actions";
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(formData: FormData) {
     setError(null);
+    setInfo(null);
     setLoading(true);
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const name = formData.get("name") as string;
-
-    if (!email || !password) {
-      setError("Email and password are required");
-      setLoading(false);
-      return;
-    }
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      setLoading(false);
-      return;
-    }
-
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name: name || undefined }),
-    });
-
-    const data = await res.json();
+    const result = await registerAction(formData);
     setLoading(false);
-
-    if (!res.ok) {
-      setError(data.error ?? "Registration failed");
+    if (result && "error" in result) {
+      setError(result.error);
       return;
     }
-
-    router.push("/login?registered=1");
-    router.refresh();
+    if (result && "needsEmailConfirmation" in result) {
+      setInfo(result.message);
+      return;
+    }
+    /* `registerAction` uses `redirect()` to `/subscribe` when a session exists. */
   }
 
   return (
@@ -62,7 +39,16 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form action={handleSubmit} className="space-y-4">
+        {info && (
+          <div className="rounded-sm border border-sky-blue/30 bg-sky-blue/5 p-3 text-sm text-foreground [font-family:var(--font-body),sans-serif]">
+            {info}{" "}
+            <Link href="/login" className="font-medium text-sky-blue hover:underline">
+              Sign in
+            </Link>{" "}
+            after you confirm.
+          </div>
+        )}
         {error && (
           <div className="rounded-sm bg-red-50 p-3 text-sm text-red-700">
             {error}

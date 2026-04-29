@@ -20,5 +20,24 @@ export async function loginAction(formData: FormData) {
     return { error: "Invalid email or password" };
   }
 
-  redirect("/schedule");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.id) {
+    return { error: "Could not complete sign-in" };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_subscriber, is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const paid = profile?.is_subscriber ?? false;
+  const admin = profile?.is_admin ?? false;
+
+  if (paid || admin) {
+    redirect("/schedule");
+  }
+  redirect("/subscribe");
 }

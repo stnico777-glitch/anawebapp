@@ -22,13 +22,18 @@ export default function WorkoutLibrarySection({
   workouts,
   completedWorkoutIds = [],
   isGuest = false,
+  isSubscriber = false,
 }: {
   movementLayout: MovementLayoutDTO;
   workouts: WorkoutRailCardWorkout[];
   completedWorkoutIds?: string[];
   isGuest?: boolean;
+  /** Signed-in members only; ignored for guests (`isGuest`). */
+  isSubscriber?: boolean;
 }) {
   const router = useRouter();
+  const movementLocked = isGuest || !isSubscriber;
+  const lockHint = isGuest ? "Sign up to unlock" : "Subscribe to unlock";
   const [activeWorkout, setActiveWorkout] = useState<WorkoutRailCardWorkout | null>(null);
   const [layoutVideo, setLayoutVideo] = useState<MovementLayoutVideoPayload | null>(null);
 
@@ -38,9 +43,13 @@ export default function WorkoutLibrarySection({
         router.push("/register");
         return;
       }
+      if (!isSubscriber) {
+        router.push("/subscribe");
+        return;
+      }
       setActiveWorkout(w);
     },
-    [isGuest, router],
+    [isGuest, isSubscriber, router],
   );
 
   const closePlayer = useCallback(() => {
@@ -59,6 +68,10 @@ export default function WorkoutLibrarySection({
         router.push("/register");
         return;
       }
+      if (!isSubscriber) {
+        router.push("/subscribe");
+        return;
+      }
       const url = tile.videoUrl?.trim();
       if (!url) return;
       setLayoutVideo({
@@ -68,13 +81,17 @@ export default function WorkoutLibrarySection({
         poster: tile.imageUrl,
       });
     },
-    [isGuest, router],
+    [isGuest, isSubscriber, router],
   );
 
   const onPlayCollectionItem = useCallback(
     (item: MovementHeroCollectionItemDTO) => {
       if (isGuest) {
         router.push("/register");
+        return;
+      }
+      if (!isSubscriber) {
+        router.push("/subscribe");
         return;
       }
       const url = item.videoUrl?.trim();
@@ -86,13 +103,17 @@ export default function WorkoutLibrarySection({
         poster: item.imageUrl,
       });
     },
-    [isGuest, router],
+    [isGuest, isSubscriber, router],
   );
 
   const onPlayQuickie = useCallback(
     (card: MovementQuickieCardDTO) => {
       if (isGuest) {
         router.push("/register");
+        return;
+      }
+      if (!isSubscriber) {
+        router.push("/subscribe");
         return;
       }
       const url = card.videoUrl?.trim();
@@ -104,7 +125,7 @@ export default function WorkoutLibrarySection({
         poster: card.imageUrl,
       });
     },
-    [isGuest, router],
+    [isGuest, isSubscriber, router],
   );
 
   const libraryHidden = activeWorkout !== null || layoutVideo !== null;
@@ -118,6 +139,8 @@ export default function WorkoutLibrarySection({
           onPlayCollectionItem={onPlayCollectionItem}
           onPlayQuickie={onPlayQuickie}
           isGuest={isGuest}
+          contentLocked={movementLocked}
+          lockHint={lockHint}
           railImageLoading="eager"
           libraryRail={
             workouts.length === 0 ? (
@@ -137,7 +160,8 @@ export default function WorkoutLibrarySection({
                   onSelect={openPlayer}
                   selected={activeWorkout?.id === w.id}
                   showDone={completedWorkoutIds.includes(w.id)}
-                  showLock={isGuest}
+                  showLock={movementLocked}
+                  railLockHint={lockHint}
                   imagePriority={index < 2}
                 />
               ))

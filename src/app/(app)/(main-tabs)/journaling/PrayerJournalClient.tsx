@@ -41,10 +41,20 @@ function parseStatusFromUrl(s: string | null): StatusFilter {
   return "ALL";
 }
 
-function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
+function PrayerJournalInner({
+  isGuest = false,
+  locked = false,
+}: {
+  isGuest?: boolean;
+  /** Locked also covers signed-in non-subscribers; routes to /subscribe instead of /register. */
+  locked?: boolean;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const lockHref = isGuest ? "/register" : "/subscribe";
+  const lockHint = isGuest ? "Sign up to unlock" : "Subscribe to unlock";
+  const navigateLocked = () => router.push(lockHref);
 
   const statusQ = searchParams.get("status");
   const tagQ = searchParams.get("tag");
@@ -111,7 +121,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (isGuest) return;
+    if (locked) return;
     let cancelled = false;
     queueMicrotask(() => {
       if (!cancelled) void loadTagSuggestions();
@@ -119,12 +129,12 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [loadTagSuggestions, isGuest]);
+  }, [loadTagSuggestions, locked]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (isGuest) {
+      if (locked) {
         setEntries([]);
         setLoading(false);
         return;
@@ -139,7 +149,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [loadEntries, isGuest]);
+  }, [loadEntries, locked]);
 
   useEffect(() => {
     if (!celebrateEntry) return;
@@ -182,13 +192,13 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
   }, [journalOptionsOpenId]);
 
   useEffect(() => {
-    if (isGuest) return;
+    if (locked) return;
     const verseRef = searchParams.get("verseRef");
     const verseText = searchParams.get("verseText");
     if (!verseRef || !verseText) return;
     const id = window.setTimeout(() => setComposerOpen(true), 0);
     return () => window.clearTimeout(id);
-  }, [searchParams, isGuest]);
+  }, [searchParams, locked]);
 
   const openNewWithVerse = searchParams.get("verseRef") && searchParams.get("verseText");
 
@@ -231,7 +241,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
         tagFilter={tagFilter}
         categorySlugs={sidebarCategorySlugs}
         labelForSlug={resolveCategoryLabel}
-        guestNavigate={isGuest ? () => router.push("/register") : undefined}
+        guestNavigate={locked ? navigateLocked : undefined}
         onAddPinnedCategory={(slug) => {
           setHiddenCategories((hPrev) => {
             if (!hPrev.includes(slug)) return hPrev;
@@ -334,19 +344,19 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
             <button
               type="button"
               onClick={() => {
-                if (isGuest) {
-                  router.push("/register");
+                if (locked) {
+                  navigateLocked();
                   return;
                 }
                 setEditing(null);
                 setComposerOpen(true);
               }}
               className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-medium text-white hover:bg-sky-blue/90 ${
-                isGuest ? "bg-sky-blue/85" : "bg-sky-blue"
+                locked ? "bg-sky-blue/85" : "bg-sky-blue"
               }`}
-              aria-label={isGuest ? "New prayer — sign up to access" : undefined}
+              aria-label={locked ? `New prayer — ${lockHint}` : undefined}
             >
-              {isGuest ? (
+              {locked ? (
                 <LockIcon size="sm" className="text-white" ariaHidden />
               ) : null}
               New prayer
@@ -357,7 +367,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
         {loading ? (
           <p className="text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">Loading…</p>
         ) : entries.length === 0 ? (
-          isGuest ? (
+          locked ? (
             <div
               className={`relative overflow-hidden rounded-xl border border-sand bg-white shadow-[0_8px_32px_-10px_rgba(120,130,135,0.18)] ${WEEKDAY_CARD_SHADOW_RING}`}
             >
@@ -374,22 +384,25 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
                   Your prayer journal
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray [font-family:var(--font-body),sans-serif]">
-                  Sign up or log in for a private space to write prayers, celebrate when God answers, and keep
-                  everything organized in one place.
+                  {isGuest
+                    ? "Sign up or log in for a private space to write prayers, celebrate when God answers, and keep everything organized in one place."
+                    : "Subscribe to unlock a private space to write prayers, celebrate when God answers, and keep everything organized in one place."}
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                   <Link
-                    href="/register"
+                    href={lockHref}
                     className="rounded-lg bg-sky-blue px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(110,173,228,0.35)] transition hover:bg-sky-blue/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white [font-family:var(--font-body),sans-serif]"
                   >
-                    Create free account
+                    {isGuest ? "Create free account" : "Subscribe to unlock"}
                   </Link>
-                  <Link
-                    href="/login"
-                    className="rounded-lg border border-sand bg-white px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-background hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white [font-family:var(--font-body),sans-serif]"
-                  >
-                    Member login
-                  </Link>
+                  {isGuest ? (
+                    <Link
+                      href="/login"
+                      className="rounded-lg border border-sand bg-white px-5 py-2.5 text-sm font-medium text-foreground transition hover:bg-background hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-blue focus-visible:ring-offset-2 focus-visible:ring-offset-white [font-family:var(--font-body),sans-serif]"
+                    >
+                      Member login
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -813,7 +826,7 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
           </div>
         ) : null}
 
-        {composerOpen && !isGuest ? (
+        {composerOpen && !locked ? (
           <PrayerJournalEditor
             key={`${editing?.id ?? "new"}-${openNewWithVerse ? "v" : "x"}`}
             entry={editing}
@@ -845,14 +858,20 @@ function PrayerJournalInner({ isGuest = false }: { isGuest?: boolean }) {
   );
 }
 
-export default function PrayerJournalClient({ isGuest = false }: { isGuest?: boolean }) {
+export default function PrayerJournalClient({
+  isGuest = false,
+  locked = false,
+}: {
+  isGuest?: boolean;
+  locked?: boolean;
+}) {
   return (
     <Suspense
       fallback={
         <p className="text-center text-sm text-gray [font-family:var(--font-body),sans-serif]">Loading journal…</p>
       }
     >
-      <PrayerJournalInner isGuest={isGuest} />
+      <PrayerJournalInner isGuest={isGuest} locked={locked} />
     </Suspense>
   );
 }
