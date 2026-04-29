@@ -4,7 +4,17 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import VideoPlayer from "@/components/VideoPlayer";
 
-const WORKOUT_DONE_BODY = { workoutDone: true } as const;
+/**
+ * Parity with the awake-align mobile app: completing the schedule-day Start flow
+ * (encouragement → movement → finish) marks the day fully done — all three bullets,
+ * not just the workout. See `ScheduleStartScreen#runCompletionSync` in the mobile
+ * codebase, which patches `prayerDone | workoutDone | affirmationDone = true`.
+ */
+const DAY_DONE_BODY = {
+  prayerDone: true,
+  workoutDone: true,
+  affirmationDone: true,
+} as const;
 
 export default function ScheduleDayVideoPlayer({
   scheduleDayId,
@@ -24,13 +34,13 @@ export default function ScheduleDayVideoPlayer({
   /** After a successful PATCH this session, skip duplicate calls from video progress. */
   const hasSyncedCompletionRef = useRef(false);
 
-  const patchWorkoutDone = useCallback(async (): Promise<boolean> => {
+  const patchDayDone = useCallback(async (): Promise<boolean> => {
     try {
       const res = await fetch(`/api/schedule/${scheduleDayId}/complete`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify(WORKOUT_DONE_BODY),
+        body: JSON.stringify(DAY_DONE_BODY),
       });
       return res.ok;
     } catch {
@@ -38,20 +48,20 @@ export default function ScheduleDayVideoPlayer({
     }
   }, [scheduleDayId]);
 
-  const markWorkoutComplete = useCallback(async () => {
+  const markDayComplete = useCallback(async () => {
     if (hasSyncedCompletionRef.current) return;
-    const ok = await patchWorkoutDone();
+    const ok = await patchDayDone();
     if (ok) hasSyncedCompletionRef.current = true;
-  }, [patchWorkoutDone]);
+  }, [patchDayDone]);
 
-  const onComplete = markWorkoutComplete;
+  const onComplete = markDayComplete;
 
   const onFinish = useCallback(async () => {
     if (finishBusy) return;
     setFinishBusy(true);
     try {
       if (!hasSyncedCompletionRef.current) {
-        const ok = await patchWorkoutDone();
+        const ok = await patchDayDone();
         if (ok) hasSyncedCompletionRef.current = true;
       }
       router.refresh();
@@ -59,7 +69,7 @@ export default function ScheduleDayVideoPlayer({
     } finally {
       setFinishBusy(false);
     }
-  }, [finishBusy, patchWorkoutDone, router]);
+  }, [finishBusy, patchDayDone, router]);
 
   return (
     <div className="w-full">
